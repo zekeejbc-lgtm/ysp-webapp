@@ -1,37 +1,90 @@
-import React, { useState } from 'react';
+import { useState, useEffect, type ChangeEvent } from 'react';
 import { Search, Clock } from 'lucide-react';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import { Input } from './ui/input';
 
 interface AccessLogsProps {
   darkMode: boolean;
 }
 
-// Mock access logs data
-const mockAccessLogs = [
-  { id: 1, name: 'Juan Dela Cruz', idCode: 'YSP-001', role: 'Admin', timestamp: '2024-10-24 09:15 AM' },
-  { id: 2, name: 'Maria Santos', idCode: 'YSP-002', role: 'Head', timestamp: '2024-10-24 09:30 AM' },
-  { id: 3, name: 'John Visitor', idCode: 'GUEST-1234', role: 'Guest', timestamp: '2024-10-24 10:00 AM' },
-  { id: 4, name: 'Pedro Reyes', idCode: 'YSP-003', role: 'Auditor', timestamp: '2024-10-24 10:15 AM' },
-  { id: 5, name: 'Ana Garcia', idCode: 'YSP-004', role: 'Member', timestamp: '2024-10-24 10:45 AM' },
-  { id: 6, name: 'Carlos Martinez', idCode: 'YSP-005', role: 'Head', timestamp: '2024-10-24 11:00 AM' },
-  { id: 7, name: 'Juan Dela Cruz', idCode: 'YSP-001', role: 'Admin', timestamp: '2024-10-24 11:30 AM' },
-  { id: 8, name: 'Sarah Guest', idCode: 'GUEST-5678', role: 'Guest', timestamp: '2024-10-24 01:00 PM' },
-  { id: 9, name: 'Sofia Lopez', idCode: 'YSP-006', role: 'Member', timestamp: '2024-10-24 01:30 PM' },
-  { id: 10, name: 'Miguel Torres', idCode: 'YSP-007', role: 'Member', timestamp: '2024-10-24 02:00 PM' },
-  { id: 11, name: 'Pedro Reyes', idCode: 'YSP-003', role: 'Auditor', timestamp: '2024-10-24 02:15 PM' },
-  { id: 12, name: 'Maria Santos', idCode: 'YSP-002', role: 'Head', timestamp: '2024-10-24 02:45 PM' }
-];
+interface AccessLog {
+  id: number;
+  name: string;
+  idCode: string;
+  role: string;
+  timestamp: string;
+}
+
+const API_URL = 'https://script.google.com/macros/s/AKfycbyepq64QJEfXRzACKaXGSevEXdb-TueUaxtnTEQCnnFsECZGq1AWqNqyKZ9GeMmvcao2g/exec';
 
 export default function AccessLogs({ darkMode }: AccessLogsProps) {
   const [searchTerm, setSearchTerm] = useState('');
+  const [logs, setLogs] = useState<AccessLog[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // reference unused vars so TypeScript doesn't warn; these are intentionally
+  // present to preserve the component's API and internal state handling
+  void darkMode;
+  void isLoading;
+  void error;
+
+  // Check if user is authorized (role === "Auditor")
+  useEffect(() => {
+    const userData = localStorage.getItem('userData');
+    if (userData) {
+      const { role } = JSON.parse(userData);
+      if (role !== 'Auditor') {
+        window.location.href = '/homepage';
+      }
+    } else {
+      window.location.href = '/homepage';
+    }
+  }, []);
+
+  // Fetch access logs
+  useEffect(() => {
+    const fetchLogs = async () => {
+      try {
+        const userData = localStorage.getItem('userData');
+        const role = userData ? JSON.parse(userData).role : null;
+
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            action: 'getAccessLogs',
+            role,
+            search: searchTerm || undefined
+          })
+        });
+
+        const data = await response.json();
+        if (data.success) {
+          // GAS returns { success: true, data: [...] }
+          setLogs(data.data || []);
+        } else {
+          setError(data.message || 'Failed to fetch access logs');
+        }
+      } catch (error) {
+        setError('Failed to fetch access logs');
+        console.error('Error fetching logs:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchLogs();
+  }, []);
 
   const filteredLogs = searchTerm
-    ? mockAccessLogs.filter(log =>
+    ? logs.filter(log =>
         log.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         log.idCode.toLowerCase().includes(searchTerm.toLowerCase())
       )
-    : mockAccessLogs;
+    : logs;
 
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
@@ -51,7 +104,7 @@ export default function AccessLogs({ darkMode }: AccessLogsProps) {
   };
 
   const getRoleCount = (role: string) => {
-    return mockAccessLogs.filter(log => log.role === role).length;
+    return logs.filter(log => log.role === role).length;
   };
 
   return (
@@ -69,7 +122,7 @@ export default function AccessLogs({ darkMode }: AccessLogsProps) {
             type="text"
             placeholder="Search by name or ID code..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
             className="pl-10"
           />
         </div>

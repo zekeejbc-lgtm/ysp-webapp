@@ -1,24 +1,21 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
+import type { KeyboardEvent as ReactKeyboardEvent, ChangeEvent } from 'react';
 import { Sun, Moon, LogIn, Eye, EyeOff, UserPlus, X } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
-import { toast } from 'sonner@2.0.3';
+import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'sonner';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 
+import type { User } from '../types';
+
 interface LoginScreenProps {
-  onLogin: (user: any) => void;
+  onLogin: (user: User) => void;
   darkMode: boolean;
   setDarkMode: (value: boolean) => void;
 }
 
-// Mock user data - In production, this would connect to Google Sheets
-const mockUsers = [
-  { username: 'admin', password: 'admin123', role: 'Admin', idCode: 'YSP-001', fullName: 'Juan Dela Cruz', email: 'admin@ysp.ph', position: 'President' },
-  { username: 'head', password: 'head123', role: 'Head', idCode: 'YSP-002', fullName: 'Maria Santos', email: 'head@ysp.ph', position: 'Committee Head' },
-  { username: 'auditor', password: 'auditor123', role: 'Auditor', idCode: 'YSP-003', fullName: 'Pedro Reyes', email: 'auditor@ysp.ph', position: 'Auditor' },
-  { username: 'member', password: 'member123', role: 'Member', idCode: 'YSP-004', fullName: 'Ana Garcia', email: 'member@ysp.ph', position: 'Member' }
-];
+const API_URL = 'https://script.google.com/macros/s/AKfycbyepq64QJEfXRzACKaXGSevEXdb-TueUaxtnTEQCnnFsECZGq1AWqNqyKZ9GeMmvcao2g/exec';
 
 export default function LoginScreen({ onLogin, darkMode, setDarkMode }: LoginScreenProps) {
   const [username, setUsername] = useState('');
@@ -27,45 +24,100 @@ export default function LoginScreen({ onLogin, darkMode, setDarkMode }: LoginScr
   const [showGuestModal, setShowGuestModal] = useState(false);
   const [guestName, setGuestName] = useState('');
 
-  const handleLogin = () => {
-    const user = mockUsers.find(u => u.username === username && u.password === password);
-    
-    if (user) {
-      // Log access in production (would write to Access Logs sheet)
-      const timestamp = new Date().toLocaleString('en-PH', { timeZone: 'Asia/Manila' });
-      console.log(`Access Log: ${user.fullName} (${user.idCode}) logged in at ${timestamp}`);
-      
-      toast.success(`Welcome back, ${user.fullName}!`);
-      onLogin(user);
-    } else {
-      toast.error('Invalid username or password', {
-        description: 'Please check your credentials and try again.'
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleLogin = async () => {
+    if (!username || !password) {
+      toast.error('Please enter both username and password');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'login',
+          username,
+          password
+        })
       });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        // Save user data to localStorage
+        localStorage.setItem('userData', JSON.stringify({
+          name: data.name,
+          idCode: data.idCode,
+          role: data.role
+        }));
+        
+        toast.success(`Welcome back, ${data.name}!`);
+        onLogin(data);
+      } else {
+        toast.error('Invalid username or password', {
+          description: 'Please check your credentials and try again.'
+        });
+      }
+    } catch (error) {
+      toast.error('Login failed', {
+        description: 'Please try again later.'
+      });
+      console.error('Login error:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleGuestLogin = () => {
+  const handleGuestLogin = async () => {
     if (!guestName.trim()) {
       toast.error('Please enter your name');
       return;
     }
 
-    const guestUser = {
-      username: 'guest',
-      password: '',
-      role: 'Guest',
-      idCode: `GUEST-${Date.now().toString().slice(-4)}`,
-      fullName: guestName,
-      email: 'guest@ysp.ph',
-      position: 'Visitor'
-    };
+    setIsLoading(true);
+    try {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'guestLogin',
+          name: guestName.trim()
+        })
+      });
 
-    // Log guest access
-    const timestamp = new Date().toLocaleString('en-PH', { timeZone: 'Asia/Manila' });
-    console.log(`Access Log: ${guestUser.fullName} (${guestUser.idCode}) logged in as guest at ${timestamp}`);
-
-    toast.success(`Welcome, ${guestName}!`);
-    onLogin(guestUser);
+      const data = await response.json();
+      
+      if (data.success) {
+        // Save guest data to localStorage
+        localStorage.setItem('userData', JSON.stringify({
+          name: data.name,
+          idCode: data.idCode,
+          role: 'Guest'
+        }));
+        
+        toast.success(`Welcome, ${data.name}!`);
+        onLogin(data);
+      } else {
+        toast.error('Guest login failed', {
+          description: data.message || 'Please try again.'
+        });
+      }
+    } catch (error) {
+      toast.error('Guest login failed', {
+        description: 'Please try again later.'
+      });
+      console.error('Guest login error:', error);
+    } finally {
+      setIsLoading(false);
+      setShowGuestModal(false);
+    }
   };
 
   return (
@@ -131,8 +183,8 @@ export default function LoginScreen({ onLogin, darkMode, setDarkMode }: LoginScr
               id="username"
               type="text"
               value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => setUsername(e.target.value)}
+              onKeyPress={(e: ReactKeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && handleLogin()}
               placeholder="Enter your username"
               className="mt-1"
             />
@@ -145,8 +197,8 @@ export default function LoginScreen({ onLogin, darkMode, setDarkMode }: LoginScr
                 id="password"
                 type={showPassword ? 'text' : 'password'}
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
+                onKeyPress={(e: ReactKeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && handleLogin()}
                 placeholder="Enter your password"
                 className="mt-1 pr-10"
               />
@@ -161,13 +213,29 @@ export default function LoginScreen({ onLogin, darkMode, setDarkMode }: LoginScr
           </div>
 
           <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-            <Button
-              onClick={handleLogin}
-              className="w-full bg-gradient-to-r from-[#f6421f] to-[#ee8724] hover:from-[#ee8724] hover:to-[#fbcb29] text-white shadow-lg shadow-orange-300/50"
-            >
-              <LogIn className="mr-2" size={18} />
-              Login
-            </Button>
+                          <Button
+                onClick={handleLogin}
+                className="w-full bg-gradient-to-r from-[#f6421f] to-[#ee8724] hover:from-[#ee8724] hover:to-[#fbcb29] text-white shadow-lg shadow-orange-300/50"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                      className="mr-2"
+                    >
+                      <LogIn size={18} />
+                    </motion.div>
+                    Logging in...
+                  </>
+                ) : (
+                  <>
+                    <LogIn className="mr-2" size={18} />
+                    Login
+                  </>
+                )}
+              </Button>
           </motion.div>
 
           <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
@@ -182,20 +250,7 @@ export default function LoginScreen({ onLogin, darkMode, setDarkMode }: LoginScr
           </motion.div>
         </motion.div>
 
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.6 }}
-          className="mt-6 p-4 bg-gradient-to-r from-gray-50 to-orange-50/50 dark:from-gray-800 dark:to-gray-700 rounded-lg border border-orange-100 dark:border-gray-600"
-        >
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Demo Accounts:</p>
-          <div className="text-xs space-y-1 text-gray-500 dark:text-gray-500">
-            <p>• Admin: admin / admin123</p>
-            <p>• Head: head / head123</p>
-            <p>• Auditor: auditor / auditor123</p>
-            <p>• Member: member / member123</p>
-          </div>
-        </motion.div>
+
       </motion.div>
 
       {/* Guest Login Modal */}
@@ -214,7 +269,7 @@ export default function LoginScreen({ onLogin, darkMode, setDarkMode }: LoginScr
               exit={{ scale: 0.9, opacity: 0 }}
               transition={{ type: "spring", duration: 0.5 }}
               className="modal-content max-w-md"
-              onClick={(e) => e.stopPropagation()}
+              onClick={(e: React.MouseEvent) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
                 <h3 className="text-[#f6421f] dark:text-[#ee8724] flex items-center gap-2">
@@ -238,8 +293,8 @@ export default function LoginScreen({ onLogin, darkMode, setDarkMode }: LoginScr
                     id="guestName"
                     type="text"
                     value={guestName}
-                    onChange={(e) => setGuestName(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && handleGuestLogin()}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) => setGuestName(e.target.value)}
+                    onKeyPress={(e: ReactKeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && handleGuestLogin()}
                     placeholder="Enter your full name"
                     className="mt-2"
                   />
