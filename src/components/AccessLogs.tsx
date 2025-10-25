@@ -22,11 +22,8 @@ export default function AccessLogs({ darkMode }: AccessLogsProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // reference unused vars so TypeScript doesn't warn; these are intentionally
-  // present to preserve the component's API and internal state handling
+  // keep darkMode referenced to avoid unused warning but otherwise unused here
   void darkMode;
-  void isLoading;
-  void error;
 
   // Check if user is authorized (role === "Auditor")
   useEffect(() => {
@@ -66,8 +63,10 @@ export default function AccessLogs({ darkMode }: AccessLogsProps) {
         console.log('Access logs response:', data);
 
         if (data.success) {
-          // Backend returns { success: true, logs: [...] }
-          setLogs(data.logs || []);
+          // Backend may return logs under `logs` or under `data` (different GAS versions).
+          const returned = data.logs ?? data.data ?? [];
+          setLogs(returned || []);
+          console.log('Parsed logs count:', (returned || []).length);
         } else {
           setError(data.message || 'Failed to fetch access logs');
         }
@@ -131,6 +130,12 @@ export default function AccessLogs({ darkMode }: AccessLogsProps) {
         </div>
       </motion.div>
 
+      {error && !isLoading && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="ysp-card text-center py-6 mb-4">
+          <p className="text-red-600">{error}</p>
+        </motion.div>
+      )}
+
       <div className="space-y-3 max-h-[700px] overflow-y-auto pr-2">
         {filteredLogs.map((log, index) => (
           <motion.div
@@ -169,7 +174,7 @@ export default function AccessLogs({ darkMode }: AccessLogsProps) {
         ))}
       </div>
 
-      {filteredLogs.length === 0 && (
+      {!isLoading && filteredLogs.length === 0 && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
