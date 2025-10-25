@@ -15,7 +15,7 @@ interface LoginScreenProps {
   setDarkMode: (value: boolean) => void;
 }
 
-const API_URL = 'https://script.google.com/macros/s/AKfycbyepq64QJEfXRzACKaXGSevEXdb-TueUaxtnTEQCnnFsECZGq1AWqNqyKZ9GeMmvcao2g/exec';
+const API_URL = '/api/gas-proxy';
 
 export default function LoginScreen({ onLogin, darkMode, setDarkMode }: LoginScreenProps) {
   const [username, setUsername] = useState('');
