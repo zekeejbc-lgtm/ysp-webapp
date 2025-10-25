@@ -132,7 +132,7 @@ export default function AccessLogs({ darkMode }: AccessLogsProps) {
       <div className="space-y-3 max-h-[700px] overflow-y-auto pr-2">
         {filteredLogs.map((log, index) => (
           <motion.div
-            key={log.id}
+            key={`${log.timestamp}-${log.idCode}-${index}`}
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: index * 0.05 }}
