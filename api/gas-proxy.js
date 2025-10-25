@@ -27,6 +27,19 @@ export default async function handler(req, res) {
       outgoingBody = JSON.stringify(req.body || {});
     }
 
+    // Basic redaction for logging (avoid printing raw passwords)
+    const redact = (str) => {
+      try {
+        return str.replace(/"password"\s*:\s*"(.*?)"/gi, '"password":"[REDACTED]"');
+      } catch (e) {
+        return str;
+      }
+    };
+
+    console.log('[gas-proxy] incoming headers:', req.headers);
+    console.log('[gas-proxy] incoming body (redacted):', redact(typeof req.body === 'string' ? req.body : JSON.stringify(req.body)));
+    console.log('[gas-proxy] outgoingBody (redacted):', redact(outgoingBody || 'undefined'));
+
     const fetchOptions = {
       method: req.method,
       headers: { 'Content-Type': req.headers['content-type'] || 'application/json' },
@@ -35,6 +48,9 @@ export default async function handler(req, res) {
 
     const r = await fetch(GAS_URL, fetchOptions);
     const text = await r.text();
+
+  console.log('[gas-proxy] GAS response status:', r.status);
+  console.log('[gas-proxy] GAS response text:', text);
 
     // Mirror status and set CORS headers for browser
     res.setHeader('Access-Control-Allow-Origin', '*');
