@@ -34,8 +34,10 @@ export default function LoginScreen({ onLogin, darkMode, setDarkMode }: LoginScr
 
     setIsLoading(true);
     try {
+      console.log('Attempting login...');
       const response = await fetch(API_URL, {
         method: 'POST',
+        mode: 'cors',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -46,7 +48,29 @@ export default function LoginScreen({ onLogin, darkMode, setDarkMode }: LoginScr
         })
       });
 
+      if (!response.ok) {
+        console.error('Login failed:', response.status, response.statusText);
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       const data = await response.json();
+      console.log('Login response:', data);
+      
+      if (data.success) {
+        // Save user data to localStorage
+        localStorage.setItem('userData', JSON.stringify({
+          name: data.name,
+          idCode: data.idCode,
+          role: data.role
+        }));
+        
+        toast.success(`Welcome back, ${data.name}!`);
+        onLogin(data);
+      } else {
+        toast.error(data.message || 'Login failed', {
+          description: 'Please check your credentials and try again.'
+        });
+      }
       
       if (data.success) {
         // Save user data to localStorage
@@ -83,6 +107,7 @@ export default function LoginScreen({ onLogin, darkMode, setDarkMode }: LoginScr
     try {
       const response = await fetch(API_URL, {
         method: 'POST',
+        mode: 'cors',
         headers: {
           'Content-Type': 'application/json',
         },

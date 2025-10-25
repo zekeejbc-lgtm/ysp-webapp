@@ -8,7 +8,6 @@ interface AccessLogsProps {
 }
 
 interface AccessLog {
-  id: number;
   name: string;
   idCode: string;
   role: string;
@@ -51,20 +50,22 @@ export default function AccessLogs({ darkMode }: AccessLogsProps) {
 
         const response = await fetch(API_URL, {
           method: 'POST',
+          mode: 'cors',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
             action: 'getAccessLogs',
-            role,
-            search: searchTerm || undefined
+            role
           })
         });
 
         const data = await response.json();
+        console.log('Access logs response:', data);
+
         if (data.success) {
-          // GAS returns { success: true, data: [...] }
-          setLogs(data.data || []);
+          // Backend returns { success: true, logs: [...] }
+          setLogs(data.logs || []);
         } else {
           setError(data.message || 'Failed to fetch access logs');
         }
