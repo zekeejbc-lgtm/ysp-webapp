@@ -38,8 +38,10 @@ export default function LoginScreen({ onLogin, darkMode, setDarkMode }: LoginScr
       const response = await fetch(API_URL, {
         method: 'POST',
         mode: 'cors',
+        credentials: 'omit',
         headers: {
           'Content-Type': 'application/json',
+          'Origin': window.location.origin
         },
         body: JSON.stringify({
           action: 'login',
@@ -108,8 +110,10 @@ export default function LoginScreen({ onLogin, darkMode, setDarkMode }: LoginScr
       const response = await fetch(API_URL, {
         method: 'POST',
         mode: 'cors',
+        credentials: 'omit',
         headers: {
           'Content-Type': 'application/json',
+          'Origin': window.location.origin
         },
         body: JSON.stringify({
           action: 'guestLogin',

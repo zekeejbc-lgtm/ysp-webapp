@@ -51,8 +51,10 @@ export default function AccessLogs({ darkMode }: AccessLogsProps) {
         const response = await fetch(API_URL, {
           method: 'POST',
           mode: 'cors',
+          credentials: 'omit',
           headers: {
             'Content-Type': 'application/json',
+            'Origin': window.location.origin
           },
           body: JSON.stringify({
             action: 'getAccessLogs',
