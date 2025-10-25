@@ -13,11 +13,24 @@ export default async function handler(req, res) {
   }
 
   try {
+    // Determine outgoing body: if req.body is already a string use it directly
+    // Vercel/Next may parse JSON and provide an object; in that case stringify.
+    let outgoingBody;
+    if (req.method === 'GET' || req.method === 'HEAD') {
+      outgoingBody = undefined;
+    } else if (typeof req.body === 'string') {
+      outgoingBody = req.body;
+    } else if (req.rawBody && req.rawBody.length) {
+      // If rawBody is available (buffer), use it as string
+      outgoingBody = req.rawBody.toString();
+    } else {
+      outgoingBody = JSON.stringify(req.body || {});
+    }
+
     const fetchOptions = {
       method: req.method,
-      headers: { 'Content-Type': 'application/json' },
-      // forward the body for POST/PUT
-      body: req.method === 'GET' || req.method === 'HEAD' ? undefined : JSON.stringify(req.body),
+      headers: { 'Content-Type': req.headers['content-type'] || 'application/json' },
+      body: outgoingBody,
     };
 
     const r = await fetch(GAS_URL, fetchOptions);
