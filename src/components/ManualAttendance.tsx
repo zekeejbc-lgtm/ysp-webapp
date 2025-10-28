@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Search } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Search, AlertTriangle } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { Label } from './ui/label';
@@ -25,6 +25,9 @@ export default function ManualAttendance(_props: ManualAttendanceProps) {
   const [showEventSuggestions, setShowEventSuggestions] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
+  const [showOverwriteDialog, setShowOverwriteDialog] = useState(false);
+  const [pendingData, setPendingData] = useState<any>(null);
+  const [existingRecord, setExistingRecord] = useState('');
 
   // Fetch active events on mount
   useEffect(() => {
@@ -73,7 +76,7 @@ export default function ManualAttendance(_props: ManualAttendanceProps) {
     ? events.filter(e => e.name.toLowerCase().includes(eventSearch.toLowerCase()))
     : events;
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (overwrite = false) => {
     if (!selectedMember || !selectedEvent) {
       toast.error('Please select both member and event');
       return;
@@ -91,17 +94,20 @@ export default function ManualAttendance(_props: ManualAttendanceProps) {
       const timeString = String(displayHours).padStart(2, '0') + ':' + String(minutes).padStart(2, '0') + ' ' + ampm;
       const formattedValue = `${status} - ${timeString}`;
 
+      const requestData = {
+        action: 'recordManualAttendance',
+        eventId: selectedEvent.id,
+        idCode: selectedMember.idCode,
+        timeType: timeType,
+        status: status,
+        formattedValue: formattedValue,
+        overwrite: overwrite
+      };
+
       const response = await fetch('/api/gas-proxy', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'recordManualAttendance',
-          eventId: selectedEvent.id,
-          idCode: selectedMember.idCode,
-          timeType: timeType,
-          status: status,
-          formattedValue: formattedValue
-        })
+        body: JSON.stringify(requestData)
       });
 
       const result = await response.json();
@@ -115,10 +121,13 @@ export default function ManualAttendance(_props: ManualAttendanceProps) {
         setMemberSearch('');
         setEventSearch('');
         setStatus('Present');
-      } else if (result.alreadyRecorded) {
-        toast.error('Already Recorded!', {
-          description: result.message
-        });
+        setShowOverwriteDialog(false);
+        setPendingData(null);
+      } else if (result.alreadyRecorded && !overwrite) {
+        // Show overwrite dialog
+        setExistingRecord(result.existingValue || 'Unknown');
+        setPendingData(requestData);
+        setShowOverwriteDialog(true);
       } else {
         toast.error('Recording Failed', {
           description: result.message || 'Unable to record attendance'
@@ -132,6 +141,22 @@ export default function ManualAttendance(_props: ManualAttendanceProps) {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleConfirmOverwrite = async () => {
+    if (pendingData) {
+      setShowOverwriteDialog(false);
+      await handleSubmit(true);
+    }
+  };
+
+  const handleCancelOverwrite = () => {
+    setShowOverwriteDialog(false);
+    setPendingData(null);
+    setIsLoading(false);
+    toast.info('Cancelled', {
+      description: 'Record was not overwritten'
+    });
   };
 
   return (
@@ -321,7 +346,7 @@ export default function ManualAttendance(_props: ManualAttendanceProps) {
             whileTap={{ scale: 0.98 }}
           >
             <Button
-              onClick={handleSubmit}
+              onClick={() => handleSubmit(false)}
               disabled={isLoading || !selectedMember || !selectedEvent}
               className="w-full bg-gradient-to-r from-[#f6421f] to-[#ee8724] hover:from-[#ee8724] hover:to-[#fbcb29] shadow-lg shadow-orange-300/50"
             >
@@ -330,6 +355,71 @@ export default function ManualAttendance(_props: ManualAttendanceProps) {
           </motion.div>
         </div>
       </motion.div>
+
+      {/* Overwrite Confirmation Dialog */}
+      <AnimatePresence>
+        {showOverwriteDialog && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+              onClick={handleCancelOverwrite}
+            >
+              {/* Dialog */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                transition={{ type: 'spring', duration: 0.3 }}
+                onClick={(e) => e.stopPropagation()}
+                className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-md w-full p-6 border border-gray-200 dark:border-gray-700"
+              >
+                <div className="flex items-start gap-4 mb-4">
+                  <div className="flex-shrink-0 w-12 h-12 rounded-full bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center">
+                    <AlertTriangle className="text-yellow-600 dark:text-yellow-500" size={24} />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
+                      Record Already Exists
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      {selectedMember?.fullName} has already {timeType === 'timeIn' ? 'timed in' : 'timed out'} for this event.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-4 mb-6 border border-gray-200 dark:border-gray-700">
+                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Existing Record:</p>
+                  <p className="font-semibold text-gray-900 dark:text-white">{existingRecord}</p>
+                </div>
+
+                <p className="text-sm text-gray-700 dark:text-gray-300 mb-6">
+                  Do you want to overwrite the existing record with the new one?
+                </p>
+
+                <div className="flex gap-3">
+                  <Button
+                    onClick={handleCancelOverwrite}
+                    variant="outline"
+                    className="flex-1"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleConfirmOverwrite}
+                    className="flex-1 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white shadow-lg shadow-orange-300/50"
+                  >
+                    Overwrite
+                  </Button>
+                </div>
+              </motion.div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -455,6 +455,7 @@ function handleRecordManualAttendance(data) {
     const idCode = data.idCode;
     const timeType = data.timeType; // 'timeIn' or 'timeOut'
     const formattedValue = data.formattedValue; // Pre-formatted "(Status) - (Time)" from frontend
+    const overwrite = data.overwrite || false; // Whether to overwrite existing record
     
     if (!eventId || !idCode || !timeType || !formattedValue) {
       return { success: false, message: 'Missing required fields' };
@@ -493,14 +494,20 @@ function handleRecordManualAttendance(data) {
       return { success: false, message: 'ID Code not found in Master Attendance Log' };
     }
     
-    // Check if already recorded (to prevent duplicates)
+    // Check if already recorded
     const currentValue = allData[personRowIndex][timeColIndex];
     if (currentValue && currentValue.toString().trim() !== '') {
-      return { 
-        success: false, 
-        message: 'Already recorded! This person has already ' + (timeType === 'timeIn' ? 'timed in' : 'timed out') + ' for this event.',
-        alreadyRecorded: true
-      };
+      if (!overwrite) {
+        // Return existing value for confirmation dialog
+        return { 
+          success: false, 
+          message: 'Already recorded! This person has already ' + (timeType === 'timeIn' ? 'timed in' : 'timed out') + ' for this event.',
+          alreadyRecorded: true,
+          existingValue: currentValue.toString()
+        };
+      }
+      // If overwrite is true, continue to update the record
+      Logger.log('Overwriting existing record: ' + currentValue.toString() + ' with ' + formattedValue);
     }
     
     // Record the attendance with the formatted value from frontend
