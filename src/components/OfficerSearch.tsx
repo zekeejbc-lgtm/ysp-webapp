@@ -1,32 +1,55 @@
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, User, Mail, Phone, Calendar, MapPin, Briefcase } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
+import { userAPI, type UserProfile } from '../services/api';
+import { toast } from 'sonner';
 
 interface OfficerSearchProps {
   darkMode: boolean;
 }
 
-// Mock user profiles data
-const mockProfiles = [
-  { idCode: 'YSP-001', fullName: 'Juan Dela Cruz', email: 'juan@ysp.ph', position: 'President', birthday: '1998-03-15', contact: '+63 912 345 6789', gender: 'Male', age: 26, civilStatus: 'Single', nationality: 'Filipino', religion: 'Catholic', profilePic: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop' },
-  { idCode: 'YSP-002', fullName: 'Maria Santos', email: 'maria@ysp.ph', position: 'Committee Head', birthday: '1999-07-22', contact: '+63 923 456 7890', gender: 'Female', age: 25, civilStatus: 'Single', nationality: 'Filipino', religion: 'Catholic', profilePic: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop' },
-  { idCode: 'YSP-003', fullName: 'Pedro Reyes', email: 'pedro@ysp.ph', position: 'Auditor', birthday: '1997-11-08', contact: '+63 934 567 8901', gender: 'Male', age: 27, civilStatus: 'Married', nationality: 'Filipino', religion: 'Catholic', profilePic: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop' },
-  { idCode: 'YSP-004', fullName: 'Ana Garcia', email: 'ana@ysp.ph', position: 'Member', birthday: '2000-02-14', contact: '+63 945 678 9012', gender: 'Female', age: 24, civilStatus: 'Single', nationality: 'Filipino', religion: 'Born Again', profilePic: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop' },
-  { idCode: 'YSP-005', fullName: 'Carlos Martinez', email: 'carlos@ysp.ph', position: 'Vice President', birthday: '1998-09-30', contact: '+63 956 789 0123', gender: 'Male', age: 26, civilStatus: 'Single', nationality: 'Filipino', religion: 'Catholic', profilePic: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop' }
-];
-
 export default function OfficerSearch({ darkMode }: OfficerSearchProps) {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedProfile, setSelectedProfile] = useState<typeof mockProfiles[0] | null>(null);
+  const [selectedProfile, setSelectedProfile] = useState<UserProfile | null>(null);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [profiles, setProfiles] = useState<UserProfile[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const filteredProfiles = searchTerm
-    ? mockProfiles.filter(p =>
-        p.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.idCode.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    : [];
+  // keep darkMode referenced
+  void darkMode;
+
+  // Search profiles as user types
+  useEffect(() => {
+    const searchProfiles = async () => {
+      if (!searchTerm || searchTerm.length < 2) {
+        setProfiles([]);
+        return;
+      }
+
+      setIsLoading(true);
+      try {
+        const response = await userAPI.searchProfiles(searchTerm);
+        if (response.success && response.profiles) {
+          setProfiles(response.profiles);
+        } else {
+          setProfiles([]);
+        }
+      } catch (error) {
+        console.error('Error searching profiles:', error);
+        toast.error('Failed to search profiles');
+        setProfiles([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    const debounceTimer = setTimeout(searchProfiles, 300);
+    return () => clearTimeout(debounceTimer);
+  }, [searchTerm]);
+
+  const filteredProfiles = profiles;
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -52,10 +75,11 @@ export default function OfficerSearch({ darkMode }: OfficerSearchProps) {
           </div>
 
           {showSuggestions && filteredProfiles.length > 0 && (
-            <div className="absolute z-10 w-full mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+            <div className="absolute z-10 w-full mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg max-h-60 overflow-y-auto border border-gray-200 dark:border-gray-700">
               {filteredProfiles.map((profile) => (
-                <button
+                <motion.button
                   key={profile.idCode}
+                  whileHover={{ scale: 1.02 }}
                   onClick={() => {
                     setSelectedProfile(profile);
                     setSearchTerm(profile.fullName);
@@ -63,30 +87,60 @@ export default function OfficerSearch({ darkMode }: OfficerSearchProps) {
                   }}
                   className="w-full px-4 py-3 text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-3"
                 >
-                  <img
-                    src={profile.profilePic}
-                    alt={profile.fullName}
-                    className="w-10 h-10 rounded-full object-cover"
-                  />
+                  {profile.profilePic && (
+                    <img
+                      src={profile.profilePic}
+                      alt={profile.fullName}
+                      className="w-10 h-10 rounded-full object-cover"
+                    />
+                  )}
+                  {!profile.profilePic && (
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-r from-[#f6421f] to-[#ee8724] flex items-center justify-center">
+                      <User size={20} className="text-white" />
+                    </div>
+                  )}
                   <div>
-                    <p>{profile.fullName}</p>
+                    <p className="font-medium">{profile.fullName}</p>
                     <p className="text-sm text-gray-500">{profile.idCode} - {profile.position}</p>
                   </div>
-                </button>
+                </motion.button>
               ))}
+            </div>
+          )}
+
+          {showSuggestions && isLoading && (
+            <div className="absolute z-10 w-full mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 text-center border border-gray-200 dark:border-gray-700">
+              <p className="text-gray-500">Searching...</p>
+            </div>
+          )}
+
+          {showSuggestions && !isLoading && searchTerm.length >= 2 && filteredProfiles.length === 0 && (
+            <div className="absolute z-10 w-full mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 text-center border border-gray-200 dark:border-gray-700">
+              <p className="text-gray-500">No profiles found</p>
             </div>
           )}
         </div>
       </div>
 
       {selectedProfile && (
-        <div className="ysp-card animate-[slideUp_0.3s_ease]">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="ysp-card"
+        >
           <div className="text-center mb-6">
-            <img
-              src={selectedProfile.profilePic}
-              alt={selectedProfile.fullName}
-              className="w-32 h-32 rounded-full object-cover mx-auto mb-4 shadow-lg"
-            />
+            {selectedProfile.profilePic && (
+              <img
+                src={selectedProfile.profilePic}
+                alt={selectedProfile.fullName}
+                className="w-32 h-32 rounded-full object-cover mx-auto mb-4 shadow-lg"
+              />
+            )}
+            {!selectedProfile.profilePic && (
+              <div className="w-32 h-32 rounded-full bg-gradient-to-r from-[#f6421f] to-[#ee8724] flex items-center justify-center mx-auto mb-4 shadow-lg">
+                <User size={48} className="text-white" />
+              </div>
+            )}
             <h3 className="text-[#f6421f] dark:text-[#ee8724] mb-1">{selectedProfile.fullName}</h3>
             <p className="text-gray-600 dark:text-gray-400">{selectedProfile.position}</p>
           </div>
@@ -158,7 +212,7 @@ export default function OfficerSearch({ darkMode }: OfficerSearchProps) {
           >
             Clear
           </Button>
-        </div>
+        </motion.div>
       )}
     </div>
   );
