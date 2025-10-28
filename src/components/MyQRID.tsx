@@ -15,24 +15,24 @@ export default function MyQRID({ darkMode, currentUser }: MyQRIDProps) {
 
   useEffect(() => {
     const fetchProfile = async () => {
-      if (!currentUser || !currentUser.id) {
+      if (!currentUser || !currentUser.idCode) {
         setIsLoading(false);
         return;
       }
 
       try {
         setIsLoading(true);
-        const response = await userAPI.searchProfiles(currentUser.id);
+        const response = await userAPI.searchProfiles(currentUser.idCode);
         
         if (response.success && response.profiles && response.profiles.length > 0) {
           // Find the exact match by ID Code
-          const matchedProfile = response.profiles.find(p => p.idCode === currentUser.id);
+          const matchedProfile = response.profiles.find(p => p.idCode === currentUser.idCode);
           setProfile(matchedProfile || response.profiles[0]);
         } else {
           // Fallback to currentUser data if API doesn't return profile
           setProfile({
-            idCode: currentUser.id || '',
-            fullName: currentUser.firstName || 'N/A',
+            idCode: currentUser.idCode || '',
+            fullName: currentUser.name || 'N/A',
             email: currentUser.email || '',
             position: 'Member', // Default position
             birthday: currentUser.birthdate || '',
@@ -50,8 +50,8 @@ export default function MyQRID({ darkMode, currentUser }: MyQRIDProps) {
         toast.error('Failed to load profile data');
         // Set fallback data
         setProfile({
-          idCode: currentUser.id || '',
-          fullName: currentUser.firstName || 'N/A',
+          idCode: currentUser.idCode || '',
+          fullName: currentUser.name || 'N/A',
           email: currentUser.email || '',
           position: 'Member',
           birthday: '',
@@ -97,7 +97,7 @@ export default function MyQRID({ darkMode, currentUser }: MyQRIDProps) {
         
         <div className="bg-white dark:bg-gray-800 p-8 rounded-lg inline-block shadow-lg mb-6">
           <QRCodeSVG
-            value={profile?.idCode || currentUser.id || 'NO-ID'}
+            value={profile?.idCode || currentUser.idCode || 'NO-ID'}
             size={256}
             level="H"
             includeMargin={true}
@@ -109,7 +109,7 @@ export default function MyQRID({ darkMode, currentUser }: MyQRIDProps) {
             <User size={24} className="text-[#f6421f]" />
             <div className="text-left">
               <p className="text-sm text-gray-500">Full Name</p>
-              <p className="font-medium">{profile?.fullName || currentUser.firstName || 'N/A'}</p>
+              <p className="font-medium">{profile?.fullName || currentUser.name || 'N/A'}</p>
             </div>
           </div>
 
@@ -117,7 +117,7 @@ export default function MyQRID({ darkMode, currentUser }: MyQRIDProps) {
             <IdCard size={24} className="text-[#f6421f]" />
             <div className="text-left">
               <p className="text-sm text-gray-500">ID Code</p>
-              <p className="font-medium">{profile?.idCode || currentUser.id || 'N/A'}</p>
+              <p className="font-medium">{profile?.idCode || currentUser.idCode || 'N/A'}</p>
             </div>
           </div>
 

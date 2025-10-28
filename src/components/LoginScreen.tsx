@@ -27,7 +27,9 @@ export default function LoginScreen({ onLogin, darkMode, setDarkMode }: LoginScr
 
   const handleLogin = async () => {
     if (!username || !password) {
-      toast.error('Please enter both username and password');
+      toast.error('Missing credentials', {
+        description: 'Please enter both username and password'
+      });
       return;
     }
 
@@ -48,16 +50,18 @@ export default function LoginScreen({ onLogin, darkMode, setDarkMode }: LoginScr
         // Save user data to localStorage
         localStorage.setItem('userData', JSON.stringify(userData));
         
-        toast.success(`Welcome back, ${userData.name}!`);
+        toast.success('Logged in successfully!', {
+          description: `Welcome back, ${userData.name}!`
+        });
         onLogin(userData as User);
       } else {
-        toast.error(data.message || 'Login failed', {
-          description: 'Please check your credentials and try again.'
+        toast.error('Invalid credentials', {
+          description: data.message || 'Please check your username and password and try again.'
         });
       }
     } catch (error) {
       toast.error('Login failed', {
-        description: 'Please try again later.'
+        description: 'Unable to connect to server. Please try again later.'
       });
       console.error('Login error:', error);
     } finally {
@@ -67,7 +71,9 @@ export default function LoginScreen({ onLogin, darkMode, setDarkMode }: LoginScr
 
   const handleGuestLogin = async () => {
     if (!guestName.trim()) {
-      toast.error('Please enter your name');
+      toast.error('Name required', {
+        description: 'Please enter your name to continue'
+      });
       return;
     }
 
@@ -86,7 +92,9 @@ export default function LoginScreen({ onLogin, darkMode, setDarkMode }: LoginScr
         // Save guest data to localStorage
         localStorage.setItem('userData', JSON.stringify(userData));
         
-        toast.success(`Welcome, ${userData.name}!`);
+        toast.success('Logged in as guest!', {
+          description: `Welcome, ${userData.name}!`
+        });
         onLogin(userData as User);
       } else {
         toast.error('Guest login failed', {
@@ -95,7 +103,7 @@ export default function LoginScreen({ onLogin, darkMode, setDarkMode }: LoginScr
       }
     } catch (error) {
       toast.error('Guest login failed', {
-        description: 'Please try again later.'
+        description: 'Unable to connect to server. Please try again later.'
       });
       console.error('Guest login error:', error);
     } finally {
@@ -133,9 +141,9 @@ export default function LoginScreen({ onLogin, darkMode, setDarkMode }: LoginScr
             initial={{ scale: 0, rotate: -180 }}
             animate={{ scale: 1, rotate: 0 }}
             transition={{ duration: 0.6, type: "spring" }}
-            src="https://images.unsplash.com/photo-1559027615-cd4628902d4a?w=100&h=100&fit=crop" 
+            src="https://i.imgur.com/J4wddTW.png" 
             alt="YSP Logo" 
-            className="w-20 h-20 rounded-full mx-auto mb-4 shadow-lg"
+            className="w-24 h-24 mx-auto mb-4 object-contain"
           />
           <motion.h1
             initial={{ opacity: 0, y: -20 }}
