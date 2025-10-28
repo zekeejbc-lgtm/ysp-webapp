@@ -37,16 +37,19 @@ export default function LoginScreen({ onLogin, darkMode, setDarkMode }: LoginScr
       const data = await authAPI.login(username, password);
       console.log('Login response:', data);
       
-      if (data.success) {
-        // Save user data to localStorage
-        localStorage.setItem('userData', JSON.stringify({
-          name: data.name,
-          idCode: data.idCode,
-          role: data.role
-        }));
+      if (data.success && data.user) {
+        // Map backend user data to frontend format
+        const userData = {
+          name: `${data.user.firstName} ${data.user.lastName}`,
+          idCode: data.user.id,
+          role: data.user.role
+        };
         
-        toast.success(`Welcome back, ${data.name}!`);
-        onLogin(data as User);
+        // Save user data to localStorage
+        localStorage.setItem('userData', JSON.stringify(userData));
+        
+        toast.success(`Welcome back, ${userData.name}!`);
+        onLogin(userData as User);
       } else {
         toast.error(data.message || 'Login failed', {
           description: 'Please check your credentials and try again.'
@@ -72,16 +75,19 @@ export default function LoginScreen({ onLogin, darkMode, setDarkMode }: LoginScr
     try {
       const data = await authAPI.guestLogin(guestName.trim());
       
-      if (data.success) {
-        // Save guest data to localStorage
-        localStorage.setItem('userData', JSON.stringify({
-          name: data.name,
-          idCode: data.idCode,
-          role: 'Guest'
-        }));
+      if (data.success && data.user) {
+        // Map guest data to frontend format
+        const userData = {
+          name: data.user.firstName,
+          idCode: data.user.id,
+          role: data.user.role
+        };
         
-        toast.success(`Welcome, ${data.name}!`);
-        onLogin(data as User);
+        // Save guest data to localStorage
+        localStorage.setItem('userData', JSON.stringify(userData));
+        
+        toast.success(`Welcome, ${userData.name}!`);
+        onLogin(userData as User);
       } else {
         toast.error('Guest login failed', {
           description: data.message || 'Please try again.'

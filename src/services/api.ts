@@ -65,10 +65,22 @@ async function apiRequest<T = any>(action: string, data: Record<string, any> = {
 
 export interface LoginResponse {
   success: boolean;
-  message: string;
-  name?: string;
-  idCode?: string;
-  role?: string;
+  message?: string;
+  user?: {
+    id: string;
+    username: string;
+    role: string;
+    firstName: string;
+    lastName: string;
+    middleName?: string;
+    birthdate?: string;
+    address?: string;
+    contactNumber?: string;
+    email?: string;
+    guardianName?: string;
+    guardianContact?: string;
+    profilePicture?: string;
+  };
 }
 
 export const authAPI = {
