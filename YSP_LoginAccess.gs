@@ -40,6 +40,8 @@ function handlePostRequest(data) {
       return handleCreateEvent(data);
     case 'toggleEventStatus':
       return handleToggleEventStatus(data);
+    case 'recordAttendance':
+      return handleRecordAttendance(data);
     default:
       return { success: false, message: 'Unknown action: ' + action };
   }
@@ -354,3 +356,90 @@ function handleToggleEventStatus(data) {
     return { success: false, message: 'Error toggling status: ' + error.toString() };
   }
 }
+
+// ===== RECORD ATTENDANCE HANDLER =====
+function handleRecordAttendance(data) {
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const sheet = ss.getSheetByName(SHEETS.MASTER_ATTENDANCE);
+    
+    const eventId = data.eventId;
+    const idCode = data.idCode;
+    const timeType = data.timeType; // 'timeIn' or 'timeOut'
+    
+    if (!eventId || !idCode || !timeType) {
+      return { success: false, message: 'Missing required fields' };
+    }
+    
+    // Get current time in PH timezone (UTC+8) in 12-hour format
+    const now = new Date();
+    const phTime = new Date(now.getTime() + (8 * 60 * 60 * 1000)); // Convert to PH time
+    const hours = phTime.getUTCHours();
+    const minutes = phTime.getUTCMinutes();
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    const displayHours = hours % 12 || 12;
+    const timeString = 'Present - ' + String(displayHours).padStart(2, '0') + ':' + String(minutes).padStart(2, '0') + ' ' + ampm;
+    
+    // Get all data
+    const allData = sheet.getDataRange().getValues();
+    const headerRow = allData[0];
+    
+    // Find the event column
+    let eventColIndex = -1;
+    for (let col = 4; col < headerRow.length; col += 6) {
+      if (headerRow[col] && headerRow[col].toString() === eventId.toString()) {
+        eventColIndex = col;
+        break;
+      }
+    }
+    
+    if (eventColIndex === -1) {
+      return { success: false, message: 'Event not found' };
+    }
+    
+    // Determine which column to update (Time IN or Time OUT)
+    const timeColIndex = timeType === 'timeIn' ? eventColIndex + 3 : eventColIndex + 4;
+    
+    // Find the person's row by ID Code (Column A, index 0)
+    let personRowIndex = -1;
+    for (let row = 1; row < allData.length; row++) {
+      if (allData[row][0] && allData[row][0].toString() === idCode.toString()) {
+        personRowIndex = row;
+        break;
+      }
+    }
+    
+    if (personRowIndex === -1) {
+      return { success: false, message: 'ID Code not found in Master Attendance Log' };
+    }
+    
+    // Check if already recorded (to prevent duplicates)
+    const currentValue = allData[personRowIndex][timeColIndex];
+    if (currentValue && currentValue.toString().trim() !== '') {
+      return { 
+        success: false, 
+        message: 'Already recorded! This person has already ' + (timeType === 'timeIn' ? 'timed in' : 'timed out') + ' for this event.',
+        alreadyRecorded: true
+      };
+    }
+    
+    // Record the attendance (row is 1-indexed in getRange, col is 1-indexed)
+    sheet.getRange(personRowIndex + 1, timeColIndex + 1).setValue(timeString);
+    
+    const personName = allData[personRowIndex][1]; // Column B - Name
+    
+    Logger.log('Recorded attendance: ' + personName + ' (' + idCode + ') - ' + timeType + ' at ' + timeString);
+    
+    return {
+      success: true,
+      message: 'Attendance recorded successfully',
+      personName: personName,
+      time: timeString,
+      timeType: timeType
+    };
+  } catch (error) {
+    Logger.log('Error recording attendance: ' + error.toString());
+    return { success: false, message: 'Error recording attendance: ' + error.toString() };
+  }
+}
+
