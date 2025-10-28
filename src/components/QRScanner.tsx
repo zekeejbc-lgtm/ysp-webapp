@@ -128,13 +128,15 @@ export default function QRScanner(_props: QRScannerProps) {
     }
   };
 
-  const handleStopScanning = async () => {
+  const handleStopScanning = async (showToast = true) => {
     if (html5QrcodeRef.current?.isScanning) {
       try {
         await html5QrcodeRef.current.stop();
         html5QrcodeRef.current = null;
         setIsScanning(false);
-        toast.info('Camera stopped');
+        if (showToast) {
+          toast.info('Camera stopped');
+        }
       } catch (error) {
         console.error('Error stopping scanner:', error);
       }
@@ -142,7 +144,10 @@ export default function QRScanner(_props: QRScannerProps) {
   };
 
   const handleQRScan = async (idCode: string) => {
-    if (!selectedEvent) return;
+    if (!selectedEvent || isLoading) return;
+    
+    // Stop scanning immediately when QR is detected (no toast)
+    await handleStopScanning(false);
     
     setIsLoading(true);
     try {
@@ -161,12 +166,12 @@ export default function QRScanner(_props: QRScannerProps) {
       const result = await response.json();
 
       if (result.success) {
-        toast.success('Attendance recorded!', {
-          description: `${result.personName} - ${result.time}`
+        toast.success('✅ Attendance Recorded!', {
+          description: `${result.personName} - ${result.time}. Press "Start Scanning" for next person.`
         });
       } else if (result.alreadyRecorded) {
         toast.error('Already recorded!', {
-          description: result.message
+          description: result.message + ' Press "Start Scanning" to continue.'
         });
       } else {
         toast.error('Recording failed', {
