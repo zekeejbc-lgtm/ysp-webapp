@@ -21,8 +21,6 @@ export default function QRScanner({ darkMode, currentUser }: QRScannerProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [manualIdCode, setManualIdCode] = useState('');
-  const [useManualEntry, setUseManualEntry] = useState(false);
   const html5QrcodeRef = useRef<Html5Qrcode | null>(null);
 
   // Fetch active events on mount
@@ -66,53 +64,60 @@ export default function QRScanner({ darkMode, currentUser }: QRScannerProps) {
     try {
       setIsScanning(true);
       
-      // Show loading toast
-      toast.info('Requesting camera access...', {
-        description: 'Please allow camera permissions when prompted'
-      });
-
       const html5Qrcode = new Html5Qrcode("qr-reader");
       html5QrcodeRef.current = html5Qrcode;
 
-      await html5Qrcode.start(
-        { facingMode: "environment" }, // Use back camera
-        { 
-          fps: 10,
-          qrbox: { width: 250, height: 250 }
-        },
-        (decodedText) => {
-          handleQRScan(decodedText);
-        },
-        (errorMessage) => {
-          // Scan errors (no QR detected) - ignore
-        }
-      );
+      // Request camera permissions and start scanning
+      const cameras = await Html5Qrcode.getCameras();
+      
+      if (cameras && cameras.length > 0) {
+        const cameraId = cameras[cameras.length - 1].id; // Use back camera (last one)
+        
+        await html5Qrcode.start(
+          cameraId,
+          { 
+            fps: 10,
+            qrbox: { width: 250, height: 250 },
+            aspectRatio: 1.0
+          },
+          (decodedText) => {
+            handleQRScan(decodedText);
+          },
+          (errorMessage) => {
+            // Scan errors (no QR detected) - ignore
+          }
+        );
 
-      // Camera started successfully
-      toast.success('Camera ready!', {
-        description: 'Point at a QR code to scan'
-      });
+        toast.success('Camera ready!', {
+          description: 'Point at a QR code to scan'
+        });
+      } else {
+        throw new Error('No cameras found');
+      }
     } catch (error) {
       console.error('Camera error:', error);
       setIsScanning(false);
       
-      // More specific error messages
       const errorMsg = error.toString();
       if (errorMsg.includes('NotAllowedError') || errorMsg.includes('Permission')) {
         toast.error('Camera Permission Denied', {
-          description: 'Please enable camera access in your browser settings and try again'
+          description: 'Please click "Allow" when your browser asks for camera access'
         });
-      } else if (errorMsg.includes('NotFoundError')) {
+      } else if (errorMsg.includes('NotFoundError') || errorMsg.includes('No cameras')) {
         toast.error('No Camera Found', {
           description: 'Please ensure your device has a camera'
         });
       } else if (errorMsg.includes('NotReadableError')) {
         toast.error('Camera In Use', {
-          description: 'Camera might be used by another application'
+          description: 'Close other apps using the camera and try again'
+        });
+      } else if (errorMsg.includes('OverconstrainedError')) {
+        toast.error('Camera Error', {
+          description: 'Camera doesn\'t support the requested settings. Trying alternative...'
         });
       } else {
         toast.error('Camera Error', {
-          description: 'Unable to access camera. Please check your browser settings.'
+          description: errorMsg || 'Unable to access camera'
         });
       }
     }
@@ -154,11 +159,6 @@ export default function QRScanner({ darkMode, currentUser }: QRScannerProps) {
         toast.success('Attendance recorded!', {
           description: `${result.personName} - ${result.time}`
         });
-        
-        // Clear manual entry if used
-        if (useManualEntry) {
-          setManualIdCode('');
-        }
       } else if (result.alreadyRecorded) {
         toast.error('Already recorded!', {
           description: result.message
@@ -176,14 +176,6 @@ export default function QRScanner({ darkMode, currentUser }: QRScannerProps) {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleManualSubmit = () => {
-    if (!manualIdCode.trim()) {
-      toast.error('Please enter an ID Code');
-      return;
-    }
-    handleQRScan(manualIdCode);
   };
 
   return (
@@ -278,123 +270,53 @@ export default function QRScanner({ darkMode, currentUser }: QRScannerProps) {
           </div>
 
           {/* Scanner Control */}
-          <div className="space-y-4">
-            {/* Toggle between Camera and Manual Entry */}
-            <div className="flex gap-2 justify-center">
-              <Button
-                onClick={() => setUseManualEntry(false)}
-                variant={!useManualEntry ? "default" : "outline"}
-                className={!useManualEntry ? "bg-gradient-to-r from-[#f6421f] to-[#ee8724]" : ""}
+          <div className="flex gap-4">
+            {!isScanning ? (
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="flex-1"
               >
-                <Camera className="mr-2" size={16} />
-                Camera Scanner
-              </Button>
-              <Button
-                onClick={() => {
-                  setUseManualEntry(true);
-                  if (isScanning) {
-                    handleStopScanning();
-                  }
-                }}
-                variant={useManualEntry ? "default" : "outline"}
-                className={useManualEntry ? "bg-gradient-to-r from-[#f6421f] to-[#ee8724]" : ""}
-              >
-                Manual Entry
-              </Button>
-            </div>
-
-            {/* Manual Entry Section */}
-            {useManualEntry ? (
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-sm font-medium mb-2">Enter ID Code</label>
-                  <Input
-                    type="text"
-                    placeholder="Enter ID Code (e.g., 2024-001)"
-                    value={manualIdCode}
-                    onChange={(e) => setManualIdCode(e.target.value)}
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter') {
-                        handleManualSubmit();
-                      }
-                    }}
-                    className="text-center text-lg font-mono"
-                  />
-                </div>
                 <Button
-                  onClick={handleManualSubmit}
-                  disabled={isLoading || !selectedEvent}
-                  className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-lg shadow-blue-300/50"
+                  onClick={handleStartScanning}
+                  disabled={isLoading}
+                  className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 shadow-lg shadow-green-300/50"
                 >
-                  {isLoading ? 'Recording...' : 'Submit Attendance'}
+                  <Camera className="mr-2" size={18} />
+                  Start Scanning
                 </Button>
-              </div>
+              </motion.div>
             ) : (
-              /* Camera Scanner Section */
-              <div className="flex gap-4">
-                {!isScanning ? (
-                  <motion.div
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="flex-1"
-                  >
-                    <Button
-                      onClick={handleStartScanning}
-                      disabled={isLoading}
-                      className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 shadow-lg shadow-green-300/50"
-                    >
-                      <Camera className="mr-2" size={18} />
-                      Start Scanning
-                    </Button>
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="flex-1"
-                  >
-                    <Button
-                      onClick={handleStopScanning}
-                      disabled={isLoading}
-                      className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 shadow-lg shadow-red-300/50"
-                    >
-                      <Square className="mr-2" size={18} />
-                      {isLoading ? 'Recording...' : 'Stop Scanning'}
-                    </Button>
-                  </motion.div>
-                )}
-              </div>
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="flex-1"
+              >
+                <Button
+                  onClick={handleStopScanning}
+                  disabled={isLoading}
+                  className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 shadow-lg shadow-red-300/50"
+                >
+                  <Square className="mr-2" size={18} />
+                  {isLoading ? 'Recording...' : 'Stop Scanning'}
+                </Button>
+              </motion.div>
             )}
           </div>
         </div>
       </motion.div>
 
       {/* Scanner Display */}
-      {isScanning && !useManualEntry && (
+      {isScanning && (
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           className="ysp-card"
         >
-          <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-            <p className="text-sm text-blue-800 dark:text-blue-200 font-medium mb-2">
-              📷 Camera Permissions Required
-            </p>
-            <p className="text-xs text-blue-700 dark:text-blue-300">
-              If the camera doesn't start:
-            </p>
-            <ul className="text-xs text-blue-700 dark:text-blue-300 mt-1 ml-4 list-disc space-y-1">
-              <li>Check browser address bar for camera permission icon</li>
-              <li>On mobile: Go to Settings → Apps → Browser → Permissions → Camera</li>
-              <li>Make sure camera isn't being used by another app</li>
-              <li>Try using "Manual Entry" button above if camera doesn't work</li>
-            </ul>
-          </div>
-          
           <div id="qr-reader" className="w-full rounded-lg overflow-hidden"></div>
           
           <p className="text-center text-sm text-gray-600 dark:text-gray-400 mt-4">
-            Position the QR code within the scanning area
+            📱 Point your camera at a QR code to scan
           </p>
         </motion.div>
       )}
