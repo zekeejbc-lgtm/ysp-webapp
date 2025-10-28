@@ -1,18 +1,13 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Search, Plus, X, Calendar } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { Label } from './ui/label';
 import { Switch } from './ui/switch';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 
-interface ManageEventsProps {
-  darkMode: boolean;
-  currentUser: any;
-}
-
-export default function ManageEvents({ darkMode, currentUser }: ManageEventsProps) {
+export default function ManageEvents() {
   const [events, setEvents] = useState([
     { id: 1, name: 'General Assembly - October 2024', date: '2024-10-15', status: true },
     { id: 2, name: 'Community Clean-Up Drive', date: '2024-10-10', status: false },

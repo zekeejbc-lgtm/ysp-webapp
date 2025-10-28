@@ -1,5 +1,10 @@
 // Vercel serverless function that proxies requests to the Google Apps Script
 // This avoids CORS issues by keeping requests same-origin to your Vercel app.
+//
+// Google Apps Script Backend Details:
+// Script ID: 1CEx53zlJZHarkYESoUzbuV3Jj04rA6YKVSpsh1n-sClm_PHjXJyeuSXf
+// Deployment ID: AKfycbyepq64QJEfXRzACKaXGSevEXdb-TueUaxtnTEQCnnFsECZGq1AWqNqyKZ9GeMmvcao2g
+//
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbyepq64QJEfXRzACKaXGSevEXdb-TueUaxtnTEQCnnFsECZGq1AWqNqyKZ9GeMmvcao2g/exec';
 
 export default async function handler(req, res) {

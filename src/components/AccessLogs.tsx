@@ -2,6 +2,7 @@ import { useState, useEffect, type ChangeEvent } from 'react';
 import { Search, Clock } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Input } from './ui/input';
+import { accessLogsAPI } from '../services/api';
 
 interface AccessLogsProps {
   darkMode: boolean;
@@ -13,8 +14,6 @@ interface AccessLog {
   role: string;
   timestamp: string;
 }
-
-const API_URL = '/api/gas-proxy';
 
 export default function AccessLogs({ darkMode }: AccessLogsProps) {
   const [searchTerm, setSearchTerm] = useState('');
@@ -45,26 +44,11 @@ export default function AccessLogs({ darkMode }: AccessLogsProps) {
         const userData = localStorage.getItem('userData');
         const role = userData ? JSON.parse(userData).role : null;
 
-        const response = await fetch(API_URL, {
-          method: 'POST',
-          mode: 'cors',
-          credentials: 'omit',
-          headers: {
-            'Content-Type': 'application/json',
-            'Origin': window.location.origin
-          },
-          body: JSON.stringify({
-            action: 'getAccessLogs',
-            role
-          })
-        });
-
-        const data = await response.json();
+        const data = await accessLogsAPI.getAll(role);
         console.log('Access logs response:', data);
 
         if (data.success) {
-          // Backend may return logs under `logs` or under `data` (different GAS versions).
-          const returned = data.logs ?? data.data ?? [];
+          const returned = data.logs ?? [];
           setLogs(returned || []);
           console.log('Parsed logs count:', (returned || []).length);
         } else {

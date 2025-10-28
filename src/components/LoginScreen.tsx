@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
+import { authAPI } from '../services/api';
 
 import type { User } from '../types';
 
@@ -14,8 +15,6 @@ interface LoginScreenProps {
   darkMode: boolean;
   setDarkMode: (value: boolean) => void;
 }
-
-const API_URL = '/api/gas-proxy';
 
 export default function LoginScreen({ onLogin, darkMode, setDarkMode }: LoginScreenProps) {
   const [username, setUsername] = useState('');
@@ -35,27 +34,7 @@ export default function LoginScreen({ onLogin, darkMode, setDarkMode }: LoginScr
     setIsLoading(true);
     try {
       console.log('Attempting login...');
-      const response = await fetch(API_URL, {
-        method: 'POST',
-        mode: 'cors',
-        credentials: 'omit',
-        headers: {
-          'Content-Type': 'application/json',
-          'Origin': window.location.origin
-        },
-        body: JSON.stringify({
-          action: 'login',
-          username,
-          password
-        })
-      });
-
-      if (!response.ok) {
-        console.error('Login failed:', response.status, response.statusText);
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const data = await response.json();
+      const data = await authAPI.login(username, password);
       console.log('Login response:', data);
       
       if (data.success) {
@@ -67,25 +46,9 @@ export default function LoginScreen({ onLogin, darkMode, setDarkMode }: LoginScr
         }));
         
         toast.success(`Welcome back, ${data.name}!`);
-        onLogin(data);
+        onLogin(data as User);
       } else {
         toast.error(data.message || 'Login failed', {
-          description: 'Please check your credentials and try again.'
-        });
-      }
-      
-      if (data.success) {
-        // Save user data to localStorage
-        localStorage.setItem('userData', JSON.stringify({
-          name: data.name,
-          idCode: data.idCode,
-          role: data.role
-        }));
-        
-        toast.success(`Welcome back, ${data.name}!`);
-        onLogin(data);
-      } else {
-        toast.error('Invalid username or password', {
           description: 'Please check your credentials and try again.'
         });
       }
@@ -107,21 +70,7 @@ export default function LoginScreen({ onLogin, darkMode, setDarkMode }: LoginScr
 
     setIsLoading(true);
     try {
-      const response = await fetch(API_URL, {
-        method: 'POST',
-        mode: 'cors',
-        credentials: 'omit',
-        headers: {
-          'Content-Type': 'application/json',
-          'Origin': window.location.origin
-        },
-        body: JSON.stringify({
-          action: 'guestLogin',
-          name: guestName.trim()
-        })
-      });
-
-      const data = await response.json();
+      const data = await authAPI.guestLogin(guestName.trim());
       
       if (data.success) {
         // Save guest data to localStorage
@@ -132,7 +81,7 @@ export default function LoginScreen({ onLogin, darkMode, setDarkMode }: LoginScr
         }));
         
         toast.success(`Welcome, ${data.name}!`);
-        onLogin(data);
+        onLogin(data as User);
       } else {
         toast.error('Guest login failed', {
           description: data.message || 'Please try again.'
