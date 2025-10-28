@@ -70,7 +70,7 @@ export default function App() {
       case 'qr-scanner':
         return <QRScanner currentUser={currentUser} />;
       case 'manual-attendance':
-        return <ManualAttendance darkMode={darkMode} currentUser={currentUser} />;
+        return <ManualAttendance currentUser={currentUser} />;
       case 'manage-events':
         return <ManageEvents />;
       case 'my-qr-id':

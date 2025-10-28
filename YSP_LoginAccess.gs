@@ -42,6 +42,8 @@ function handlePostRequest(data) {
       return handleToggleEventStatus(data);
     case 'recordAttendance':
       return handleRecordAttendance(data);
+    case 'recordManualAttendance':
+      return handleRecordManualAttendance(data);
     default:
       return { success: false, message: 'Unknown action: ' + action };
   }
@@ -439,6 +441,84 @@ function handleRecordAttendance(data) {
     };
   } catch (error) {
     Logger.log('Error recording attendance: ' + error.toString());
+    return { success: false, message: 'Error recording attendance: ' + error.toString() };
+  }
+}
+
+// ===== RECORD MANUAL ATTENDANCE HANDLER =====
+function handleRecordManualAttendance(data) {
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const sheet = ss.getSheetByName(SHEETS.MASTER_ATTENDANCE);
+    
+    const eventId = data.eventId;
+    const idCode = data.idCode;
+    const timeType = data.timeType; // 'timeIn' or 'timeOut'
+    const formattedValue = data.formattedValue; // Pre-formatted "(Status) - (Time)" from frontend
+    
+    if (!eventId || !idCode || !timeType || !formattedValue) {
+      return { success: false, message: 'Missing required fields' };
+    }
+    
+    // Get all data
+    const allData = sheet.getDataRange().getValues();
+    const headerRow = allData[0];
+    
+    // Find the event column
+    let eventColIndex = -1;
+    for (let col = 4; col < headerRow.length; col += 6) {
+      if (headerRow[col] && headerRow[col].toString() === eventId.toString()) {
+        eventColIndex = col;
+        break;
+      }
+    }
+    
+    if (eventColIndex === -1) {
+      return { success: false, message: 'Event not found' };
+    }
+    
+    // Determine which column to update (Time IN or Time OUT)
+    const timeColIndex = timeType === 'timeIn' ? eventColIndex + 3 : eventColIndex + 4;
+    
+    // Find the person's row by ID Code (Column A, index 0)
+    let personRowIndex = -1;
+    for (let row = 1; row < allData.length; row++) {
+      if (allData[row][0] && allData[row][0].toString() === idCode.toString()) {
+        personRowIndex = row;
+        break;
+      }
+    }
+    
+    if (personRowIndex === -1) {
+      return { success: false, message: 'ID Code not found in Master Attendance Log' };
+    }
+    
+    // Check if already recorded (to prevent duplicates)
+    const currentValue = allData[personRowIndex][timeColIndex];
+    if (currentValue && currentValue.toString().trim() !== '') {
+      return { 
+        success: false, 
+        message: 'Already recorded! This person has already ' + (timeType === 'timeIn' ? 'timed in' : 'timed out') + ' for this event.',
+        alreadyRecorded: true
+      };
+    }
+    
+    // Record the attendance with the formatted value from frontend
+    sheet.getRange(personRowIndex + 1, timeColIndex + 1).setValue(formattedValue);
+    
+    const personName = allData[personRowIndex][1]; // Column B - Name
+    
+    Logger.log('Recorded manual attendance: ' + personName + ' (' + idCode + ') - ' + timeType + ' - ' + formattedValue);
+    
+    return {
+      success: true,
+      message: 'Attendance recorded successfully',
+      personName: personName,
+      formattedValue: formattedValue,
+      timeType: timeType
+    };
+  } catch (error) {
+    Logger.log('Error recording manual attendance: ' + error.toString());
     return { success: false, message: 'Error recording attendance: ' + error.toString() };
   }
 }

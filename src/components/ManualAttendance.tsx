@@ -1,77 +1,137 @@
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Search } from 'lucide-react';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
+import { userAPI, eventsAPI, type UserProfile, type Event } from '../services/api';
 
 interface ManualAttendanceProps {
-  darkMode: boolean;
   currentUser: any;
 }
 
-const mockMembers = [
-  { idCode: 'YSP-001', fullName: 'Juan Dela Cruz', position: 'President' },
-  { idCode: 'YSP-002', fullName: 'Maria Santos', position: 'Committee Head' },
-  { idCode: 'YSP-003', fullName: 'Pedro Reyes', position: 'Auditor' },
-  { idCode: 'YSP-004', fullName: 'Ana Garcia', position: 'Member' },
-  { idCode: 'YSP-005', fullName: 'Carlos Martinez', position: 'Vice President' }
-];
-
-const mockEvents = [
-  { id: 1, name: 'General Assembly - October 2024', date: '2024-10-15', status: 'Active' },
-  { id: 2, name: 'Youth Leadership Summit', date: '2024-10-20', status: 'Active' }
-];
-
-export default function ManualAttendance({ darkMode, currentUser }: ManualAttendanceProps) {
+export default function ManualAttendance(_props: ManualAttendanceProps) {
+  const [members, setMembers] = useState<UserProfile[]>([]);
+  const [events, setEvents] = useState<Event[]>([]);
   const [memberSearch, setMemberSearch] = useState('');
   const [eventSearch, setEventSearch] = useState('');
-  const [selectedMember, setSelectedMember] = useState<typeof mockMembers[0] | null>(null);
-  const [selectedEvent, setSelectedEvent] = useState<typeof mockEvents[0] | null>(null);
-  const [timeType, setTimeType] = useState<'in' | 'out'>('in');
+  const [selectedMember, setSelectedMember] = useState<UserProfile | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [timeType, setTimeType] = useState<'timeIn' | 'timeOut'>('timeIn');
   const [status, setStatus] = useState('Present');
   const [showMemberSuggestions, setShowMemberSuggestions] = useState(false);
   const [showEventSuggestions, setShowEventSuggestions] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
 
-  const filteredMembers = memberSearch
-    ? mockMembers.filter(m =>
-        m.fullName.toLowerCase().includes(memberSearch.toLowerCase()) ||
-        m.idCode.toLowerCase().includes(memberSearch.toLowerCase())
-      )
-    : mockMembers;
+  // Fetch active events on mount
+  useEffect(() => {
+    fetchEvents();
+  }, []);
+
+  const fetchEvents = async () => {
+    try {
+      const response = await eventsAPI.getAll();
+      if (response.success && response.events) {
+        const activeEvents = response.events.filter(e => e.status === 'Active');
+        setEvents(activeEvents);
+      }
+    } catch (error) {
+      console.error('Error fetching events:', error);
+      toast.error('Failed to load events');
+    }
+  };
+
+  // Search members when user types
+  useEffect(() => {
+    const searchMembers = async () => {
+      if (memberSearch.length < 2) {
+        setMembers([]);
+        return;
+      }
+
+      setIsSearching(true);
+      try {
+        const response = await userAPI.searchProfiles(memberSearch);
+        if (response.success && response.profiles) {
+          setMembers(response.profiles);
+        }
+      } catch (error) {
+        console.error('Error searching members:', error);
+      } finally {
+        setIsSearching(false);
+      }
+    };
+
+    const debounce = setTimeout(searchMembers, 300);
+    return () => clearTimeout(debounce);
+  }, [memberSearch]);
 
   const filteredEvents = eventSearch
-    ? mockEvents.filter(e => e.name.toLowerCase().includes(eventSearch.toLowerCase()))
-    : mockEvents;
+    ? events.filter(e => e.name.toLowerCase().includes(eventSearch.toLowerCase()))
+    : events;
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!selectedMember || !selectedEvent) {
       toast.error('Please select both member and event');
       return;
     }
 
-    const timestamp = new Date().toLocaleTimeString('en-PH', {
-      timeZone: 'Asia/Manila',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true
-    });
+    setIsLoading(true);
 
-    // In production, this would write to Google Sheets
-    console.log(`Manual Attendance: ${selectedMember.idCode} - ${selectedEvent.name} - ${timeType === 'in' ? 'Time In' : 'Time Out'}: ${status} - ${timestamp}`);
+    try {
+      const now = new Date();
+      const phTime = new Date(now.getTime() + (8 * 60 * 60 * 1000));
+      const hours = phTime.getUTCHours();
+      const minutes = phTime.getUTCMinutes();
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      const displayHours = hours % 12 || 12;
+      const timeString = String(displayHours).padStart(2, '0') + ':' + String(minutes).padStart(2, '0') + ' ' + ampm;
+      const formattedValue = `${status} - ${timeString}`;
 
-    toast.success('Attendance recorded successfully', {
-      description: `${selectedMember.fullName} - ${status} at ${timestamp}`
-    });
+      const response = await fetch('/api/gas-proxy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'recordManualAttendance',
+          eventId: selectedEvent.id,
+          idCode: selectedMember.idCode,
+          timeType: timeType,
+          status: status,
+          formattedValue: formattedValue
+        })
+      });
 
-    // Reset form
-    setSelectedMember(null);
-    setSelectedEvent(null);
-    setMemberSearch('');
-    setEventSearch('');
-    setStatus('Present');
+      const result = await response.json();
+
+      if (result.success) {
+        toast.success('✅ Attendance Recorded!', {
+          description: `${selectedMember.fullName} - ${status} at ${timeString}`
+        });
+        setSelectedMember(null);
+        setSelectedEvent(null);
+        setMemberSearch('');
+        setEventSearch('');
+        setStatus('Present');
+      } else if (result.alreadyRecorded) {
+        toast.error('Already Recorded!', {
+          description: result.message
+        });
+      } else {
+        toast.error('Recording Failed', {
+          description: result.message || 'Unable to record attendance'
+        });
+      }
+    } catch (error) {
+      console.error('Error recording attendance:', error);
+      toast.error('Recording Failed', {
+        description: 'Unable to connect to server'
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -85,7 +145,6 @@ export default function ManualAttendance({ darkMode, currentUser }: ManualAttend
         <h2 className="text-[#f6421f] dark:text-[#ee8724] mb-6">Manual Attendance</h2>
 
         <div className="space-y-6">
-          {/* Member Selection */}
           <div>
             <Label>Select Member</Label>
             <div className="relative mt-2">
@@ -103,13 +162,13 @@ export default function ManualAttendance({ darkMode, currentUser }: ManualAttend
                 className="pl-10"
               />
 
-              {showMemberSuggestions && filteredMembers.length > 0 && memberSearch && (
+              {showMemberSuggestions && members.length > 0 && memberSearch.length >= 2 && (
                 <motion.div
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   className="absolute z-10 w-full mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg max-h-60 overflow-y-auto border border-gray-200 dark:border-gray-700"
                 >
-                  {filteredMembers.map((member) => (
+                  {members.map((member) => (
                     <button
                       key={member.idCode}
                       onClick={() => {
@@ -119,11 +178,15 @@ export default function ManualAttendance({ darkMode, currentUser }: ManualAttend
                       }}
                       className="w-full px-4 py-3 text-left hover:bg-gradient-to-r hover:from-orange-50 hover:to-red-50 dark:hover:from-gray-700 dark:hover:to-gray-600 transition-all duration-200 border-b border-gray-100 dark:border-gray-700 last:border-b-0"
                     >
-                      <p>{member.fullName}</p>
+                      <p className="font-medium">{member.fullName}</p>
                       <p className="text-sm text-gray-500">{member.idCode} - {member.position}</p>
                     </button>
                   ))}
                 </motion.div>
+              )}
+
+              {isSearching && memberSearch.length >= 2 && (
+                <p className="text-sm text-gray-500 mt-2">Searching...</p>
               )}
             </div>
 
@@ -133,7 +196,7 @@ export default function ManualAttendance({ darkMode, currentUser }: ManualAttend
                 animate={{ opacity: 1, scale: 1 }}
                 className="mt-3 p-3 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-lg border border-green-200 dark:border-green-800"
               >
-                <p className="flex items-center gap-2">
+                <p className="flex items-center gap-2 font-medium">
                   <span className="text-green-600 dark:text-green-400">✓</span>
                   Selected: {selectedMember.fullName}
                 </p>
@@ -142,14 +205,13 @@ export default function ManualAttendance({ darkMode, currentUser }: ManualAttend
             )}
           </div>
 
-          {/* Event Selection */}
           <div>
             <Label>Select Event</Label>
             <div className="relative mt-2">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
               <Input
                 type="text"
-                placeholder="Search for an event..."
+                placeholder="Search for an active event..."
                 value={eventSearch}
                 onChange={(e) => {
                   setEventSearch(e.target.value);
@@ -160,7 +222,7 @@ export default function ManualAttendance({ darkMode, currentUser }: ManualAttend
                 className="pl-10"
               />
 
-              {showEventSuggestions && filteredEvents.length > 0 && eventSearch && (
+              {showEventSuggestions && filteredEvents.length > 0 && (
                 <motion.div
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -176,10 +238,20 @@ export default function ManualAttendance({ darkMode, currentUser }: ManualAttend
                       }}
                       className="w-full px-4 py-3 text-left hover:bg-gradient-to-r hover:from-orange-50 hover:to-red-50 dark:hover:from-gray-700 dark:hover:to-gray-600 transition-all duration-200 border-b border-gray-100 dark:border-gray-700 last:border-b-0"
                     >
-                      <p>{event.name}</p>
+                      <p className="font-medium">{event.name}</p>
                       <p className="text-sm text-gray-500">{event.date}</p>
                     </button>
                   ))}
+                </motion.div>
+              )}
+
+              {showEventSuggestions && filteredEvents.length === 0 && eventSearch && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="absolute z-10 w-full mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-4 text-center text-gray-500"
+                >
+                  No active events found
                 </motion.div>
               )}
             </div>
@@ -190,7 +262,7 @@ export default function ManualAttendance({ darkMode, currentUser }: ManualAttend
                 animate={{ opacity: 1, scale: 1 }}
                 className="mt-3 p-3 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-lg border border-green-200 dark:border-green-800"
               >
-                <p className="flex items-center gap-2">
+                <p className="flex items-center gap-2 font-medium">
                   <span className="text-green-600 dark:text-green-400">✓</span>
                   Selected: {selectedEvent.name}
                 </p>
@@ -199,16 +271,15 @@ export default function ManualAttendance({ darkMode, currentUser }: ManualAttend
             )}
           </div>
 
-          {/* Time Type */}
           <div>
             <Label>Time Type</Label>
             <div className="flex gap-4 mt-2">
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={() => setTimeType('in')}
-                className={`flex-1 py-3 rounded-lg transition-all duration-300 shadow-md ${
-                  timeType === 'in'
+                onClick={() => setTimeType('timeIn')}
+                className={`flex-1 py-3 rounded-lg font-medium transition-all duration-300 shadow-md ${
+                  timeType === 'timeIn'
                     ? 'bg-gradient-to-r from-[#f6421f] to-[#ee8724] text-white shadow-lg shadow-orange-300/50'
                     : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600'
                 }`}
@@ -218,9 +289,9 @@ export default function ManualAttendance({ darkMode, currentUser }: ManualAttend
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={() => setTimeType('out')}
-                className={`flex-1 py-3 rounded-lg transition-all duration-300 shadow-md ${
-                  timeType === 'out'
+                onClick={() => setTimeType('timeOut')}
+                className={`flex-1 py-3 rounded-lg font-medium transition-all duration-300 shadow-md ${
+                  timeType === 'timeOut'
                     ? 'bg-gradient-to-r from-[#f6421f] to-[#ee8724] text-white shadow-lg shadow-orange-300/50'
                     : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600'
                 }`}
@@ -230,7 +301,6 @@ export default function ManualAttendance({ darkMode, currentUser }: ManualAttend
             </div>
           </div>
 
-          {/* Status */}
           <div>
             <Label htmlFor="status">Status</Label>
             <Select value={status} onValueChange={setStatus}>
@@ -246,16 +316,16 @@ export default function ManualAttendance({ darkMode, currentUser }: ManualAttend
             </Select>
           </div>
 
-          {/* Submit Button */}
           <motion.div
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
             <Button
               onClick={handleSubmit}
+              disabled={isLoading || !selectedMember || !selectedEvent}
               className="w-full bg-gradient-to-r from-[#f6421f] to-[#ee8724] hover:from-[#ee8724] hover:to-[#fbcb29] shadow-lg shadow-orange-300/50"
             >
-              Record Attendance
+              {isLoading ? 'Recording...' : 'Record Attendance'}
             </Button>
           </motion.div>
         </div>
