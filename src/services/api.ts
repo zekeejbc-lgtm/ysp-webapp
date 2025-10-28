@@ -190,29 +190,43 @@ export const userAPI = {
 };
 
 // ======================================================
-// EVENTS API (Example for future expansion)
+// EVENTS API
 // ======================================================
+
+export interface Event {
+  id: string;
+  name: string;
+  date: string;
+  status: string;
+}
+
+export interface EventsResponse {
+  success: boolean;
+  message: string;
+  events?: Event[];
+  event?: Event;
+}
 
 export const eventsAPI = {
   /**
    * Get all events
    */
-  getAll: async (): Promise<any> => {
+  getAll: async (): Promise<EventsResponse> => {
     return apiRequest('getEvents');
   },
 
   /**
    * Create new event
    */
-  create: async (eventData: Record<string, any>): Promise<any> => {
-    return apiRequest('createEvent', eventData);
+  create: async (name: string, date: string): Promise<EventsResponse> => {
+    return apiRequest('createEvent', { name, date });
   },
 
   /**
    * Toggle event status
    */
-  toggleStatus: async (eventId: string): Promise<any> => {
-    return apiRequest('toggleEventStatus', { eventId });
+  toggleStatus: async (eventId: string, currentStatus: string): Promise<EventsResponse> => {
+    return apiRequest('toggleEventStatus', { eventId, currentStatus });
   },
 };
 

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, Plus, X, Calendar } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Input } from './ui/input';
@@ -6,54 +6,89 @@ import { Button } from './ui/button';
 import { Label } from './ui/label';
 import { Switch } from './ui/switch';
 import { toast } from 'sonner';
+import { eventsAPI, type Event } from '../services/api';
 
 export default function ManageEvents() {
-  const [events, setEvents] = useState([
-    { id: 1, name: 'General Assembly - October 2024', date: '2024-10-15', status: true },
-    { id: 2, name: 'Community Clean-Up Drive', date: '2024-10-10', status: false },
-    { id: 3, name: 'Youth Leadership Summit', date: '2024-10-20', status: true },
-    { id: 4, name: 'Tree Planting Activity', date: '2024-10-05', status: false }
-  ]);
-
+  const [events, setEvents] = useState<Event[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newEventName, setNewEventName] = useState('');
   const [newEventDate, setNewEventDate] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Fetch events on mount
+  useEffect(() => {
+    fetchEvents();
+  }, []);
+
+  const fetchEvents = async () => {
+    setIsLoading(true);
+    try {
+      const response = await eventsAPI.getAll();
+      if (response.success && response.events) {
+        setEvents(response.events);
+      } else {
+        toast.error(response.message || 'Failed to fetch events');
+      }
+    } catch (error) {
+      console.error('Error fetching events:', error);
+      toast.error('Failed to fetch events');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const filteredEvents = searchTerm
     ? events.filter(e => e.name.toLowerCase().includes(searchTerm.toLowerCase()))
     : events;
 
-  const handleToggleStatus = (id: number) => {
-    setEvents(events.map(e =>
-      e.id === id ? { ...e, status: !e.status } : e
-    ));
-    const event = events.find(e => e.id === id);
-    toast.success(`Event ${event?.status ? 'deactivated' : 'activated'}`);
+  const handleToggleStatus = async (eventId: string, currentStatus: string) => {
+    try {
+      const response = await eventsAPI.toggleStatus(eventId, currentStatus);
+      if (response.success) {
+        // Update local state
+        setEvents(events.map(e =>
+          e.id === eventId ? { ...e, status: currentStatus === 'Active' ? 'Inactive' : 'Active' } : e
+        ));
+        const newStatus = currentStatus === 'Active' ? 'Inactive' : 'Active';
+        toast.success(`Event ${newStatus === 'Active' ? 'activated' : 'deactivated'}`);
+      } else {
+        toast.error(response.message || 'Failed to toggle event status');
+      }
+    } catch (error) {
+      console.error('Error toggling status:', error);
+      toast.error('Failed to toggle event status');
+    }
   };
 
-  const handleCreateEvent = () => {
+  const handleCreateEvent = async () => {
     if (!newEventName || !newEventDate) {
       toast.error('Please fill in all fields');
       return;
     }
 
-    const newEvent = {
-      id: events.length + 1,
-      name: newEventName,
-      date: newEventDate,
-      status: true
-    };
-
-    setEvents([...events, newEvent]);
-    toast.success('Event created successfully', {
-      description: 'Event columns added to Master Attendance Log'
-    });
-
-    // Reset form
-    setNewEventName('');
-    setNewEventDate('');
-    setShowCreateModal(false);
+    setIsLoading(true);
+    try {
+      const response = await eventsAPI.create(newEventName, newEventDate);
+      if (response.success) {
+        toast.success('Event created successfully', {
+          description: 'Event columns added to Master Attendance Log'
+        });
+        // Refresh events list
+        await fetchEvents();
+        // Reset form
+        setNewEventName('');
+        setNewEventDate('');
+        setShowCreateModal(false);
+      } else {
+        toast.error(response.message || 'Failed to create event');
+      }
+    } catch (error) {
+      console.error('Error creating event:', error);
+      toast.error('Failed to create event');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -87,7 +122,19 @@ export default function ManageEvents() {
         </div>
 
         <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
-          {filteredEvents.map((event, index) => (
+          {isLoading && (
+            <div className="text-center py-8">
+              <p className="text-gray-500">Loading events...</p>
+            </div>
+          )}
+          
+          {!isLoading && filteredEvents.length === 0 && (
+            <div className="text-center py-8">
+              <p className="text-gray-500">No events found</p>
+            </div>
+          )}
+
+          {!isLoading && filteredEvents.map((event, index) => (
             <motion.div
               key={event.id}
               initial={{ opacity: 0, x: -20 }}
@@ -105,12 +152,12 @@ export default function ManageEvents() {
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <span className={`text-sm px-3 py-1 rounded-full ${event.status ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-400'}`}>
-                    {event.status ? 'Active' : 'Inactive'}
+                  <span className={`text-sm px-3 py-1 rounded-full ${event.status === 'Active' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-400'}`}>
+                    {event.status}
                   </span>
                   <Switch
-                    checked={event.status}
-                    onCheckedChange={() => handleToggleStatus(event.id)}
+                    checked={event.status === 'Active'}
+                    onCheckedChange={() => handleToggleStatus(event.id, event.status)}
                   />
                 </div>
               </div>
