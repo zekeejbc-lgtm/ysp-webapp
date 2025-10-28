@@ -5,11 +5,10 @@ import { userAPI, type UserProfile } from '../services/api';
 import { toast } from 'sonner';
 
 interface MyQRIDProps {
-  darkMode: boolean;
   currentUser: any;
 }
 
-export default function MyQRID({ darkMode, currentUser }: MyQRIDProps) {
+export default function MyQRID({ currentUser }: MyQRIDProps) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 

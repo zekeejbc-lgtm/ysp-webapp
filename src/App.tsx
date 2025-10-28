@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { Menu, X } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import TopBar from './components/TopBar';
 import Homepage from './components/Homepage';
@@ -69,13 +68,13 @@ export default function App() {
       case 'attendance-dashboard':
         return <AttendanceDashboard darkMode={darkMode} />;
       case 'qr-scanner':
-        return <QRScanner darkMode={darkMode} currentUser={currentUser} />;
+        return <QRScanner currentUser={currentUser} />;
       case 'manual-attendance':
         return <ManualAttendance darkMode={darkMode} currentUser={currentUser} />;
       case 'manage-events':
-        return <ManageEvents darkMode={darkMode} currentUser={currentUser} />;
+        return <ManageEvents />;
       case 'my-qr-id':
-        return <MyQRID darkMode={darkMode} currentUser={currentUser} />;
+        return <MyQRID currentUser={currentUser} />;
       case 'attendance-transparency':
         return <AttendanceTransparency darkMode={darkMode} currentUser={currentUser} />;
       case 'announcements':

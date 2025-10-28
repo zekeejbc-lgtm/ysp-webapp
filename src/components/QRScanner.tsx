@@ -9,11 +9,10 @@ import type { Event } from '../services/api';
 import { Html5Qrcode } from 'html5-qrcode';
 
 interface QRScannerProps {
-  darkMode: boolean;
   currentUser: any;
 }
 
-export default function QRScanner({ darkMode, currentUser }: QRScannerProps) {
+export default function QRScanner(_props: QRScannerProps) {
   const [events, setEvents] = useState<Event[]>([]);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [timeType, setTimeType] = useState<'timeIn' | 'timeOut'>('timeIn');
@@ -62,7 +61,11 @@ export default function QRScanner({ darkMode, currentUser }: QRScannerProps) {
     }
 
     try {
+      // First, show the scanner container
       setIsScanning(true);
+      
+      // Wait for DOM to update before initializing scanner
+      await new Promise(resolve => setTimeout(resolve, 100));
       
       const html5Qrcode = new Html5Qrcode("qr-reader");
       html5QrcodeRef.current = html5Qrcode;
@@ -83,7 +86,7 @@ export default function QRScanner({ darkMode, currentUser }: QRScannerProps) {
           (decodedText) => {
             handleQRScan(decodedText);
           },
-          (errorMessage) => {
+          () => {
             // Scan errors (no QR detected) - ignore
           }
         );
@@ -94,11 +97,13 @@ export default function QRScanner({ darkMode, currentUser }: QRScannerProps) {
       } else {
         throw new Error('No cameras found');
       }
-    } catch (error) {
-      console.error('Camera error:', error);
+    } catch (err) {
+      console.error('Camera error:', err);
       setIsScanning(false);
       
-      const errorMsg = error.toString();
+      const error = err as Error;
+      const errorMsg = error.message || error.toString();
+      
       if (errorMsg.includes('NotAllowedError') || errorMsg.includes('Permission')) {
         toast.error('Camera Permission Denied', {
           description: 'Please click "Allow" when your browser asks for camera access'
@@ -113,7 +118,7 @@ export default function QRScanner({ darkMode, currentUser }: QRScannerProps) {
         });
       } else if (errorMsg.includes('OverconstrainedError')) {
         toast.error('Camera Error', {
-          description: 'Camera doesn\'t support the requested settings. Trying alternative...'
+          description: 'Camera doesn\'t support the requested settings'
         });
       } else {
         toast.error('Camera Error', {
