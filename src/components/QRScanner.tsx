@@ -55,44 +55,64 @@ export default function QRScanner({ darkMode, currentUser }: QRScannerProps) {
     ? events.filter(e => e.name.toLowerCase().includes(searchTerm.toLowerCase()))
     : events;
 
-  const handleStartScanning = async () => {
+    const handleStartScanning = async () => {
     if (!selectedEvent) {
-      toast.error('Please select an event first', {
-        description: 'Choose an active event from the list'
-      });
+      toast.error('Please select an event first');
       return;
     }
 
     try {
+      setIsScanning(true);
+      
+      // Show loading toast
+      toast.info('Requesting camera access...', {
+        description: 'Please allow camera permissions when prompted'
+      });
+
       const html5Qrcode = new Html5Qrcode("qr-reader");
       html5QrcodeRef.current = html5Qrcode;
 
       await html5Qrcode.start(
         { facingMode: "environment" }, // Use back camera
-        {
+        { 
           fps: 10,
           qrbox: { width: 250, height: 250 }
         },
         (decodedText) => {
-          // QR Code successfully scanned
           handleQRScan(decodedText);
-          // Stop scanning after successful scan
-          handleStopScanning();
         },
         (errorMessage) => {
-          // Ignore scan errors (happens continuously while scanning)
+          // Scan errors (no QR detected) - ignore
         }
       );
 
-      setIsScanning(true);
-      toast.success('Camera started', {
-        description: 'Point camera at QR code'
+      // Camera started successfully
+      toast.success('Camera ready!', {
+        description: 'Point at a QR code to scan'
       });
     } catch (error) {
-      console.error('Error starting scanner:', error);
-      toast.error('Camera access denied', {
-        description: 'Please allow camera access to scan QR codes'
-      });
+      console.error('Camera error:', error);
+      setIsScanning(false);
+      
+      // More specific error messages
+      const errorMsg = error.toString();
+      if (errorMsg.includes('NotAllowedError') || errorMsg.includes('Permission')) {
+        toast.error('Camera Permission Denied', {
+          description: 'Please enable camera access in your browser settings and try again'
+        });
+      } else if (errorMsg.includes('NotFoundError')) {
+        toast.error('No Camera Found', {
+          description: 'Please ensure your device has a camera'
+        });
+      } else if (errorMsg.includes('NotReadableError')) {
+        toast.error('Camera In Use', {
+          description: 'Camera might be used by another application'
+        });
+      } else {
+        toast.error('Camera Error', {
+          description: 'Unable to access camera. Please check your browser settings.'
+        });
+      }
     }
   };
 
@@ -286,6 +306,21 @@ export default function QRScanner({ darkMode, currentUser }: QRScannerProps) {
           animate={{ opacity: 1, scale: 1 }}
           className="ysp-card"
         >
+          <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+            <p className="text-sm text-blue-800 dark:text-blue-200 font-medium mb-2">
+              📷 Camera Permissions Required
+            </p>
+            <p className="text-xs text-blue-700 dark:text-blue-300">
+              If the camera doesn't start:
+            </p>
+            <ul className="text-xs text-blue-700 dark:text-blue-300 mt-1 ml-4 list-disc space-y-1">
+              <li>Check browser address bar for camera permission icon</li>
+              <li>On mobile: Go to Settings → Apps → Browser → Permissions → Camera</li>
+              <li>Make sure camera isn't being used by another app</li>
+              <li>Try refreshing the page and clicking "Allow" when prompted</li>
+            </ul>
+          </div>
+          
           <div id="qr-reader" className="w-full rounded-lg overflow-hidden"></div>
           
           <p className="text-center text-sm text-gray-600 dark:text-gray-400 mt-4">
