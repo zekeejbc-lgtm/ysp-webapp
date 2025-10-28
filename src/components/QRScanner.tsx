@@ -21,6 +21,8 @@ export default function QRScanner({ darkMode, currentUser }: QRScannerProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [manualIdCode, setManualIdCode] = useState('');
+  const [useManualEntry, setUseManualEntry] = useState(false);
   const html5QrcodeRef = useRef<Html5Qrcode | null>(null);
 
   // Fetch active events on mount
@@ -141,7 +143,7 @@ export default function QRScanner({ darkMode, currentUser }: QRScannerProps) {
         body: JSON.stringify({
           action: 'recordAttendance',
           eventId: selectedEvent.id,
-          idCode: idCode,
+          idCode: idCode.trim(),
           timeType: timeType
         })
       });
@@ -152,6 +154,11 @@ export default function QRScanner({ darkMode, currentUser }: QRScannerProps) {
         toast.success('Attendance recorded!', {
           description: `${result.personName} - ${result.time}`
         });
+        
+        // Clear manual entry if used
+        if (useManualEntry) {
+          setManualIdCode('');
+        }
       } else if (result.alreadyRecorded) {
         toast.error('Already recorded!', {
           description: result.message
@@ -169,6 +176,14 @@ export default function QRScanner({ darkMode, currentUser }: QRScannerProps) {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleManualSubmit = () => {
+    if (!manualIdCode.trim()) {
+      toast.error('Please enter an ID Code');
+      return;
+    }
+    handleQRScan(manualIdCode);
   };
 
   return (
@@ -263,44 +278,99 @@ export default function QRScanner({ darkMode, currentUser }: QRScannerProps) {
           </div>
 
           {/* Scanner Control */}
-          <div className="flex gap-4">
-            {!isScanning ? (
-              <motion.div
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="flex-1"
+          <div className="space-y-4">
+            {/* Toggle between Camera and Manual Entry */}
+            <div className="flex gap-2 justify-center">
+              <Button
+                onClick={() => setUseManualEntry(false)}
+                variant={!useManualEntry ? "default" : "outline"}
+                className={!useManualEntry ? "bg-gradient-to-r from-[#f6421f] to-[#ee8724]" : ""}
               >
+                <Camera className="mr-2" size={16} />
+                Camera Scanner
+              </Button>
+              <Button
+                onClick={() => {
+                  setUseManualEntry(true);
+                  if (isScanning) {
+                    handleStopScanning();
+                  }
+                }}
+                variant={useManualEntry ? "default" : "outline"}
+                className={useManualEntry ? "bg-gradient-to-r from-[#f6421f] to-[#ee8724]" : ""}
+              >
+                Manual Entry
+              </Button>
+            </div>
+
+            {/* Manual Entry Section */}
+            {useManualEntry ? (
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Enter ID Code</label>
+                  <Input
+                    type="text"
+                    placeholder="Enter ID Code (e.g., 2024-001)"
+                    value={manualIdCode}
+                    onChange={(e) => setManualIdCode(e.target.value)}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        handleManualSubmit();
+                      }
+                    }}
+                    className="text-center text-lg font-mono"
+                  />
+                </div>
                 <Button
-                  onClick={handleStartScanning}
-                  disabled={isLoading}
-                  className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 shadow-lg shadow-green-300/50"
+                  onClick={handleManualSubmit}
+                  disabled={isLoading || !selectedEvent}
+                  className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-lg shadow-blue-300/50"
                 >
-                  <Camera className="mr-2" size={18} />
-                  Start Scanning
+                  {isLoading ? 'Recording...' : 'Submit Attendance'}
                 </Button>
-              </motion.div>
+              </div>
             ) : (
-              <motion.div
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="flex-1"
-              >
-                <Button
-                  onClick={handleStopScanning}
-                  disabled={isLoading}
-                  className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 shadow-lg shadow-red-300/50"
-                >
-                  <Square className="mr-2" size={18} />
-                  {isLoading ? 'Recording...' : 'Stop Scanning'}
-                </Button>
-              </motion.div>
+              /* Camera Scanner Section */
+              <div className="flex gap-4">
+                {!isScanning ? (
+                  <motion.div
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="flex-1"
+                  >
+                    <Button
+                      onClick={handleStartScanning}
+                      disabled={isLoading}
+                      className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 shadow-lg shadow-green-300/50"
+                    >
+                      <Camera className="mr-2" size={18} />
+                      Start Scanning
+                    </Button>
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="flex-1"
+                  >
+                    <Button
+                      onClick={handleStopScanning}
+                      disabled={isLoading}
+                      className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 shadow-lg shadow-red-300/50"
+                    >
+                      <Square className="mr-2" size={18} />
+                      {isLoading ? 'Recording...' : 'Stop Scanning'}
+                    </Button>
+                  </motion.div>
+                )}
+              </div>
             )}
           </div>
         </div>
       </motion.div>
 
       {/* Scanner Display */}
-      {isScanning && (
+      {isScanning && !useManualEntry && (
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -317,7 +387,7 @@ export default function QRScanner({ darkMode, currentUser }: QRScannerProps) {
               <li>Check browser address bar for camera permission icon</li>
               <li>On mobile: Go to Settings → Apps → Browser → Permissions → Camera</li>
               <li>Make sure camera isn't being used by another app</li>
-              <li>Try refreshing the page and clicking "Allow" when prompted</li>
+              <li>Try using "Manual Entry" button above if camera doesn't work</li>
             </ul>
           </div>
           
