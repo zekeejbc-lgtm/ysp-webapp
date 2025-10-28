@@ -93,6 +93,32 @@ export default function AccessLogs({ darkMode }: AccessLogsProps) {
     return logs.filter(log => log.role === role).length;
   };
 
+  const formatTimestamp = (timestamp: string) => {
+    try {
+      // Handle both ISO format and formatted string
+      const date = new Date(timestamp);
+      if (isNaN(date.getTime())) {
+        // If it's already formatted, return as is
+        return { date: timestamp.split(' ')[0] || '', time: timestamp.split(' ').slice(1).join(' ') || '' };
+      }
+      // Convert to Philippine time
+      const phTime = date.toLocaleString('en-PH', {
+        timeZone: 'Asia/Manila',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      });
+      const [datePart, timePart] = phTime.split(', ');
+      return { date: datePart, time: timePart };
+    } catch (error) {
+      console.error('Error formatting timestamp:', error);
+      return { date: timestamp, time: '' };
+    }
+  };
+
   return (
     <div className="max-w-5xl mx-auto">
       <motion.div
@@ -150,8 +176,8 @@ export default function AccessLogs({ darkMode }: AccessLogsProps) {
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-sm">{log.timestamp.split(' ')[0]}</p>
-                <p className="text-sm text-gray-500">{log.timestamp.split(' ')[1]} {log.timestamp.split(' ')[2]}</p>
+                <p className="text-sm">{formatTimestamp(log.timestamp).date}</p>
+                <p className="text-sm text-gray-500">{formatTimestamp(log.timestamp).time}</p>
               </div>
             </div>
           </motion.div>
