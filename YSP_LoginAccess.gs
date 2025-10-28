@@ -61,9 +61,15 @@ function handleLogin(data) {
       const password = row[14]; // Column O - Password
       
       if (username === data.username && password === data.password) {
-        // Log access
+        // Log access with correct column order: Timestamp, Account Created, Email, ID Code, Name, Role
         const timestamp = new Date().toISOString();
-        accessLogsSheet.appendRow([timestamp, username, 'Login']);
+        const accountCreated = row[0];        // Column A - Timestamp (from User Profiles)
+        const email = row[12];                // Column M - Personal Email Address
+        const idCode = row[18];               // Column S - ID Code
+        const fullName = row[3];              // Column D - Full Name
+        const role = row[20];                 // Column U - Role
+        
+        accessLogsSheet.appendRow([timestamp, accountCreated, email, idCode, fullName, role]);
         
         // Return user data
         return {
@@ -99,9 +105,9 @@ function handleGuestLogin(data) {
     const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
     const accessLogsSheet = ss.getSheetByName(SHEETS.ACCESS_LOGS);
     
-    // Log guest access
+    // Log guest access with correct column order: Timestamp, Account Created, Email, ID Code, Name, Role
     const timestamp = new Date().toISOString();
-    accessLogsSheet.appendRow([timestamp, 'Guest', 'Guest Login']);
+    accessLogsSheet.appendRow([timestamp, 'N/A', 'N/A', 'N/A', data.name || 'Guest', 'Guest']);
     
     return {
       success: true,
@@ -109,7 +115,7 @@ function handleGuestLogin(data) {
         id: 'guest',
         username: 'Guest',
         role: 'Guest',
-        firstName: 'Guest',
+        firstName: data.name || 'Guest',
         lastName: 'User'
       }
     };
@@ -123,33 +129,16 @@ function handleGetAccessLogs(data) {
   try {
     const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
     const logsSheet = ss.getSheetByName(SHEETS.ACCESS_LOGS);
-    const profilesSheet = ss.getSheetByName(SHEETS.USER_PROFILES);
     
     const logsData = logsSheet.getDataRange().getValues();
-    const profilesData = profilesSheet.getDataRange().getValues();
-    
-    // Create a map of username -> user data for quick lookup
-    const userMap = {};
-    for (let i = 1; i < profilesData.length; i++) {
-      const username = profilesData[i][13]; // Column N - Username
-      userMap[username] = {
-        name: profilesData[i][3],    // Column D - Full Name
-        idCode: profilesData[i][18], // Column S - ID Code
-        role: profilesData[i][20]    // Column U - Role
-      };
-    }
     
     // Skip header row and reverse for newest first
     const logs = logsData.slice(1).reverse().map(row => {
-      const username = row[1];
-      const action = row[2];
-      const user = userMap[username] || { name: username, idCode: 'N/A', role: action === 'Guest Login' ? 'Guest' : 'Unknown' };
-      
       return {
-        timestamp: row[0],
-        name: user.name,
-        idCode: user.idCode,
-        role: user.role
+        timestamp: row[0],  // Column A - Timestamp
+        name: row[4],       // Column E - Name
+        idCode: row[3],     // Column D - ID Code
+        role: row[5]        // Column F - Role
       };
     });
     
