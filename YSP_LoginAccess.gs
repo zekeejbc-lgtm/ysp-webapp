@@ -184,13 +184,21 @@ function handleSearchProfiles(data) {
         // Calculate age from birthdate
         const birthdate = row[4] ? new Date(row[4]) : null;
         let age = 0;
-        if (birthdate) {
+        let formattedBirthday = '';
+        
+        if (birthdate && !isNaN(birthdate.getTime())) {
           const today = new Date();
           age = today.getFullYear() - birthdate.getFullYear();
           const monthDiff = today.getMonth() - birthdate.getMonth();
           if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthdate.getDate())) {
             age--;
           }
+          
+          // Format as "Mon DD YYYY" (e.g., "May 20 2007")
+          const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+          formattedBirthday = months[birthdate.getMonth()] + ' ' + 
+                             birthdate.getDate() + ' ' + 
+                             birthdate.getFullYear();
         }
         
         return {
@@ -198,7 +206,7 @@ function handleSearchProfiles(data) {
           fullName: row[3] || '',             // Column D - Full Name
           email: row[12] || '',               // Column M - Personal Email Address
           position: row[19] || '',            // Column T - Position
-          birthday: row[4] ? row[4].toString() : '',  // Column E - Date of Birth
+          birthday: formattedBirthday,        // Formatted birthday
           contact: row[9] || '',              // Column J - Contact Number
           gender: row[6] || '',               // Column G - Sex/Gender
           age: age,                           // Calculated
@@ -228,10 +236,25 @@ function handleGetEvents(data) {
     for (let col = 4; col < headerRow.length; col += 6) {
       const eventId = headerRow[col];
       if (eventId) {
+        // Format the date
+        const rawDate = headerRow[col + 2];
+        let formattedDate = '';
+        if (rawDate) {
+          const dateObj = new Date(rawDate);
+          if (!isNaN(dateObj.getTime())) {
+            // Format as "YYYY-MM-DD"
+            formattedDate = dateObj.getFullYear() + '-' + 
+                           String(dateObj.getMonth() + 1).padStart(2, '0') + '-' + 
+                           String(dateObj.getDate()).padStart(2, '0');
+          } else {
+            formattedDate = rawDate.toString();
+          }
+        }
+        
         events.push({
-          id: eventId,
+          id: eventId.toString(),
           name: headerRow[col + 1] || '',
-          date: headerRow[col + 2] || '',
+          date: formattedDate,
           timeIn: headerRow[col + 3] || '',
           timeOut: headerRow[col + 4] || '',
           status: headerRow[col + 5] || 'Active'
@@ -251,36 +274,59 @@ function handleCreateEvent(data) {
     const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
     const sheet = ss.getSheetByName(SHEETS.MASTER_ATTENDANCE);
     
-    const eventId = data.eventId;
-    const eventName = data.eventName;
-    const eventDate = data.eventDate;
-    const timeIn = data.timeIn || '';
-    const timeOut = data.timeOut || '';
+    const eventName = data.eventName || data.name;
+    const eventDate = data.eventDate || data.date;
+    
+    if (!eventName || !eventDate) {
+      return { success: false, message: 'Event name and date are required' };
+    }
+    
+    // Generate Event ID (auto-increment from existing events)
+    const headerRow = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    let maxEventId = 0;
+    
+    // Find highest event ID
+    for (let col = 4; col < headerRow.length; col += 6) {
+      const eventId = headerRow[col];
+      if (eventId) {
+        const idNum = parseInt(eventId.toString());
+        if (!isNaN(idNum) && idNum > maxEventId) {
+          maxEventId = idNum;
+        }
+      }
+    }
+    
+    // Generate new ID (padded to 4 digits)
+    const newEventId = String(maxEventId + 1).padStart(4, '0');
     
     // Find the next available column (after existing events)
     const lastCol = sheet.getLastColumn();
     const nextCol = lastCol + 1;
     
-    // Add 6 columns for the new event
-    const headers = [eventId, eventName, eventDate, timeIn, timeOut, 'Active'];
+    // Add 6 columns for the new event with proper headers
+    const headers = [newEventId, eventName, eventDate, 'Time IN', 'Time OUT', 'Active'];
     
     for (let i = 0; i < headers.length; i++) {
       sheet.getRange(1, nextCol + i).setValue(headers[i]);
     }
     
+    // Log the creation
+    Logger.log('Created event: ' + newEventId + ' - ' + eventName + ' at column ' + nextCol);
+    
     return {
       success: true,
       message: 'Event created successfully',
       event: {
-        id: eventId,
+        id: newEventId,
         name: eventName,
         date: eventDate,
-        timeIn: timeIn,
-        timeOut: timeOut,
+        timeIn: 'Time IN',
+        timeOut: 'Time OUT',
         status: 'Active'
       }
     };
   } catch (error) {
+    Logger.log('Error creating event: ' + error.toString());
     return { success: false, message: 'Error creating event: ' + error.toString() };
   }
 }
@@ -296,12 +342,14 @@ function handleToggleEventStatus(data) {
     
     // Find the event column
     for (let col = 4; col < headerRow.length; col += 6) {
-      if (headerRow[col] === eventId) {
-        const statusCol = col + 6; // Status is 6th column in the event group
-        const currentStatus = sheet.getRange(1, statusCol).getValue();
+      if (headerRow[col].toString() === eventId.toString()) {
+        const statusCol = col + 5; // Status is at position 5 (0-indexed: col+5)
+        const currentStatus = sheet.getRange(1, statusCol + 1).getValue(); // +1 because getRange is 1-indexed
         const newStatus = currentStatus === 'Active' ? 'Inactive' : 'Active';
         
-        sheet.getRange(1, statusCol).setValue(newStatus);
+        sheet.getRange(1, statusCol + 1).setValue(newStatus);
+        
+        Logger.log('Toggled event ' + eventId + ' from ' + currentStatus + ' to ' + newStatus);
         
         return {
           success: true,
@@ -313,6 +361,7 @@ function handleToggleEventStatus(data) {
     
     return { success: false, message: 'Event not found' };
   } catch (error) {
+    Logger.log('Error toggling status: ' + error.toString());
     return { success: false, message: 'Error toggling status: ' + error.toString() };
   }
 }
