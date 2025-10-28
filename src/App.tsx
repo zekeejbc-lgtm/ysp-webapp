@@ -52,7 +52,12 @@ export default function App() {
   };
 
   if (!isLoggedIn) {
-    return <LoginScreen onLogin={handleLogin} darkMode={darkMode} setDarkMode={setDarkMode} />;
+    return (
+      <>
+        <LoginScreen onLogin={handleLogin} darkMode={darkMode} setDarkMode={setDarkMode} />
+        <Toaster position="top-center" />
+      </>
+    );
   }
 
   const renderPage = () => {
@@ -105,7 +110,7 @@ export default function App() {
         </main>
       </div>
       
-      <Toaster position="bottom-center" />
+      <Toaster position="top-center" />
     </div>
   );
 }

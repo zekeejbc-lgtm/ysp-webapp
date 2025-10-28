@@ -137,14 +137,18 @@ export default function LoginScreen({ onLogin, darkMode, setDarkMode }: LoginScr
         className="relative z-10 ysp-card max-w-md w-full mx-4"
       >
         <div className="text-center mb-6">
-          <motion.img
+          <motion.div
             initial={{ scale: 0, rotate: -180 }}
             animate={{ scale: 1, rotate: 0 }}
             transition={{ duration: 0.6, type: "spring" }}
-            src="https://i.imgur.com/J4wddTW.png" 
-            alt="YSP Logo" 
-            className="w-24 h-24 mx-auto mb-4 object-contain"
-          />
+            className="w-32 h-32 mx-auto mb-4 flex items-center justify-center"
+          >
+            <img
+              src="https://i.imgur.com/J4wddTW.png" 
+              alt="YSP Logo" 
+              className="w-full h-full object-contain"
+            />
+          </motion.div>
           <motion.h1
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
