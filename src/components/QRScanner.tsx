@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Search, Camera, Square } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Input } from './ui/input';
@@ -6,6 +6,7 @@ import { Button } from './ui/button';
 import { toast } from 'sonner';
 import { eventsAPI } from '../services/api';
 import type { Event } from '../services/api';
+import { Html5Qrcode } from 'html5-qrcode';
 
 interface QRScannerProps {
   darkMode: boolean;
@@ -20,10 +21,20 @@ export default function QRScanner({ darkMode, currentUser }: QRScannerProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const html5QrcodeRef = useRef<Html5Qrcode | null>(null);
 
   // Fetch active events on mount
   useEffect(() => {
     fetchEvents();
+  }, []);
+
+  // Cleanup scanner on unmount
+  useEffect(() => {
+    return () => {
+      if (html5QrcodeRef.current?.isScanning) {
+        html5QrcodeRef.current.stop().catch(console.error);
+      }
+    };
   }, []);
 
   const fetchEvents = async () => {
@@ -44,33 +55,58 @@ export default function QRScanner({ darkMode, currentUser }: QRScannerProps) {
     ? events.filter(e => e.name.toLowerCase().includes(searchTerm.toLowerCase()))
     : events;
 
-  const handleStartScanning = () => {
+  const handleStartScanning = async () => {
     if (!selectedEvent) {
       toast.error('Please select an event first', {
         description: 'Choose an active event from the list'
       });
       return;
     }
-    setIsScanning(true);
-    toast.success('QR Scanner started', {
-      description: 'Point camera at QR code to record attendance'
-    });
-    
-    // TODO: Implement html5-qrcode camera scanning
-    // For now, simulate with prompt
-    setTimeout(() => {
-      const simulatedQR = prompt('DEMO: Enter ID Code to simulate QR scan:');
-      if (simulatedQR) {
-        handleQRScan(simulatedQR.trim());
-      } else {
-        setIsScanning(false);
-      }
-    }, 500);
+
+    try {
+      const html5Qrcode = new Html5Qrcode("qr-reader");
+      html5QrcodeRef.current = html5Qrcode;
+
+      await html5Qrcode.start(
+        { facingMode: "environment" }, // Use back camera
+        {
+          fps: 10,
+          qrbox: { width: 250, height: 250 }
+        },
+        (decodedText) => {
+          // QR Code successfully scanned
+          handleQRScan(decodedText);
+          // Stop scanning after successful scan
+          handleStopScanning();
+        },
+        (errorMessage) => {
+          // Ignore scan errors (happens continuously while scanning)
+        }
+      );
+
+      setIsScanning(true);
+      toast.success('Camera started', {
+        description: 'Point camera at QR code'
+      });
+    } catch (error) {
+      console.error('Error starting scanner:', error);
+      toast.error('Camera access denied', {
+        description: 'Please allow camera access to scan QR codes'
+      });
+    }
   };
 
-  const handleStopScanning = () => {
-    setIsScanning(false);
-    toast.info('QR Scanner stopped');
+  const handleStopScanning = async () => {
+    if (html5QrcodeRef.current?.isScanning) {
+      try {
+        await html5QrcodeRef.current.stop();
+        html5QrcodeRef.current = null;
+        setIsScanning(false);
+        toast.info('Camera stopped');
+      } catch (error) {
+        console.error('Error stopping scanner:', error);
+      }
+    }
   };
 
   const handleQRScan = async (idCode: string) => {
@@ -112,7 +148,6 @@ export default function QRScanner({ darkMode, currentUser }: QRScannerProps) {
       });
     } finally {
       setIsLoading(false);
-      setIsScanning(false);
     }
   };
 
@@ -251,29 +286,10 @@ export default function QRScanner({ darkMode, currentUser }: QRScannerProps) {
           animate={{ opacity: 1, scale: 1 }}
           className="ysp-card"
         >
-          <div className="aspect-video bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg flex items-center justify-center relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900" />
-            <div className="relative z-10 text-center text-white">
-              <motion.div
-                animate={{ scale: [1, 1.1, 1] }}
-                transition={{ repeat: Infinity, duration: 2 }}
-              >
-                <Camera size={64} className="mx-auto mb-4" />
-              </motion.div>
-              <p className="text-lg font-medium">Camera Active</p>
-              <p className="text-sm text-gray-400 mt-2">Point camera at QR code</p>
-              <motion.div
-                animate={{ 
-                  borderColor: ['#f6421f', '#ee8724', '#fbcb29', '#f6421f']
-                }}
-                transition={{ repeat: Infinity, duration: 3 }}
-                className="mt-4 w-48 h-48 border-4 border-dashed rounded-lg mx-auto"
-              />
-            </div>
-          </div>
+          <div id="qr-reader" className="w-full rounded-lg overflow-hidden"></div>
           
-          <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-4">
-            Note: Camera scanning will be implemented with html5-qrcode library
+          <p className="text-center text-sm text-gray-600 dark:text-gray-400 mt-4">
+            Position the QR code within the scanning area
           </p>
         </motion.div>
       )}
