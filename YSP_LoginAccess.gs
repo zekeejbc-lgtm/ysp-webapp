@@ -57,8 +57,8 @@ function handleLogin(data) {
     // Find user (skip header row)
     for (let i = 1; i < profilesData.length; i++) {
       const row = profilesData[i];
-      const username = row[1]; // Column B
-      const password = row[2]; // Column C
+      const username = row[13]; // Column N - Username
+      const password = row[14]; // Column O - Password
       
       if (username === data.username && password === data.password) {
         // Log access
@@ -69,19 +69,19 @@ function handleLogin(data) {
         return {
           success: true,
           user: {
-            id: row[0],           // Column A - ID
-            username: row[1],     // Column B - Username
-            role: row[3],         // Column D - Role
-            firstName: row[4],    // Column E - First Name
-            lastName: row[5],     // Column F - Last Name
-            middleName: row[6],   // Column G - Middle Name
-            birthdate: row[7],    // Column H - Birthdate
-            address: row[8],      // Column I - Address
+            id: row[18],          // Column S - ID Code
+            username: row[13],    // Column N - Username
+            role: row[20],        // Column U - Role
+            firstName: row[3],    // Column D - Full Name (we'll use this as firstName)
+            lastName: '',         // Not separate in this sheet
+            middleName: '',       // Not separate in this sheet
+            birthdate: row[4],    // Column E - Date of Birth
+            address: '',          // Not in this sheet
             contactNumber: row[9], // Column J - Contact Number
-            email: row[10],       // Column K - Email
-            guardianName: row[11], // Column L - Guardian Name
-            guardianContact: row[12], // Column M - Guardian Contact
-            profilePicture: row[13] // Column N - Profile Picture
+            email: row[12],       // Column M - Personal Email Address
+            guardianName: '',     // Not in this sheet
+            guardianContact: '',  // Not in this sheet
+            profilePicture: row[21] // Column V - ProfilePictureURL
           }
         };
       }
@@ -122,16 +122,36 @@ function handleGuestLogin(data) {
 function handleGetAccessLogs(data) {
   try {
     const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-    const sheet = ss.getSheetByName(SHEETS.ACCESS_LOGS);
-    const dataRange = sheet.getDataRange();
-    const values = dataRange.getValues();
+    const logsSheet = ss.getSheetByName(SHEETS.ACCESS_LOGS);
+    const profilesSheet = ss.getSheetByName(SHEETS.USER_PROFILES);
+    
+    const logsData = logsSheet.getDataRange().getValues();
+    const profilesData = profilesSheet.getDataRange().getValues();
+    
+    // Create a map of username -> user data for quick lookup
+    const userMap = {};
+    for (let i = 1; i < profilesData.length; i++) {
+      const username = profilesData[i][13]; // Column N - Username
+      userMap[username] = {
+        name: profilesData[i][3],    // Column D - Full Name
+        idCode: profilesData[i][18], // Column S - ID Code
+        role: profilesData[i][20]    // Column U - Role
+      };
+    }
     
     // Skip header row and reverse for newest first
-    const logs = values.slice(1).reverse().map(row => ({
-      timestamp: row[0],
-      username: row[1],
-      action: row[2]
-    }));
+    const logs = logsData.slice(1).reverse().map(row => {
+      const username = row[1];
+      const action = row[2];
+      const user = userMap[username] || { name: username, idCode: 'N/A', role: action === 'Guest Login' ? 'Guest' : 'Unknown' };
+      
+      return {
+        timestamp: row[0],
+        name: user.name,
+        idCode: user.idCode,
+        role: user.role
+      };
+    });
     
     return { success: true, logs: logs };
   } catch (error) {
@@ -147,36 +167,47 @@ function handleSearchProfiles(data) {
     const dataRange = sheet.getDataRange();
     const values = dataRange.getValues();
     
-    const searchTerm = (data.searchTerm || '').toLowerCase();
+    const searchTerm = (data.search || data.searchTerm || '').toLowerCase();
     
     // Skip header row
     const profiles = values.slice(1)
       .filter(row => {
-        const id = (row[0] || '').toString().toLowerCase();
-        const username = (row[1] || '').toString().toLowerCase();
-        const firstName = (row[4] || '').toString().toLowerCase();
-        const lastName = (row[5] || '').toString().toLowerCase();
-        const fullName = firstName + ' ' + lastName;
+        const idCode = (row[18] || '').toString().toLowerCase();      // Column S - ID Code
+        const username = (row[13] || '').toString().toLowerCase();    // Column N - Username
+        const fullName = (row[3] || '').toString().toLowerCase();     // Column D - Full Name
         
-        return id.includes(searchTerm) || 
+        return idCode.includes(searchTerm) || 
                username.includes(searchTerm) || 
                fullName.includes(searchTerm);
       })
-      .map(row => ({
-        id: row[0],
-        username: row[1],
-        role: row[3],
-        firstName: row[4],
-        lastName: row[5],
-        middleName: row[6],
-        birthdate: row[7],
-        address: row[8],
-        contactNumber: row[9],
-        email: row[10],
-        guardianName: row[11],
-        guardianContact: row[12],
-        profilePicture: row[13]
-      }));
+      .map(row => {
+        // Calculate age from birthdate
+        const birthdate = row[4] ? new Date(row[4]) : null;
+        let age = 0;
+        if (birthdate) {
+          const today = new Date();
+          age = today.getFullYear() - birthdate.getFullYear();
+          const monthDiff = today.getMonth() - birthdate.getMonth();
+          if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthdate.getDate())) {
+            age--;
+          }
+        }
+        
+        return {
+          idCode: row[18] || '',              // Column S - ID Code
+          fullName: row[3] || '',             // Column D - Full Name
+          email: row[12] || '',               // Column M - Personal Email Address
+          position: row[19] || '',            // Column T - Position
+          birthday: row[4] ? row[4].toString() : '',  // Column E - Date of Birth
+          contact: row[9] || '',              // Column J - Contact Number
+          gender: row[6] || '',               // Column G - Sex/Gender
+          age: age,                           // Calculated
+          civilStatus: row[8] || '',          // Column I - Civil Status
+          nationality: row[11] || '',         // Column L - Nationality
+          religion: row[10] || '',            // Column K - Religion
+          profilePic: row[21] || ''           // Column V - ProfilePictureURL
+        };
+      });
     
     return { success: true, profiles: profiles };
   } catch (error) {
