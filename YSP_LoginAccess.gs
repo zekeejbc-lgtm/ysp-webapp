@@ -1751,52 +1751,39 @@ function handleGetHomepageContent(data) {
     // Get all data from Homepage Content sheet
     const homepageData = homepageSheet.getDataRange().getValues();
     
-    // Read data based on row positions (from screenshot)
-    // Row 1: mission (Column A has "mission", Column B has value)
-    // Row 2: vision (Column A has "vision", Column B has value)
-    // Row 3: objectives (Column A has title, Column B has value)
+    // Read data based on EXACT row positions (starting from row 1, index 1)
+    // Row 1: vision
+    // Row 2: mission
+    // Row 3: Section 3. YSP shall be guided by the following advocacy pillars:
+    // Row 4: orgChartUrl
+    // Row 5: facebookUrl
+    // Row 6: email
+    // Row 7: founderName
+    // Row 8: aboutYSP
+    // Row 9: projectImageUrl_1
+    // Row 10: projectDesc_1
+    // Row 11: projectImageUrl_2
+    // Row 12: projectDesc_2
+    // etc...
     
     let vision = '';
     let mission = '';
     let objectives = '';
-    let aboutYSP = '';
     let orgChartUrl = '';
-    let founderName = '';
-    let email = '';
     let facebookUrl = '';
+    let email = '';
+    let founderName = '';
+    let aboutYSP = '';
     
-    // Create a map for other fields (case-insensitive)
-    const contentMap = {};
-    
-    // Process all rows
-    for (let i = 1; i < homepageData.length; i++) {
-      const key = homepageData[i][0]; // Column A
-      const value = homepageData[i][1]; // Column B
-      
-      if (!key || key.toString().trim() === '') continue;
-      
-      const keyStr = key.toString().trim();
-      const keyLower = keyStr.toLowerCase();
-      
-      // Direct row assignments based on position (rows 1-3)
-      if (i === 1) {
-        vision = value ? value.toString() : '';
-      } else if (i === 2) {
-        mission = value ? value.toString() : '';
-      } else if (i === 3) {
-        objectives = value ? value.toString() : '';
-      }
-      
-      // Also map by key for other fields
-      contentMap[keyLower] = value ? value.toString() : '';
-    }
-    
-    // Extract other fields from contentMap
-    aboutYSP = contentMap['aboutysp'] || '';
-    orgChartUrl = contentMap['orgcharturl'] || '';
-    founderName = contentMap['foundername'] || '';
-    email = contentMap['email'] || '';
-    facebookUrl = contentMap['facebookurl'] || '';
+    // Read fixed positions (rows 1-8)
+    if (homepageData.length > 1) vision = homepageData[1][1] || ''; // Row 1, Column B
+    if (homepageData.length > 2) mission = homepageData[2][1] || ''; // Row 2, Column B
+    if (homepageData.length > 3) objectives = homepageData[3][1] || ''; // Row 3, Column B
+    if (homepageData.length > 4) orgChartUrl = homepageData[4][1] || ''; // Row 4, Column B
+    if (homepageData.length > 5) facebookUrl = homepageData[5][1] || ''; // Row 5, Column B
+    if (homepageData.length > 6) email = homepageData[6][1] || ''; // Row 6, Column B
+    if (homepageData.length > 7) founderName = homepageData[7][1] || ''; // Row 7, Column B
+    if (homepageData.length > 8) aboutYSP = homepageData[8][1] || ''; // Row 8, Column B
     
     // Parse objectives into array (split by numbered items)
     const objectivesArray = [];
@@ -1806,28 +1793,32 @@ function handleGetHomepageContent(data) {
       objectivesArray.push(...sections);
     }
     
-    // Extract projects (projectImageUrl_1, projectDesc_1, etc.)
+    // Extract projects starting from row 9 (index 9)
+    // Row 9: projectImageUrl_1, Row 10: projectDesc_1
+    // Row 11: projectImageUrl_2, Row 12: projectDesc_2
+    // etc...
     const projects = [];
     let projectIndex = 1;
+    let rowIndex = 9; // Start from row 9 (index 9)
     
-    while (true) {
-      const imageKey = ('projectimageurl_' + projectIndex);
-      const descKey = ('projectdesc_' + projectIndex);
-      
-      const imageUrl = contentMap[imageKey];
-      const description = contentMap[descKey];
+    while (rowIndex < homepageData.length) {
+      const imageUrl = homepageData[rowIndex][1] || ''; // projectImageUrl_X
+      const description = homepageData[rowIndex + 1] ? (homepageData[rowIndex + 1][1] || '') : ''; // projectDesc_X
       
       if (!imageUrl && !description) {
         break; // No more projects
       }
       
-      projects.push({
-        image: imageUrl || '',
-        description: description || '',
-        title: 'Project ' + projectIndex
-      });
+      if (imageUrl || description) {
+        projects.push({
+          image: imageUrl,
+          description: description,
+          title: 'Project ' + projectIndex
+        });
+        projectIndex++;
+      }
       
-      projectIndex++;
+      rowIndex += 2; // Move to next project (skip 2 rows)
     }
     
     Logger.log('Retrieved homepage content with ' + projects.length + ' projects');
