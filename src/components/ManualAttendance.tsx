@@ -363,101 +363,111 @@ export default function ManualAttendance(_props: ManualAttendanceProps) {
       {/* Overwrite Confirmation Modal */}
       {showOverwriteDialog && (
         <div 
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
           onClick={handleCancelOverwrite}
         >
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="w-full max-w-md mx-auto bg-white dark:bg-[#252839] rounded-lg shadow-xl"
+            className="w-full max-w-md mx-auto bg-white dark:bg-[#1e2130] rounded-xl shadow-2xl overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-5 border-b border-gray-700">
+            <div className="flex items-center justify-between px-6 py-4 bg-white dark:bg-[#252839] border-b border-gray-200 dark:border-gray-700">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-orange-500/20 flex items-center justify-center flex-shrink-0">
-                  <AlertCircle className="w-5 h-5 text-orange-500" />
+                <div className="w-10 h-10 rounded-full bg-orange-500/10 dark:bg-orange-500/20 flex items-center justify-center flex-shrink-0">
+                  <AlertCircle className="w-5 h-5 text-orange-500 dark:text-orange-400" />
                 </div>
-                <h3 className="text-base sm:text-lg text-gray-900 dark:text-white font-medium">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                   Overwrite Attendance
                 </h3>
               </div>
               <button
                 onClick={handleCancelOverwrite}
-                className="p-1.5 rounded-md transition-colors hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 flex-shrink-0"
+                className="p-2 rounded-lg transition-all hover:bg-gray-100 dark:hover:bg-gray-700/50 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Content */}
-            <div className="p-5 space-y-4">
-              {/* Warning Message */}
-              <p className="text-sm sm:text-base text-gray-700 dark:text-gray-300">
-                <span className="text-gray-900 dark:text-white font-medium">{selectedMember?.fullName}</span> already has an attendance record for this event.
-              </p>
-
-              {/* Current Record */}
-              <div className="p-4 rounded-lg bg-gray-50 dark:bg-[#1a1d2e] border border-gray-200 dark:border-gray-700/50">
-                <div className="mb-3 text-sm text-gray-600 dark:text-gray-400 font-medium">
-                  Current Record:
-                </div>
-                <div className="space-y-2.5 text-sm">
-                  <div className="flex justify-between items-center gap-4">
-                    <span className="text-gray-600 dark:text-gray-400 flex-shrink-0">
-                      Member:
-                    </span>
-                    <span className="text-gray-900 dark:text-white text-right font-medium">
-                      {selectedMember?.fullName}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center gap-4">
-                    <span className="text-gray-600 dark:text-gray-400 flex-shrink-0">
-                      Event:
-                    </span>
-                    <span className="text-gray-900 dark:text-white text-right font-medium">
-                      {selectedEvent?.name}
-                    </span>
-                  </div>
-                  <div className="my-2 border-t border-gray-200 dark:border-gray-700" />
-                  <div className="flex justify-between items-center gap-4">
-                    <span className="text-gray-600 dark:text-gray-400 flex-shrink-0">
-                      Time In:
-                    </span>
-                    <span className="text-gray-900 dark:text-white text-right font-semibold">
-                      {existingRecord || '—'}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center gap-4">
-                    <span className="text-gray-600 dark:text-gray-400 flex-shrink-0">
-                      Time Out:
-                    </span>
-                    <span className="text-gray-900 dark:text-white text-right">
-                      —
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* New Value Indicator */}
-              <div className="p-3 rounded-lg border bg-orange-50 dark:bg-orange-500/5 border-orange-200 dark:border-orange-500/30">
-                <p className="text-sm text-orange-800 dark:text-orange-300">
-                  New {timeType === 'timeIn' ? 'Time In' : 'Time Out'}: <span className="font-semibold text-orange-900 dark:text-orange-200">{new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}</span>
+            <div className="px-6 py-5 bg-white dark:bg-[#1e2130]">
+              <div className="space-y-4">
+                {/* Warning Message */}
+                <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                  <span className="font-semibold text-gray-900 dark:text-white">{selectedMember?.fullName}</span> already has an attendance record for this event.
                 </p>
+
+                {/* Current Record Box */}
+                <div className="rounded-lg bg-gray-50 dark:bg-[#252839] border border-gray-200 dark:border-gray-700/50 p-4">
+                  <div className="mb-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                    Current Record:
+                  </div>
+                  <div className="space-y-2.5">
+                    <div className="flex justify-between items-start gap-4">
+                      <span className="text-sm text-gray-600 dark:text-gray-400 flex-shrink-0">
+                        Member:
+                      </span>
+                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100 text-right">
+                        {selectedMember?.fullName}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-start gap-4">
+                      <span className="text-sm text-gray-600 dark:text-gray-400 flex-shrink-0">
+                        Event:
+                      </span>
+                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100 text-right">
+                        {selectedEvent?.name}
+                      </span>
+                    </div>
+                    <div className="border-t border-gray-200 dark:border-gray-700 my-2"></div>
+                    <div className="flex justify-between items-start gap-4">
+                      <span className="text-sm text-gray-600 dark:text-gray-400 flex-shrink-0">
+                        Time In:
+                      </span>
+                      <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 text-right">
+                        {existingRecord || '—'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-start gap-4">
+                      <span className="text-sm text-gray-600 dark:text-gray-400 flex-shrink-0">
+                        Time Out:
+                      </span>
+                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100 text-right">
+                        —
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-start gap-4">
+                      <span className="text-sm text-gray-600 dark:text-gray-400 flex-shrink-0">
+                        Status:
+                      </span>
+                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100 text-right">
+                        {status}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* New Value Indicator */}
+                <div className="rounded-lg bg-gradient-to-r from-orange-50 to-orange-100/50 dark:from-orange-500/10 dark:to-orange-500/5 border border-orange-200 dark:border-orange-500/30 px-4 py-3">
+                  <p className="text-sm font-medium text-orange-900 dark:text-orange-300">
+                    New {timeType === 'timeIn' ? 'Time In' : 'Time Out'}: <span className="font-bold text-orange-600 dark:text-orange-400">{new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}</span>
+                  </p>
+                </div>
               </div>
             </div>
 
             {/* Footer */}
-            <div className="flex flex-col sm:flex-row gap-3 p-5 border-t border-gray-700">
+            <div className="flex gap-3 px-6 py-4 bg-gray-50 dark:bg-[#252839] border-t border-gray-200 dark:border-gray-700">
               <button
                 onClick={handleCancelOverwrite}
-                className="flex-1 py-2.5 px-4 rounded-md border transition-colors border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 font-medium"
+                className="flex-1 py-2.5 px-4 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#1e2130] text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all font-medium shadow-sm"
               >
                 Cancel
               </button>
               <button
                 onClick={handleConfirmOverwrite}
-                className="flex-1 py-2.5 px-4 rounded-md bg-orange-500 text-white hover:bg-orange-600 transition-colors font-medium"
+                className="flex-1 py-2.5 px-4 rounded-lg bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white transition-all font-semibold shadow-lg shadow-orange-500/30"
               >
                 Change
               </button>
