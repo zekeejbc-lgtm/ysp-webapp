@@ -1751,19 +1751,24 @@ function handleGetHomepageContent(data) {
     // Get all data from Homepage Content sheet
     const homepageData = homepageSheet.getDataRange().getValues();
     
-    // Read data based on EXACT row positions (starting from row 1, index 1)
-    // Row 1: vision
-    // Row 2: mission
-    // Row 3: Section 3. YSP shall be guided by the following advocacy pillars:
-    // Row 4: orgChartUrl
-    // Row 5: facebookUrl
-    // Row 6: email
-    // Row 7: founderName
-    // Row 8: aboutYSP
-    // Row 9: projectImageUrl_1
-    // Row 10: projectDesc_1
-    // Row 11: projectImageUrl_2
-    // Row 12: projectDesc_2
+    // ===================================================================
+    // CRITICAL: NO HEADER ROW IN SHEET!
+    // Sheet Row 1 = Array Index 0 (contains vision content)
+    // ===================================================================
+    
+    // YOUR EXACT SHEET STRUCTURE:
+    // SHEET ROW 1  (index 0): vision - Column B has Vision content
+    // SHEET ROW 2  (index 1): mission - Column B has Mission content  
+    // SHEET ROW 3  (index 2): Section 3... - Column B has Pillars content
+    // SHEET ROW 4  (index 3): orgChartUrl
+    // SHEET ROW 5  (index 4): facebookUrl
+    // SHEET ROW 6  (index 5): email
+    // SHEET ROW 7  (index 6): founderName
+    // SHEET ROW 8  (index 7): aboutYSP
+    // SHEET ROW 9  (index 8): projectImageUrl_1
+    // SHEET ROW 10 (index 9): projectDesc_1
+    // SHEET ROW 11 (index 10): projectImageUrl_2
+    // SHEET ROW 12 (index 11): projectDesc_2
     // etc...
     
     let vision = '';
@@ -1775,26 +1780,30 @@ function handleGetHomepageContent(data) {
     let founderName = '';
     let aboutYSP = '';
     
-    // Read fixed positions (rows 1-8)
-    if (homepageData.length > 1) vision = homepageData[1][1] || ''; // Row 1, Column B
-    if (homepageData.length > 2) mission = homepageData[2][1] || ''; // Row 2, Column B
-    if (homepageData.length > 3) objectives = homepageData[3][1] || ''; // Row 3, Column B
-    if (homepageData.length > 4) orgChartUrl = homepageData[4][1] || ''; // Row 4, Column B
-    if (homepageData.length > 5) facebookUrl = homepageData[5][1] || ''; // Row 5, Column B
-    if (homepageData.length > 6) email = homepageData[6][1] || ''; // Row 6, Column B
-    if (homepageData.length > 7) founderName = homepageData[7][1] || ''; // Row 7, Column B
-    if (homepageData.length > 8) aboutYSP = homepageData[8][1] || ''; // Row 8, Column B
+    // Read from index 0 onwards (NO header row offset!)
+    if (homepageData.length > 0) vision = homepageData[0][1] || ''; // SHEET ROW 1, Column B
+    if (homepageData.length > 1) mission = homepageData[1][1] || ''; // SHEET ROW 2, Column B
+    if (homepageData.length > 2) objectives = homepageData[2][1] || ''; // SHEET ROW 3, Column B
+    if (homepageData.length > 3) orgChartUrl = homepageData[3][1] || ''; // SHEET ROW 4, Column B
+    if (homepageData.length > 4) facebookUrl = homepageData[4][1] || ''; // SHEET ROW 5, Column B
+    if (homepageData.length > 5) email = homepageData[5][1] || ''; // SHEET ROW 6, Column B
+    if (homepageData.length > 6) founderName = homepageData[6][1] || ''; // SHEET ROW 7, Column B
+    if (homepageData.length > 7) aboutYSP = homepageData[7][1] || ''; // SHEET ROW 8, Column B
+    
+    if (homepageData.length > 7) aboutYSP = homepageData[7][1] || ''; // SHEET ROW 8, Column B
     
     // Keep objectives as-is, don't split
     const objectivesArray = objectives ? [objectives] : [];
     
-    // Extract projects starting from row 9 (index 9)
-    // Row 9: projectImageUrl_1, Row 10: projectDesc_1
-    // Row 11: projectImageUrl_2, Row 12: projectDesc_2
+    // Extract projects starting from SHEET ROW 9 (array index 8)
+    // SHEET ROW 9  (index 8): projectImageUrl_1
+    // SHEET ROW 10 (index 9): projectDesc_1
+    // SHEET ROW 11 (index 10): projectImageUrl_2
+    // SHEET ROW 12 (index 11): projectDesc_2
     // etc...
     const projects = [];
     let projectIndex = 1;
-    let rowIndex = 9; // Start from row 9 (index 9)
+    let rowIndex = 8; // Start from array index 8 (SHEET ROW 9)
     
     while (rowIndex < homepageData.length) {
       const imageUrl = homepageData[rowIndex][1] || ''; // projectImageUrl_X
