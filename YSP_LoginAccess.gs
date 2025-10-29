@@ -65,6 +65,8 @@ function handlePostRequest(data) {
       return handleReplyToFeedback(data);
     case 'getHomepageContent':
       return handleGetHomepageContent(data);
+    case 'getUserProfile':
+      return handleGetUserProfile(data);
     default:
       return { success: false, message: 'Unknown action: ' + action };
   }
@@ -1844,6 +1846,112 @@ function handleGetHomepageContent(data) {
   } catch (error) {
     Logger.log('Error fetching homepage content: ' + error.toString());
     return { success: false, message: 'Error fetching homepage content: ' + error.toString() };
+  }
+}
+
+// ===== GET USER PROFILE =====
+/**
+ * Retrieves the full profile information for a specific user
+ * @param {Object} data - Contains username or idCode to identify the user
+ * @returns {Object} - User profile with all fields
+ */
+function handleGetUserProfile(data) {
+  try {
+    const { username, idCode } = data;
+    
+    if (!username && !idCode) {
+      return { success: false, message: 'Username or ID Code is required' };
+    }
+    
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const userProfilesSheet = ss.getSheetByName(SHEETS.USER_PROFILES);
+    
+    if (!userProfilesSheet) {
+      return { success: false, message: 'User Profiles sheet not found' };
+    }
+    
+    const userProfilesData = userProfilesSheet.getDataRange().getValues();
+    
+    // Skip header row (index 0), start from row 1
+    for (let i = 1; i < userProfilesData.length; i++) {
+      const row = userProfilesData[i];
+      const rowUsername = row[13]; // Column N - Username
+      const rowIdCode = row[18]; // Column S - ID Code
+      
+      // Match by username or ID code
+      if ((username && rowUsername === username) || (idCode && rowIdCode === idCode)) {
+        // Extract all profile fields
+        const fullName = row[3] || ''; // Column D - Full name
+        const email = row[1] || ''; // Column B - Email Address
+        const dateOfBirth = row[4] || ''; // Column E - Date of Birth
+        const ageFromSheet = row[5] || ''; // Column F - Age
+        const gender = row[6] || ''; // Column G - Sex/Gender
+        const pronouns = row[7] || ''; // Column H - Pronouns
+        const civilStatus = row[8] || ''; // Column I - Civil Status
+        const contactNumber = row[9] || ''; // Column J - Contact Number
+        const religion = row[10] || ''; // Column K - Religion
+        const nationality = row[11] || ''; // Column L - Nationality
+        const password = row[14] || ''; // Column O - Password
+        const position = row[19] || ''; // Column T - Position
+        const role = row[20] || ''; // Column U - Role
+        const profilePictureURL = row[21] || ''; // Column V - ProfilePictureURL
+        
+        // Calculate age from date of birth if not provided in sheet
+        let age = ageFromSheet;
+        if (!age && dateOfBirth) {
+          try {
+            const birthDate = new Date(dateOfBirth);
+            const today = new Date();
+            age = today.getFullYear() - birthDate.getFullYear();
+            const monthDiff = today.getMonth() - birthDate.getMonth();
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+              age--;
+            }
+          } catch (error) {
+            Logger.log('Error calculating age: ' + error.toString());
+          }
+        }
+        
+        // Format birthday for display
+        let formattedBirthday = dateOfBirth;
+        if (dateOfBirth) {
+          try {
+            const birthDate = new Date(dateOfBirth);
+            formattedBirthday = Utilities.formatDate(birthDate, Session.getScriptTimeZone(), 'MMMM dd, yyyy');
+          } catch (error) {
+            Logger.log('Error formatting birthday: ' + error.toString());
+          }
+        }
+        
+        return {
+          success: true,
+          profile: {
+            fullName: fullName,
+            username: rowUsername,
+            idCode: rowIdCode,
+            email: email,
+            contactNumber: contactNumber,
+            birthday: formattedBirthday,
+            age: age.toString(),
+            gender: gender,
+            pronouns: pronouns,
+            civilStatus: civilStatus,
+            religion: religion,
+            nationality: nationality,
+            password: password,
+            position: position,
+            role: role,
+            profilePictureURL: profilePictureURL
+          }
+        };
+      }
+    }
+    
+    return { success: false, message: 'User not found' };
+    
+  } catch (error) {
+    Logger.log('Error fetching user profile: ' + error.toString());
+    return { success: false, message: 'Error fetching user profile: ' + error.toString() };
   }
 }
 

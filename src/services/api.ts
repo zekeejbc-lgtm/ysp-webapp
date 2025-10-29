@@ -164,33 +164,37 @@ export const attendanceAPI = {
 // ======================================================
 
 export interface UserProfile {
-  idCode: string;
   fullName: string;
+  username: string;
+  idCode: string;
   email: string;
-  position: string;
+  contactNumber: string;
   birthday: string;
-  contact: string;
+  age: string;
   gender: string;
-  age: number;
+  pronouns: string;
   civilStatus: string;
-  nationality: string;
   religion: string;
-  profilePic?: string;
+  nationality: string;
+  password: string;
+  position: string;
+  role: string;
+  profilePictureURL: string;
 }
 
 export interface UserProfileResponse {
   success: boolean;
-  message: string;
+  message?: string;
   profile?: UserProfile;
   profiles?: UserProfile[];
 }
 
 export const userAPI = {
   /**
-   * Get user profile by ID code
+   * Get user profile by username or ID code
    */
-  getProfile: async (idCode: string): Promise<UserProfileResponse> => {
-    return apiRequest('getUserProfile', { idCode });
+  getProfile: async (username?: string, idCode?: string): Promise<UserProfileResponse> => {
+    return apiRequest('getUserProfile', { username, idCode });
   },
 
   /**
