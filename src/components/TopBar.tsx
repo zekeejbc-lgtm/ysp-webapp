@@ -1,4 +1,3 @@
-import React from 'react';
 import { Menu, X, Sun, Moon } from 'lucide-react';
 
 interface TopBarProps {
@@ -21,9 +20,12 @@ export default function TopBar({ darkMode, setDarkMode, setSidebarOpen, sidebarO
         
         <div className="flex items-center gap-3">
           <img 
-            src="https://images.unsplash.com/photo-1559027615-cd4628902d4a?w=80&h=80&fit=crop" 
+            src="https://scontent.fdvo2-2.fna.fbcdn.net/v/t39.30808-6/462543605_122156158186224300_6848909482214993863_n.jpg?_nc_cat=103&ccb=1-7&_nc_sid=6ee11a&_nc_eui2=AeE5G9n6YhqBJXvTMhWp_6nKZgJk1z6Kt6VmAmTXPoq3pYeS36vTXNvhqxK7JoXZQiSjKjQJpNYzGh4QNlxrPGYc&_nc_ohc=VjkQVxZ75qAQ7kNvgFWQx7-&_nc_zt=23&_nc_ht=scontent.fdvo2-2.fna&_nc_gid=ANwRqFiBDMvLJQ3HpWZxXB0&oh=00_AYDPInMPYNQEBRDBRKVcJIhZoHnRlvUzHQnT0Kg7yJGnCw&oe=6727C40A" 
             alt="YSP Logo" 
-            className="w-10 h-10 rounded-full"
+            className="w-10 h-10 rounded-full object-cover"
+            onError={(e) => {
+              e.currentTarget.src = "https://ui-avatars.com/api/?name=YSP&size=80&background=f6421f&color=fff";
+            }}
           />
           <div>
             <h1 className="text-[#f6421f] dark:text-[#ee8724] font-['Lexend'] m-0">Youth Service Philippines</h1>

@@ -29,6 +29,22 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
+  // Check for existing session on mount (session persistence)
+  useEffect(() => {
+    const savedUser = localStorage.getItem('userData');
+    if (savedUser) {
+      try {
+        const userData = JSON.parse(savedUser);
+        console.log('Restoring session for user:', userData.name);
+        setCurrentUser(userData);
+        setIsLoggedIn(true);
+      } catch (error) {
+        console.error('Failed to restore session:', error);
+        localStorage.removeItem('userData');
+      }
+    }
+  }, []);
+
   useEffect(() => {
     localStorage.setItem('theme', darkMode ? 'dark' : 'light');
     if (darkMode) {
@@ -42,12 +58,16 @@ export default function App() {
     setCurrentUser(user);
     setIsLoggedIn(true);
     setCurrentPage('homepage');
+    // Save to localStorage for session persistence
+    localStorage.setItem('userData', JSON.stringify(user));
   };
 
   const handleLogout = () => {
     setCurrentUser(null);
     setIsLoggedIn(false);
     setCurrentPage('homepage');
+    // Clear session from localStorage
+    localStorage.removeItem('userData');
   };
 
   if (!isLoggedIn) {
@@ -84,7 +104,7 @@ export default function App() {
       case 'access-logs':
         return <AccessLogs darkMode={darkMode} />;
       case 'my-profile':
-        return <MyProfile darkMode={darkMode} currentUser={currentUser} />;
+        return <MyProfile currentUser={currentUser} />;
       default:
         return <Homepage darkMode={darkMode} />;
     }

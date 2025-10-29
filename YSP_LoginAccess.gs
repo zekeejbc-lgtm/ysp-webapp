@@ -2022,6 +2022,16 @@ function handleUpdateProfile(data) {
           userProfilesSheet.getRange(i + 1, 12).setValue(data.nationality);
         }
         
+        // Column C - Date of Birth (Birthday)
+        if (data.birthday !== undefined) {
+          userProfilesSheet.getRange(i + 1, 3).setValue(data.birthday);
+        }
+        
+        // Column D - Age
+        if (data.age !== undefined) {
+          userProfilesSheet.getRange(i + 1, 4).setValue(data.age);
+        }
+        
         return { 
           success: true, 
           message: 'Profile updated successfully' 

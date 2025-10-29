@@ -237,8 +237,20 @@ export default function MyProfile({ currentUser }: MyProfileProps) {
     <div className="max-w-5xl mx-auto space-y-6">
       {/* Header with Profile Picture */}
       <div className="ysp-card text-center relative">
+        {/* YSP Logo at Top Right */}
+        <div className="absolute top-4 right-4 flex items-center gap-3">
+          <img 
+            src="https://scontent.fdvo2-2.fna.fbcdn.net/v/t39.30808-6/462543605_122156158186224300_6848909482214993863_n.jpg?_nc_cat=103&ccb=1-7&_nc_sid=6ee11a&_nc_eui2=AeE5G9n6YhqBJXvTMhWp_6nKZgJk1z6Kt6VmAmTXPoq3pYeS36vTXNvhqxK7JoXZQiSjKjQJpNYzGh4QNlxrPGYc&_nc_ohc=VjkQVxZ75qAQ7kNvgFWQx7-&_nc_zt=23&_nc_ht=scontent.fdvo2-2.fna&_nc_gid=ANwRqFiBDMvLJQ3HpWZxXB0&oh=00_AYDPInMPYNQEBRDBRKVcJIhZoHnRlvUzHQnT0Kg7yJGnCw&oe=6727C40A" 
+            alt="YSP Logo" 
+            className="w-16 h-16 rounded-full shadow-lg ring-2 ring-[#f6421f]/20 object-cover"
+            onError={(e) => {
+              e.currentTarget.src = "https://ui-avatars.com/api/?name=YSP&size=200&background=f6421f&color=fff";
+            }}
+          />
+        </div>
+
         {/* Edit/Save/Cancel Buttons */}
-        <div className="absolute top-4 right-4 flex gap-2">
+        <div className="absolute top-20 right-4 flex gap-2">
           {!isEditing ? (
             <button
               onClick={handleEdit}
@@ -271,13 +283,17 @@ export default function MyProfile({ currentUser }: MyProfileProps) {
 
         <div className="relative inline-block">
           <img
-            src={profile.profilePictureURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.fullName)}&size=200&background=f6421f&color=fff`}
+            src={profile.profilePictureURL && profile.profilePictureURL.trim() !== '' 
+              ? profile.profilePictureURL 
+              : `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.fullName)}&size=200&background=f6421f&color=fff`}
             alt={profile.fullName}
             className="w-32 h-32 rounded-full object-cover mx-auto shadow-lg ring-4 ring-[#f6421f]/20"
             onError={(e) => {
+              console.error('Failed to load profile picture:', profile.profilePictureURL);
               e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.fullName)}&size=200&background=f6421f&color=fff`;
             }}
-            key={profile.profilePictureURL} 
+            key={profile.profilePictureURL || 'default'} 
+            crossOrigin="anonymous"
           />
           
           {/* Upload Button Overlay */}
@@ -367,21 +383,40 @@ export default function MyProfile({ currentUser }: MyProfileProps) {
             </div>
           </div>
 
-          {/* Birthday - Read only */}
+          {/* Birthday */}
           <div className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
             <Calendar size={20} className="text-[#f6421f] mt-1 flex-shrink-0" />
             <div className="flex-1 min-w-0">
               <p className="text-sm text-gray-500 dark:text-gray-400">Birthday</p>
-              <p className="font-medium">{profile.birthday}</p>
+              {isEditing ? (
+                <input
+                  type="text"
+                  placeholder="e.g., January 15, 1990"
+                  value={editedProfile.birthday ?? profile.birthday}
+                  onChange={(e) => handleFieldChange('birthday', e.target.value)}
+                  className="w-full px-2 py-1 border rounded mt-1 text-sm"
+                />
+              ) : (
+                <p className="font-medium">{profile.birthday}</p>
+              )}
             </div>
           </div>
 
-          {/* Age - Read only */}
+          {/* Age */}
           <div className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
             <User size={20} className="text-[#f6421f] mt-1 flex-shrink-0" />
             <div className="flex-1 min-w-0">
               <p className="text-sm text-gray-500 dark:text-gray-400">Age</p>
-              <p className="font-medium">{profile.age} years old</p>
+              {isEditing ? (
+                <input
+                  type="number"
+                  value={editedProfile.age ?? profile.age}
+                  onChange={(e) => handleFieldChange('age', e.target.value)}
+                  className="w-full px-2 py-1 border rounded mt-1 text-sm"
+                />
+              ) : (
+                <p className="font-medium">{profile.age} years old</p>
+              )}
             </div>
           </div>
 

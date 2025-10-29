@@ -214,7 +214,7 @@ export const userAPI = {
    * Update user profile
    */
   updateProfile: async (idCode: string, updates: Record<string, any>): Promise<any> => {
-    return apiRequest('updateUserProfile', { idCode, ...updates });
+    return apiRequest('updateProfile', { idCode, ...updates });
   },
 
   /**
