@@ -409,7 +409,7 @@ export default function ManualAttendance(_props: ManualAttendanceProps) {
                         Member:
                       </span>
                       <span className="text-sm font-medium text-gray-900 dark:text-gray-100 text-right">
-                        {selectedMember?.fullName}
+                        {selectedMember?.fullName || 'N/A'}
                       </span>
                     </div>
                     <div className="flex justify-between items-start gap-4">
@@ -417,32 +417,16 @@ export default function ManualAttendance(_props: ManualAttendanceProps) {
                         Event:
                       </span>
                       <span className="text-sm font-medium text-gray-900 dark:text-gray-100 text-right">
-                        {selectedEvent?.name}
+                        {selectedEvent?.name || 'N/A'}
                       </span>
                     </div>
                     <div className="border-t border-gray-200 dark:border-gray-700 my-2"></div>
                     <div className="flex justify-between items-start gap-4">
                       <span className="text-sm text-gray-600 dark:text-gray-400 flex-shrink-0">
-                        Time In:
+                        {timeType === 'timeIn' ? 'Time In:' : 'Time Out:'}
                       </span>
                       <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 text-right">
                         {existingRecord || '—'}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-start gap-4">
-                      <span className="text-sm text-gray-600 dark:text-gray-400 flex-shrink-0">
-                        Time Out:
-                      </span>
-                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100 text-right">
-                        —
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-start gap-4">
-                      <span className="text-sm text-gray-600 dark:text-gray-400 flex-shrink-0">
-                        Status:
-                      </span>
-                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100 text-right">
-                        {status}
                       </span>
                     </div>
                   </div>
@@ -451,7 +435,15 @@ export default function ManualAttendance(_props: ManualAttendanceProps) {
                 {/* New Value Indicator */}
                 <div className="rounded-lg bg-gradient-to-r from-orange-50 to-orange-100/50 dark:from-orange-500/10 dark:to-orange-500/5 border border-orange-200 dark:border-orange-500/30 px-4 py-3">
                   <p className="text-sm font-medium text-orange-900 dark:text-orange-300">
-                    New {timeType === 'timeIn' ? 'Time In' : 'Time Out'}: <span className="font-bold text-orange-600 dark:text-orange-400">{new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}</span>
+                    New {timeType === 'timeIn' ? 'Time In' : 'Time Out'}: <span className="font-bold text-orange-600 dark:text-orange-400">{status} - {(() => {
+                      const now = new Date();
+                      const phTime = new Date(now.getTime() + (8 * 60 * 60 * 1000));
+                      const hours = phTime.getUTCHours();
+                      const minutes = phTime.getUTCMinutes();
+                      const ampm = hours >= 12 ? 'PM' : 'AM';
+                      const displayHours = hours % 12 || 12;
+                      return String(displayHours).padStart(2, '0') + ':' + String(minutes).padStart(2, '0') + ' ' + ampm;
+                    })()}</span>
                   </p>
                 </div>
               </div>
