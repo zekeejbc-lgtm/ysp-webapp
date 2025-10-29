@@ -35,11 +35,11 @@ export default function AttendanceTransparency({ currentUser }: AttendanceTransp
   useEffect(() => {
     console.log('AttendanceTransparency mounted. CurrentUser:', currentUser);
     if (currentUser) {
-      console.log('CurrentUser ID:', currentUser.id);
-      if (currentUser.id) {
+      console.log('CurrentUser idCode:', currentUser.idCode);
+      if (currentUser.idCode) {
         fetchAttendance();
       } else {
-        console.error('CurrentUser has no ID!');
+        console.error('CurrentUser has no idCode!');
         setIsLoading(false);
       }
     } else {
@@ -51,14 +51,14 @@ export default function AttendanceTransparency({ currentUser }: AttendanceTransp
   const fetchAttendance = async () => {
     setIsLoading(true);
     try {
-      console.log('Fetching attendance for ID:', currentUser.id);
+      console.log('Fetching attendance for ID Code:', currentUser.idCode);
       
       const response = await fetch('/api/gas-proxy', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'getUserAttendance',
-          idCode: currentUser.id
+          idCode: currentUser.idCode
         })
       });
 
@@ -130,7 +130,7 @@ export default function AttendanceTransparency({ currentUser }: AttendanceTransp
       <div className="ysp-card mb-6">
         <h2 className="text-[#f6421f] dark:text-[#ee8724] mb-2">Attendance Transparency</h2>
         <p className="text-gray-600 dark:text-gray-400">
-          Viewing attendance records for: <span className="font-semibold text-gray-900 dark:text-white">({currentUser.id})</span>
+          Viewing attendance records for: <span className="font-semibold text-gray-900 dark:text-white">({currentUser.idCode})</span>
         </p>
       </div>
 
