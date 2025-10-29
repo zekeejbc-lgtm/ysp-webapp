@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search } from 'lucide-react';
+import { Search, AlertTriangle, X } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
@@ -7,8 +7,6 @@ import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { toast } from 'sonner';
 import { userAPI, eventsAPI, type UserProfile, type Event } from '../services/api';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from './ui/card';
-import { AlertTriangle } from 'lucide-react';
 
 interface ManualAttendanceProps {
   currentUser: any;
@@ -362,48 +360,73 @@ export default function ManualAttendance(_props: ManualAttendanceProps) {
         </div>
       </motion.div>
 
-      {/* Overwrite Confirmation Inline Card (no modal) */}
+      {/* Overwrite Confirmation Modal */}
       {showOverwriteDialog && (
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mt-6"
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60"
+          onClick={handleCancelOverwrite}
         >
-          <Card className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#252839] shadow-xl">
-            {/* Header with icon and close button */}
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 p-5 border-b border-gray-200 dark:border-gray-700">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="w-full max-w-md bg-white dark:bg-[#252839] rounded-lg shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between p-5 border-b border-gray-200 dark:border-gray-700">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-orange-500/20 flex items-center justify-center">
                   <AlertTriangle className="w-5 h-5 text-orange-500" />
                 </div>
-                <CardTitle className="text-gray-900 dark:text-white font-semibold">Overwrite Attendance</CardTitle>
+                <h3 className="text-gray-900 dark:text-white font-semibold">
+                  Overwrite Attendance
+                </h3>
               </div>
-            </CardHeader>
+              <button
+                onClick={handleCancelOverwrite}
+                className="p-1.5 rounded-md transition-colors hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
 
-            <CardContent className="p-5 space-y-4">
+            {/* Content */}
+            <div className="p-5 space-y-4">
               {/* Warning Message */}
               <p className="text-gray-700 dark:text-gray-300">
-                <span className="font-medium text-gray-900 dark:text-white">{selectedMember?.fullName}</span> already has an attendance record for this event.
+                <span className="text-gray-900 dark:text-white font-medium">{selectedMember?.fullName}</span> already has an attendance record for this event.
               </p>
 
-              {/* Current Record Box */}
+              {/* Current Record */}
               <div className="p-4 rounded-lg bg-gray-50 dark:bg-[#1a1d2e]">
-                <div className="mb-3 text-gray-600 dark:text-gray-400 text-sm font-medium">
+                <div className="mb-3 text-gray-600 dark:text-gray-400">
                   Current Record:
                 </div>
                 <div className="space-y-2.5">
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-600 dark:text-gray-400">Member:</span>
-                    <span className="text-gray-900 dark:text-white font-medium">{selectedMember?.fullName}</span>
+                    <span className="text-gray-600 dark:text-gray-400">
+                      Member:
+                    </span>
+                    <span className="text-gray-900 dark:text-white">
+                      {selectedMember?.fullName}
+                    </span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-600 dark:text-gray-400">Event:</span>
-                    <span className="text-gray-900 dark:text-white font-medium">{selectedEvent?.name}</span>
+                    <span className="text-gray-600 dark:text-gray-400">
+                      Event:
+                    </span>
+                    <span className="text-gray-900 dark:text-white">
+                      {selectedEvent?.name}
+                    </span>
                   </div>
                   <div className="my-2 border-t border-gray-200 dark:border-gray-700" />
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-600 dark:text-gray-400">Status:</span>
-                    <span className="text-gray-900 dark:text-white font-medium">{existingRecord}</span>
+                    <span className="text-gray-600 dark:text-gray-400">
+                      Status:
+                    </span>
+                    <span className="text-gray-900 dark:text-white">
+                      {existingRecord}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -411,29 +434,28 @@ export default function ManualAttendance(_props: ManualAttendanceProps) {
               {/* New Value Indicator */}
               <div className="p-3 rounded-lg border bg-orange-50 dark:bg-orange-500/5 border-orange-200 dark:border-orange-500/30">
                 <p className="text-sm text-orange-800 dark:text-orange-300">
-                  New {timeType === 'timeIn' ? 'Time In' : 'Time Out'}: <span className="font-semibold text-orange-900 dark:text-orange-200">{status} - {new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}</span>
+                  New {timeType === 'timeIn' ? 'Time In' : 'Time Out'}: <span className="text-orange-900 dark:text-orange-200">{status} - {new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}</span>
                 </p>
               </div>
-            </CardContent>
+            </div>
 
-            {/* Footer with actions */}
-            <CardFooter className="flex gap-3 p-5 border-t border-gray-200 dark:border-gray-700">
-              <Button 
-                variant="outline" 
+            {/* Footer */}
+            <div className="flex gap-3 p-5 border-t border-gray-200 dark:border-gray-700">
+              <button
                 onClick={handleCancelOverwrite}
-                className="flex-1 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                className="flex-1 py-2.5 px-4 rounded-md border transition-colors border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
               >
                 Cancel
-              </Button>
-              <Button 
-                onClick={handleConfirmOverwrite} 
-                className="flex-1 bg-orange-500 hover:bg-orange-600 text-white"
+              </button>
+              <button
+                onClick={handleConfirmOverwrite}
+                className="flex-1 py-2.5 px-4 rounded-md bg-orange-500 text-white hover:bg-orange-600 transition-colors"
               >
                 Change
-              </Button>
-            </CardFooter>
-          </Card>
-        </motion.div>
+              </button>
+            </div>
+          </motion.div>
+        </div>
       )}
     </div>
   );
