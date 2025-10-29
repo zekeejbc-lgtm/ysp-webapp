@@ -27,14 +27,25 @@ export default function MyProfile({ currentUser }: MyProfileProps) {
         setError(null);
 
         console.log('Fetching profile for user:', currentUser);
+        console.log('Available properties:', Object.keys(currentUser));
         console.log('Username:', currentUser.username);
         console.log('ID Code:', currentUser.id);
 
         // Fetch profile using username or idCode
-        const response = await userAPI.getProfile(
-          currentUser.username || undefined,
-          currentUser.id || undefined
-        );
+        // Ensure at least one parameter is provided and not empty
+        const username = currentUser.username && currentUser.username.trim() !== '' ? currentUser.username : undefined;
+        const idCode = currentUser.id && currentUser.id.trim() !== '' ? currentUser.id : undefined;
+        
+        console.log('Calling API with username:', username, 'and idCode:', idCode);
+        
+        // Check if we have at least one valid parameter
+        if (!username && !idCode) {
+          setError('User information is incomplete. Please log in again.');
+          setLoading(false);
+          return;
+        }
+        
+        const response = await userAPI.getProfile(username, idCode);
 
         console.log('Profile response:', response);
 
@@ -83,11 +94,14 @@ export default function MyProfile({ currentUser }: MyProfileProps) {
 
         try {
           // Upload to Google Drive via backend
+          const username = currentUser.username && currentUser.username.trim() !== '' ? currentUser.username : undefined;
+          const idCode = currentUser.id && currentUser.id.trim() !== '' ? currentUser.id : undefined;
+          
           const response = await userAPI.uploadProfilePicture(
             base64Image,
-            `profile_${currentUser.username || currentUser.id}.jpg`,
-            currentUser.username || undefined,
-            currentUser.id || undefined,
+            `profile_${username || idCode}.jpg`,
+            username,
+            idCode,
             file.type
           );
 
