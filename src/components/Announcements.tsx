@@ -139,8 +139,19 @@ export default function Announcements({ currentUser }: AnnouncementsProps) {
   });
 
   const handleCreateAnnouncement = async () => {
+    // Debug logging
+    console.log('=== CREATE ANNOUNCEMENT VALIDATION ===');
+    console.log('Title:', newTitle);
+    console.log('Subject:', newSubject);
+    console.log('Body:', newBody);
+    console.log('Recipient Type:', recipientType);
+    console.log('Recipient Value:', recipientValue);
+    console.log('Selected Users:', selectedUsers);
+    console.log('======================================');
+
     // Validate all required fields
     if (!newTitle.trim()) {
+      console.error('VALIDATION FAILED: Title is empty');
       toast.error('Missing required fields', {
         description: 'Please enter a title'
       });
@@ -148,6 +159,7 @@ export default function Announcements({ currentUser }: AnnouncementsProps) {
     }
 
     if (!newSubject.trim()) {
+      console.error('VALIDATION FAILED: Subject is empty');
       toast.error('Missing required fields', {
         description: 'Please enter a subject'
       });
@@ -155,6 +167,7 @@ export default function Announcements({ currentUser }: AnnouncementsProps) {
     }
 
     if (!newBody.trim()) {
+      console.error('VALIDATION FAILED: Body is empty');
       toast.error('Missing required fields', {
         description: 'Please enter the announcement body'
       });
@@ -162,6 +175,7 @@ export default function Announcements({ currentUser }: AnnouncementsProps) {
     }
 
     if (!recipientType) {
+      console.error('VALIDATION FAILED: Recipient type not selected');
       toast.error('Missing required fields', {
         description: 'Please select a recipient type'
       });
@@ -177,6 +191,7 @@ export default function Announcements({ currentUser }: AnnouncementsProps) {
       finalRecipientValue = 'Only Heads';
     } else if (recipientType === 'Specific Committee') {
       if (!recipientValue || !COMMITTEES.includes(recipientValue)) {
+        console.error('VALIDATION FAILED: Committee not selected');
         toast.error('Missing required fields', {
           description: 'Please select a committee'
         });
@@ -184,6 +199,7 @@ export default function Announcements({ currentUser }: AnnouncementsProps) {
       }
     } else if (recipientType === 'Specific Person/s') {
       if (selectedUsers.length === 0) {
+        console.error('VALIDATION FAILED: No users selected. selectedUsers:', selectedUsers);
         toast.error('Missing required fields', {
           description: 'Please select at least one recipient'
         });
@@ -191,6 +207,8 @@ export default function Announcements({ currentUser }: AnnouncementsProps) {
       }
       finalRecipientValue = selectedUsers.join(', ');
     }
+
+    console.log('VALIDATION PASSED! Final recipient value:', finalRecipientValue);
 
     try {
       setCreating(true);
