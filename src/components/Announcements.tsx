@@ -454,7 +454,7 @@ export default function Announcements({ currentUser }: AnnouncementsProps) {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               transition={{ type: "spring", duration: 0.5 }}
-              className="modal-content max-w-2xl max-h-[85vh] flex flex-col"
+              className="modal-content max-w-2xl"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
@@ -469,7 +469,7 @@ export default function Announcements({ currentUser }: AnnouncementsProps) {
                 </motion.button>
               </div>
 
-              <div className="space-y-4 flex-1 overflow-y-auto pr-2">
+              <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
                 <div>
                   <Label htmlFor="title">Title *</Label>
                   <Input
