@@ -5,7 +5,8 @@ const SHEETS = {
   USER_PROFILES: 'User Profiles',
   MASTER_ATTENDANCE: 'Master Attendance Log',
   ANNOUNCEMENTS: 'Announcements',
-  FEEDBACK: 'Feedback'
+  FEEDBACK: 'Feedback',
+  HOMEPAGE_CONTENT: 'Homepage Content'
 };
 
 // ===== MAIN ENTRY POINT =====
@@ -62,6 +63,8 @@ function handlePostRequest(data) {
       return handleGetFeedback(data);
     case 'replyToFeedback':
       return handleReplyToFeedback(data);
+    case 'getHomepageContent':
+      return handleGetHomepageContent(data);
     default:
       return { success: false, message: 'Unknown action: ' + action };
   }
@@ -1732,6 +1735,100 @@ function handleReplyToFeedback(data) {
   } catch (error) {
     Logger.log('Error replying to feedback: ' + error.toString());
     return { success: false, message: 'Error replying to feedback: ' + error.toString() };
+  }
+}
+
+// ===== GET HOMEPAGE CONTENT HANDLER =====
+function handleGetHomepageContent(data) {
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const homepageSheet = ss.getSheetByName(SHEETS.HOMEPAGE_CONTENT);
+    
+    if (!homepageSheet) {
+      return { success: false, message: 'Homepage Content sheet not found' };
+    }
+    
+    // Get all data from Homepage Content sheet
+    const homepageData = homepageSheet.getDataRange().getValues();
+    
+    // Create a map of key-value pairs
+    const contentMap = {};
+    
+    // Skip header row, process data rows
+    for (let i = 1; i < homepageData.length; i++) {
+      const key = homepageData[i][0]; // Column A
+      const value = homepageData[i][1]; // Column B
+      
+      if (key && key.toString().trim() !== '') {
+        contentMap[key.toString()] = value ? value.toString() : '';
+      }
+    }
+    
+    // Extract mission/vision/about from specific rows
+    const mission = contentMap['mission'] || '';
+    const vision = contentMap['vision'] || '';
+    const aboutYSP = contentMap['aboutYSP'] || '';
+    
+    // Extract objectives (Section 1, 2, 3)
+    const objectives = [];
+    const section1 = contentMap['objectives'] || '';
+    if (section1) {
+      // Split by numbered items (e.g., "1.) ", "2.) ", etc.)
+      const sections = section1.split(/\d+\.\)\s+/).filter(s => s.trim());
+      objectives.push(...sections);
+    }
+    
+    // Extract org chart URL
+    const orgChartUrl = contentMap['orgChartUrl'] || '';
+    
+    // Extract founder info
+    const founderName = contentMap['founderName'] || '';
+    const email = contentMap['email'] || '';
+    const facebookUrl = contentMap['facebookUrl'] || '';
+    
+    // Extract projects (projectImageUrl_1, projectDesc_1, projectImageUrl_2, projectDesc_2, etc.)
+    const projects = [];
+    let projectIndex = 1;
+    
+    while (true) {
+      const imageKey = 'projectImageUrl_' + projectIndex;
+      const descKey = 'projectDesc_' + projectIndex;
+      
+      const imageUrl = contentMap[imageKey];
+      const description = contentMap[descKey];
+      
+      if (!imageUrl && !description) {
+        break; // No more projects
+      }
+      
+      projects.push({
+        image: imageUrl || '',
+        description: description || '',
+        title: 'Project ' + projectIndex // Default title, can be extracted if needed
+      });
+      
+      projectIndex++;
+    }
+    
+    Logger.log('Retrieved homepage content with ' + projects.length + ' projects');
+    
+    return {
+      success: true,
+      content: {
+        mission: mission,
+        vision: vision,
+        about: aboutYSP,
+        objectives: objectives,
+        orgChartUrl: orgChartUrl,
+        founderName: founderName,
+        email: email,
+        facebookUrl: facebookUrl,
+        projects: projects
+      }
+    };
+  } catch (error) {
+    Logger.log('Error fetching homepage content: ' + error.toString());
+    return { success: false, message: 'Error fetching homepage content: ' + error.toString() };
   }
 }
 

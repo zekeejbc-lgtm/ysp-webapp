@@ -454,5 +454,43 @@ export const feedbackAPI = {
   },
 };
 
+// ======================================================
+// Homepage API
+// ======================================================
+
+export interface HomepageProject {
+  image: string;
+  description: string;
+  title: string;
+}
+
+export interface HomepageContent {
+  mission: string;
+  vision: string;
+  about: string;
+  objectives: string[];
+  orgChartUrl: string;
+  founderName: string;
+  email: string;
+  facebookUrl: string;
+  projects: HomepageProject[];
+}
+
+export interface HomepageResponse {
+  success: boolean;
+  message?: string;
+  content?: HomepageContent;
+}
+
+export const homepageAPI = {
+  /**
+   * Get homepage content from Google Sheets
+   * Available to everyone
+   */
+  getContent: async (): Promise<HomepageResponse> => {
+    return apiRequest('getHomepageContent', {});
+  },
+};
+
 // Export API_CONFIG for direct access if needed
 export { API_CONFIG };
