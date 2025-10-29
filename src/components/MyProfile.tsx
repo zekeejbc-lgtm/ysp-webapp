@@ -26,11 +26,17 @@ export default function MyProfile({ currentUser }: MyProfileProps) {
         setLoading(true);
         setError(null);
 
+        console.log('Fetching profile for user:', currentUser);
+        console.log('Username:', currentUser.username);
+        console.log('ID Code:', currentUser.id);
+
         // Fetch profile using username or idCode
         const response = await userAPI.getProfile(
-          currentUser.username,
-          currentUser.id
+          currentUser.username || undefined,
+          currentUser.id || undefined
         );
+
+        console.log('Profile response:', response);
 
         if (response.success && response.profile) {
           setProfile(response.profile);
@@ -80,8 +86,8 @@ export default function MyProfile({ currentUser }: MyProfileProps) {
           const response = await userAPI.uploadProfilePicture(
             base64Image,
             `profile_${currentUser.username || currentUser.id}.jpg`,
-            currentUser.username,
-            currentUser.id,
+            currentUser.username || undefined,
+            currentUser.id || undefined,
             file.type
           );
 
