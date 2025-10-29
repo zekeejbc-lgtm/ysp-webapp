@@ -1,5 +1,6 @@
 // ===== CONFIGURATION =====
 const SPREADSHEET_ID = '1zTgBQw3ISAtagKOKhMYl6JWL6DnQSpcHt7L3UnBevuU';
+const PROFILE_PICTURES_FOLDER_ID = '192-pVluL93fYKpyJoukfi_H5az_9fqFK'; // Google Drive folder for profile pictures
 const SHEETS = {
   ACCESS_LOGS: 'Access Logs',
   USER_PROFILES: 'User Profiles',
@@ -67,6 +68,10 @@ function handlePostRequest(data) {
       return handleGetHomepageContent(data);
     case 'getUserProfile':
       return handleGetUserProfile(data);
+    case 'uploadProfilePicture':
+      return handleUploadProfilePicture(data);
+    case 'updateProfilePicture':
+      return handleUpdateProfilePicture(data);
     default:
       return { success: false, message: 'Unknown action: ' + action };
   }
@@ -1952,6 +1957,131 @@ function handleGetUserProfile(data) {
   } catch (error) {
     Logger.log('Error fetching user profile: ' + error.toString());
     return { success: false, message: 'Error fetching user profile: ' + error.toString() };
+  }
+}
+
+// ===== UPLOAD PROFILE PICTURE TO GOOGLE DRIVE =====
+/**
+ * Uploads a profile picture to Google Drive folder
+ * @param {Object} data - Contains base64Image, fileName, username/idCode
+ * @returns {Object} - Success status with Drive file URL
+ */
+function handleUploadProfilePicture(data) {
+  try {
+    const { base64Image, fileName, username, idCode, mimeType } = data;
+    
+    if (!base64Image) {
+      return { success: false, message: 'Image data is required' };
+    }
+    
+    if (!username && !idCode) {
+      return { success: false, message: 'Username or ID Code is required' };
+    }
+    
+    // Get the profile pictures folder
+    const folder = DriveApp.getFolderById(PROFILE_PICTURES_FOLDER_ID);
+    
+    // Decode base64 image
+    const base64Data = base64Image.split(',')[1] || base64Image;
+    const blob = Utilities.newBlob(
+      Utilities.base64Decode(base64Data),
+      mimeType || 'image/jpeg',
+      fileName || 'profile_' + (username || idCode) + '.jpg'
+    );
+    
+    // Check if user already has a profile picture and delete it
+    const existingFiles = folder.getFilesByName(fileName || 'profile_' + (username || idCode) + '.jpg');
+    while (existingFiles.hasNext()) {
+      const file = existingFiles.next();
+      file.setTrashed(true);
+    }
+    
+    // Upload new file to Drive
+    const file = folder.createFile(blob);
+    
+    // Make file publicly viewable
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    
+    // Get the public URL
+    const fileUrl = 'https://drive.google.com/uc?export=view&id=' + file.getId();
+    
+    // Update the User Profiles sheet with the new URL
+    const updateResult = handleUpdateProfilePicture({
+      username: username,
+      idCode: idCode,
+      profilePictureURL: fileUrl
+    });
+    
+    if (!updateResult.success) {
+      return { success: false, message: 'Image uploaded but failed to update profile: ' + updateResult.message };
+    }
+    
+    return {
+      success: true,
+      message: 'Profile picture uploaded successfully',
+      profilePictureURL: fileUrl
+    };
+    
+  } catch (error) {
+    Logger.log('Error uploading profile picture: ' + error.toString());
+    return { success: false, message: 'Error uploading profile picture: ' + error.toString() };
+  }
+}
+
+// ===== UPDATE PROFILE PICTURE URL IN SHEET =====
+/**
+ * Updates the ProfilePictureURL in User Profiles sheet
+ * @param {Object} data - Contains username/idCode and profilePictureURL
+ * @returns {Object} - Success status
+ */
+function handleUpdateProfilePicture(data) {
+  try {
+    const { username, idCode, profilePictureURL } = data;
+    
+    if (!username && !idCode) {
+      return { success: false, message: 'Username or ID Code is required' };
+    }
+    
+    if (!profilePictureURL) {
+      return { success: false, message: 'Profile picture URL is required' };
+    }
+    
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const userProfilesSheet = ss.getSheetByName(SHEETS.USER_PROFILES);
+    
+    if (!userProfilesSheet) {
+      return { success: false, message: 'User Profiles sheet not found' };
+    }
+    
+    const userProfilesData = userProfilesSheet.getDataRange().getValues();
+    
+    // Skip header row (index 0), start from row 1
+    for (let i = 1; i < userProfilesData.length; i++) {
+      const row = userProfilesData[i];
+      const rowUsername = row[13]; // Column N - Username
+      const rowIdCode = row[18]; // Column S - ID Code
+      
+      // Match by username or ID code
+      if ((username && rowUsername === username) || (idCode && rowIdCode === idCode)) {
+        // Update Column V (index 21) - ProfilePictureURL
+        // Row number is i+1 because sheet rows are 1-indexed
+        userProfilesSheet.getRange(i + 1, 22).setValue(profilePictureURL); // Column V is index 21, but Range uses 1-based indexing so it's 22
+        
+        Logger.log('Updated profile picture for user: ' + (username || idCode));
+        
+        return {
+          success: true,
+          message: 'Profile picture updated successfully',
+          profilePictureURL: profilePictureURL
+        };
+      }
+    }
+    
+    return { success: false, message: 'User not found' };
+    
+  } catch (error) {
+    Logger.log('Error updating profile picture: ' + error.toString());
+    return { success: false, message: 'Error updating profile picture: ' + error.toString() };
   }
 }
 

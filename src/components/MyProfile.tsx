@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { User, Mail, Phone, Calendar, MapPin, Briefcase, IdCard, Users, Eye, EyeOff, Loader2, AlertCircle } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { User, Mail, Phone, Calendar, MapPin, Briefcase, IdCard, Users, Eye, EyeOff, Loader2, AlertCircle, Camera, Upload } from 'lucide-react';
 import { userAPI, UserProfile } from '../services/api';
 
 interface MyProfileProps {
@@ -12,6 +12,9 @@ export default function MyProfile({ darkMode, currentUser }: MyProfileProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadSuccess, setUploadSuccess] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -45,6 +48,78 @@ export default function MyProfile({ darkMode, currentUser }: MyProfileProps) {
 
     fetchProfile();
   }, [currentUser]);
+
+  // Handle profile picture upload
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Image size should be less than 5MB');
+      return;
+    }
+
+    try {
+      setUploading(true);
+      setUploadSuccess(false);
+      setError(null);
+
+      // Convert image to base64
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const base64Image = e.target?.result as string;
+
+        try {
+          // Upload to Google Drive via backend
+          const response = await userAPI.uploadProfilePicture(
+            base64Image,
+            `profile_${currentUser.username || currentUser.id}.jpg`,
+            currentUser.username,
+            currentUser.id,
+            file.type
+          );
+
+          if (response.success && response.profilePictureURL) {
+            // Update local profile state immediately (real-time update)
+            setProfile(prev => prev ? { ...prev, profilePictureURL: response.profilePictureURL! } : null);
+            setUploadSuccess(true);
+            
+            // Hide success message after 3 seconds
+            setTimeout(() => setUploadSuccess(false), 3000);
+          } else {
+            setError(response.message || 'Failed to upload profile picture');
+          }
+        } catch (err) {
+          console.error('Upload error:', err);
+          setError('Failed to upload profile picture. Please try again.');
+        } finally {
+          setUploading(false);
+        }
+      };
+
+      reader.onerror = () => {
+        setError('Failed to read image file');
+        setUploading(false);
+      };
+
+      reader.readAsDataURL(file);
+    } catch (err) {
+      console.error('File handling error:', err);
+      setError('Failed to process image file');
+      setUploading(false);
+    }
+  };
+
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
 
   if (!currentUser) {
     return (
@@ -102,9 +177,48 @@ export default function MyProfile({ darkMode, currentUser }: MyProfileProps) {
               e.currentTarget.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(profile.fullName) + '&size=200&background=f6421f&color=fff';
             }}
           />
+          
+          {/* Upload Button Overlay */}
+          <button
+            onClick={handleUploadClick}
+            disabled={uploading}
+            className="absolute bottom-0 right-0 p-2 bg-gradient-to-r from-[#f6421f] to-[#ee8724] text-white rounded-full shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Change profile picture"
+          >
+            {uploading ? (
+              <Loader2 size={20} className="animate-spin" />
+            ) : (
+              <Camera size={20} />
+            )}
+          </button>
+          
+          {/* Hidden file input */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleFileSelect}
+            className="hidden"
+          />
         </div>
+        
         <h2 className="text-2xl font-bold text-[#f6421f] dark:text-[#ee8724] mt-4">{profile.fullName}</h2>
         <p className="text-gray-600 dark:text-gray-400 text-lg">{profile.username}</p>
+        
+        {/* Upload Status Messages */}
+        {uploadSuccess && (
+          <div className="mt-3 inline-flex items-center gap-2 px-4 py-2 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-lg text-sm animate-fade-in">
+            <Upload size={16} />
+            Profile picture updated successfully!
+          </div>
+        )}
+        
+        {error && !loading && (
+          <div className="mt-3 inline-flex items-center gap-2 px-4 py-2 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-lg text-sm">
+            <AlertCircle size={16} />
+            {error}
+          </div>
+        )}
       </div>
 
       {/* Personal Information Card */}

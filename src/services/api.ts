@@ -189,6 +189,12 @@ export interface UserProfileResponse {
   profiles?: UserProfile[];
 }
 
+export interface UploadProfilePictureResponse {
+  success: boolean;
+  message: string;
+  profilePictureURL?: string;
+}
+
 export const userAPI = {
   /**
    * Get user profile by username or ID code
@@ -209,6 +215,30 @@ export const userAPI = {
    */
   updateProfile: async (idCode: string, updates: Record<string, any>): Promise<any> => {
     return apiRequest('updateUserProfile', { idCode, ...updates });
+  },
+
+  /**
+   * Upload profile picture to Google Drive
+   * @param base64Image - Base64 encoded image data
+   * @param fileName - Name of the file
+   * @param username - Username of the user
+   * @param idCode - ID Code of the user
+   * @param mimeType - MIME type of the image (e.g., 'image/jpeg', 'image/png')
+   */
+  uploadProfilePicture: async (
+    base64Image: string,
+    fileName: string,
+    username?: string,
+    idCode?: string,
+    mimeType?: string
+  ): Promise<UploadProfilePictureResponse> => {
+    return apiRequest('uploadProfilePicture', {
+      base64Image,
+      fileName,
+      username,
+      idCode,
+      mimeType: mimeType || 'image/jpeg',
+    });
   },
 };
 
