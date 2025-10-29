@@ -68,6 +68,8 @@ function handlePostRequest(data) {
       return handleGetHomepageContent(data);
     case 'getUserProfile':
       return handleGetUserProfile(data);
+    case 'updateProfile':
+      return handleUpdateProfile(data);
     case 'uploadProfilePicture':
       return handleUploadProfilePicture(data);
     case 'updateProfilePicture':
@@ -1957,6 +1959,81 @@ function handleGetUserProfile(data) {
   } catch (error) {
     Logger.log('Error fetching user profile: ' + error.toString());
     return { success: false, message: 'Error fetching user profile: ' + error.toString() };
+  }
+}
+
+// ===== UPDATE USER PROFILE =====
+function handleUpdateProfile(data) {
+  try {
+    const { idCode } = data;
+    
+    if (!idCode) {
+      return { success: false, message: 'ID Code is required' };
+    }
+    
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const userProfilesSheet = ss.getSheetByName(SHEETS.USER_PROFILES);
+    
+    if (!userProfilesSheet) {
+      return { success: false, message: 'User Profiles sheet not found' };
+    }
+    
+    const userProfilesData = userProfilesSheet.getDataRange().getValues();
+    
+    // Find the user's row by ID Code
+    for (let i = 1; i < userProfilesData.length; i++) {
+      const row = userProfilesData[i];
+      const rowIdCode = row[18]; // Column S - ID Code
+      
+      if (rowIdCode === idCode) {
+        // Update allowed fields
+        // Column B - Email Address
+        if (data.email !== undefined) {
+          userProfilesSheet.getRange(i + 1, 2).setValue(data.email);
+        }
+        
+        // Column G - Sex/Gender
+        if (data.gender !== undefined) {
+          userProfilesSheet.getRange(i + 1, 7).setValue(data.gender);
+        }
+        
+        // Column H - Pronouns
+        if (data.pronouns !== undefined) {
+          userProfilesSheet.getRange(i + 1, 8).setValue(data.pronouns);
+        }
+        
+        // Column I - Civil Status
+        if (data.civilStatus !== undefined) {
+          userProfilesSheet.getRange(i + 1, 9).setValue(data.civilStatus);
+        }
+        
+        // Column J - Contact Number
+        if (data.contactNumber !== undefined) {
+          userProfilesSheet.getRange(i + 1, 10).setValue(data.contactNumber);
+        }
+        
+        // Column K - Religion
+        if (data.religion !== undefined) {
+          userProfilesSheet.getRange(i + 1, 11).setValue(data.religion);
+        }
+        
+        // Column L - Nationality
+        if (data.nationality !== undefined) {
+          userProfilesSheet.getRange(i + 1, 12).setValue(data.nationality);
+        }
+        
+        return { 
+          success: true, 
+          message: 'Profile updated successfully' 
+        };
+      }
+    }
+    
+    return { success: false, message: 'User not found' };
+    
+  } catch (error) {
+    Logger.log('Error updating user profile: ' + error.toString());
+    return { success: false, message: 'Error updating user profile: ' + error.toString() };
   }
 }
 
