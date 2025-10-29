@@ -7,7 +7,7 @@ import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { toast } from 'sonner';
 import { userAPI, eventsAPI, type UserProfile, type Event } from '../services/api';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './ui/card';
 
 interface ManualAttendanceProps {
   currentUser: any;
@@ -361,33 +361,39 @@ export default function ManualAttendance(_props: ManualAttendanceProps) {
         </div>
       </motion.div>
 
-      {/* Overwrite Confirmation Dialog - use shared Dialog for consistency */}
-  <Dialog open={showOverwriteDialog} onOpenChange={(open: boolean) => { if (!open) handleCancelOverwrite(); }}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="text-[#f6421f] dark:text-[#ee8724]">Record Already Exists</DialogTitle>
-            <DialogDescription>Duplicate attendance detected.</DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4">
-            <div className="rounded-lg border bg-muted/30 dark:bg-muted/10 p-4">
-              <p className="text-sm">
-                <span className="font-semibold text-foreground">{selectedMember?.fullName}</span> has already {timeType === 'timeIn' ? 'timed in' : 'timed out'} for this event.
-              </p>
-              <div className="mt-3 rounded-md border bg-background p-3">
-                <p className="text-xs text-muted-foreground mb-1">Current Record</p>
-                <p className="font-semibold">{existingRecord}</p>
+      {/* Overwrite Confirmation Inline Card (no modal) */}
+      {showOverwriteDialog && (
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mt-6"
+        >
+          <Card className="shadow-lg border-orange-100 dark:border-gray-700 bg-white dark:bg-gray-900">
+            <CardHeader>
+              <CardTitle className="text-[#f6421f] dark:text-[#ee8724]">Record Already Exists</CardTitle>
+              <CardDescription>Duplicate attendance detected.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="rounded-lg border bg-orange-50/60 dark:bg-muted/10 p-4 border-orange-200 dark:border-gray-700">
+                  <p className="text-sm">
+                    <span className="font-semibold text-foreground">{selectedMember?.fullName}</span> has already {timeType === 'timeIn' ? 'timed in' : 'timed out'} for this event.
+                  </p>
+                  <div className="mt-3 rounded-md border bg-background p-3">
+                    <p className="text-xs text-muted-foreground mb-1">Current Record</p>
+                    <p className="font-semibold">{existingRecord}</p>
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground">Do you want to overwrite the existing record with the new one?</p>
               </div>
-            </div>
-            <p className="text-sm text-muted-foreground">Do you want to overwrite the existing record with the new one?</p>
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={handleCancelOverwrite}>Cancel</Button>
-            <Button onClick={handleConfirmOverwrite} className="bg-gradient-to-r from-[#f6421f] to-[#ee8724] hover:from-[#ee8724] hover:to-[#fbcb29] text-white">Overwrite</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            </CardContent>
+            <CardFooter className="justify-end gap-2">
+              <Button variant="outline" onClick={handleCancelOverwrite}>Cancel</Button>
+              <Button onClick={handleConfirmOverwrite} className="bg-gradient-to-r from-[#f6421f] to-[#ee8724] hover:from-[#ee8724] hover:to-[#fbcb29] text-white">Overwrite</Button>
+            </CardFooter>
+          </Card>
+        </motion.div>
+      )}
     </div>
   );
 }
