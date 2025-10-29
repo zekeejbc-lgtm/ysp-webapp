@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { toast } from 'sonner';
 import { userAPI, eventsAPI, type UserProfile, type Event } from '../services/api';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './ui/card';
+import { AlertTriangle } from 'lucide-react';
 
 interface ManualAttendanceProps {
   currentUser: any;
@@ -368,23 +369,30 @@ export default function ManualAttendance(_props: ManualAttendanceProps) {
           animate={{ opacity: 1, y: 0 }}
           className="mt-6"
         >
-          <Card className="shadow-lg border-orange-100 dark:border-gray-700 bg-white dark:bg-gray-900">
-            <CardHeader>
-              <CardTitle className="text-[#f6421f] dark:text-[#ee8724]">Record Already Exists</CardTitle>
-              <CardDescription>Duplicate attendance detected.</CardDescription>
+          <Card className="relative overflow-hidden rounded-xl md:rounded-2xl border border-orange-200/60 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-xl before:absolute before:inset-y-0 before:left-0 before:w-1.5 before:bg-gradient-to-b before:from-[#f6421f] before:to-[#ee8724] before:content-[''] before:rounded-l-2xl">
+            <CardHeader className="pb-4">
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5 text-[#f6421f] dark:text-[#ee8724]">
+                  <AlertTriangle size={20} />
+                </div>
+                <div>
+                  <CardTitle className="text-[#f6421f] dark:text-[#ee8724]">Record Already Exists</CardTitle>
+                  <CardDescription>Duplicate attendance detected.</CardDescription>
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div className="rounded-lg border bg-orange-50/60 dark:bg-muted/10 p-4 border-orange-200 dark:border-gray-700">
-                  <p className="text-sm">
-                    <span className="font-semibold text-foreground">{selectedMember?.fullName}</span> has already {timeType === 'timeIn' ? 'timed in' : 'timed out'} for this event.
+              <div className="grid gap-4 md:grid-cols-3 md:gap-6">
+                <div className="md:col-span-2 space-y-3">
+                  <p className="text-sm leading-6">
+                    <span className="font-medium text-foreground">{selectedMember?.fullName}</span> has already {timeType === 'timeIn' ? 'timed in' : 'timed out'} for this event.
                   </p>
-                  <div className="mt-3 rounded-md border bg-background p-3">
-                    <p className="text-xs text-muted-foreground mb-1">Current Record</p>
-                    <p className="font-semibold">{existingRecord}</p>
+                  <div className="rounded-lg border bg-orange-50/60 dark:bg-muted/10 p-4 border-orange-200 dark:border-gray-700">
+                    <p className="text-xs text-muted-foreground mb-1">Current record</p>
+                    <p className="font-semibold tracking-wide">{existingRecord}</p>
                   </div>
+                  <p className="text-sm text-muted-foreground">Do you want to overwrite the existing record with the new one?</p>
                 </div>
-                <p className="text-sm text-muted-foreground">Do you want to overwrite the existing record with the new one?</p>
               </div>
             </CardContent>
             <CardFooter className="justify-end gap-2">
