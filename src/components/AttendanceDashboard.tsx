@@ -1,104 +1,123 @@
-import React, { useState } from 'react';
-import { Search, ChevronDown, ChevronUp } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Search, ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Input } from './ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { eventsAPI, Event, EventAnalytics } from '../services/api';
 
 interface AttendanceDashboardProps {
   darkMode: boolean;
 }
 
-// Mock events and attendance data
-const mockEvents = [
-  { id: 1, name: 'General Assembly - October 2024', date: '2024-10-15', status: 'Completed' },
-  { id: 2, name: 'Community Clean-Up Drive', date: '2024-10-10', status: 'Completed' },
-  { id: 3, name: 'Youth Leadership Summit', date: '2024-10-20', status: 'Active' },
-  { id: 4, name: 'Tree Planting Activity', date: '2024-10-05', status: 'Completed' }
-];
-
-const mockCommittees = [
+const COMMITTEE_OPTIONS = [
   { id: 'all', name: 'All Committees' },
-  { id: 'programs', name: 'Programs Committee' },
-  { id: 'logistics', name: 'Logistics Committee' },
-  { id: 'media', name: 'Media Committee' },
-  { id: 'finance', name: 'Finance Committee' }
+  { id: 'heads', name: 'All Heads' },
+  { id: 'YSPTIR', name: 'Membership and Internal Affairs Committee' },
+  { id: 'YSPTCM', name: 'Communications and Marketing Committee' },
+  { id: 'YSPTFR', name: 'Finance and Treasury Committee' },
+  { id: 'YSPTSD', name: 'Secretariat and Documentation Committee' },
+  { id: 'YSPTER', name: 'External Relations Committee' },
+  { id: 'YSPTPD', name: 'Program Development Committee' }
 ];
-
-const mockAttendanceData = {
-  1: {
-    all: { Present: 45, Late: 8, Absent: 12, Excused: 5, NotRecorded: 3, Total: 73 },
-    programs: { Present: 12, Late: 2, Absent: 1, Excused: 0, NotRecorded: 0, Total: 15 },
-    logistics: { Present: 10, Late: 1, Absent: 1, Excused: 0, NotRecorded: 0, Total: 12 },
-    media: { Present: 9, Late: 0, Absent: 0, Excused: 1, NotRecorded: 0, Total: 10 },
-    finance: { Present: 6, Late: 1, Absent: 1, Excused: 0, NotRecorded: 0, Total: 8 }
-  },
-  2: {
-    all: { Present: 38, Late: 5, Absent: 15, Excused: 7, NotRecorded: 2, Total: 67 },
-    programs: { Present: 10, Late: 2, Absent: 2, Excused: 1, NotRecorded: 0, Total: 15 },
-    logistics: { Present: 8, Late: 1, Absent: 2, Excused: 1, NotRecorded: 0, Total: 12 },
-    media: { Present: 8, Late: 0, Absent: 1, Excused: 1, NotRecorded: 0, Total: 10 },
-    finance: { Present: 5, Late: 1, Absent: 1, Excused: 1, NotRecorded: 0, Total: 8 }
-  },
-  3: {
-    all: { Present: 52, Late: 6, Absent: 8, Excused: 4, NotRecorded: 1, Total: 71 },
-    programs: { Present: 13, Late: 1, Absent: 1, Excused: 0, NotRecorded: 0, Total: 15 },
-    logistics: { Present: 11, Late: 0, Absent: 1, Excused: 0, NotRecorded: 0, Total: 12 },
-    media: { Present: 9, Late: 1, Absent: 0, Excused: 0, NotRecorded: 0, Total: 10 },
-    finance: { Present: 7, Late: 0, Absent: 0, Excused: 1, NotRecorded: 0, Total: 8 }
-  },
-  4: {
-    all: { Present: 41, Late: 9, Absent: 10, Excused: 6, NotRecorded: 4, Total: 70 },
-    programs: { Present: 11, Late: 2, Absent: 1, Excused: 1, NotRecorded: 0, Total: 15 },
-    logistics: { Present: 9, Late: 2, Absent: 1, Excused: 0, NotRecorded: 0, Total: 12 },
-    media: { Present: 8, Late: 1, Absent: 0, Excused: 1, NotRecorded: 0, Total: 10 },
-    finance: { Present: 5, Late: 2, Absent: 1, Excused: 0, NotRecorded: 0, Total: 8 }
-  }
-};
-
-// Mock attendee names
-const mockAttendeeNames = {
-  Present: ['Juan Cruz', 'Maria Santos', 'Pedro Reyes', 'Ana Garcia', 'Carlos Martinez', 'Sofia Lopez', 'Miguel Torres', 'Isabella Gonzalez'],
-  Late: ['Roberto Diaz', 'Patricia Morales', 'Fernando Castro'],
-  Absent: ['Jose Rivera', 'Carmen Flores', 'Antonio Vargas'],
-  Excused: ['Lucia Mendoza', 'Francisco Jimenez']
-};
 
 const COLORS = {
   Present: '#4ade80',
   Late: '#fbbf24',
   Absent: '#f87171',
   Excused: '#60a5fa',
-  NotRecorded: '#9ca3af'
+  'Not Recorded': '#9ca3af'
 };
 
-export default function AttendanceDashboard({ darkMode }: AttendanceDashboardProps) {
-  const [selectedEvent, setSelectedEvent] = useState<number | null>(null);
+export default function AttendanceDashboard({ }: AttendanceDashboardProps) {
+  const [events, setEvents] = useState<Event[]>([]);
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [selectedCommittee, setSelectedCommittee] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [expandedStatus, setExpandedStatus] = useState<string | null>(null);
+  const [analytics, setAnalytics] = useState<EventAnalytics | null>(null);
+  const [totalAttendees, setTotalAttendees] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [loadingEvents, setLoadingEvents] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Load all events on component mount
+  useEffect(() => {
+    loadEvents();
+  }, []);
+
+  // Load analytics when event or committee changes
+  useEffect(() => {
+    if (selectedEvent) {
+      loadAnalytics(selectedEvent.id, selectedCommittee);
+    }
+  }, [selectedEvent, selectedCommittee]);
+
+  const loadEvents = async () => {
+    setLoadingEvents(true);
+    setError(null);
+    try {
+      const response = await eventsAPI.getAll();
+      if (response.success && response.events) {
+        setEvents(response.events);
+      } else {
+        setError(response.message || 'Failed to load events');
+      }
+    } catch (err) {
+      setError('Failed to load events: ' + (err as Error).message);
+      console.error('Error loading events:', err);
+    } finally {
+      setLoadingEvents(false);
+    }
+  };
+
+  const loadAnalytics = async (eventId: string, committee: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await eventsAPI.getAnalytics(eventId, committee);
+      if (response.success && response.analytics) {
+        setAnalytics(response.analytics);
+        setTotalAttendees(response.totalAttendees || 0);
+      } else {
+        setError(response.message || 'Failed to load analytics');
+        setAnalytics(null);
+        setTotalAttendees(0);
+      }
+    } catch (err) {
+      setError('Failed to load analytics: ' + (err as Error).message);
+      setAnalytics(null);
+      setTotalAttendees(0);
+      console.error('Error loading analytics:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredEvents = searchTerm
-    ? mockEvents.filter(e => e.name.toLowerCase().includes(searchTerm.toLowerCase()))
-    : mockEvents;
+    ? events.filter(e => e.name.toLowerCase().includes(searchTerm.toLowerCase()))
+    : events;
 
-  const selectedEventData = selectedEvent && mockAttendanceData[selectedEvent as keyof typeof mockAttendanceData]
-    ? mockAttendanceData[selectedEvent as keyof typeof mockAttendanceData][selectedCommittee as keyof typeof mockAttendanceData[1]]
-    : null;
-
-  const chartData = selectedEventData
+  const chartData = analytics
     ? [
-        { name: 'Present', value: selectedEventData.Present },
-        { name: 'Late', value: selectedEventData.Late },
-        { name: 'Absent', value: selectedEventData.Absent },
-        { name: 'Excused', value: selectedEventData.Excused },
-        { name: 'Not Recorded', value: selectedEventData.NotRecorded }
+        { name: 'Present', value: analytics.Present.count },
+        { name: 'Late', value: analytics.Late.count },
+        { name: 'Absent', value: analytics.Absent.count },
+        { name: 'Excused', value: analytics.Excused.count },
+        { name: 'Not Recorded', value: analytics['Not Recorded'].count }
       ].filter(item => item.value > 0)
     : [];
 
   const toggleStatus = (status: string) => {
     setExpandedStatus(expandedStatus === status ? null : status);
+  };
+
+  const handleEventSelect = (event: Event) => {
+    setSelectedEvent(event);
+    setSearchTerm(event.name);
+    setShowSuggestions(false);
+    setExpandedStatus(null); // Reset expanded status when changing events
   };
 
   return (
@@ -115,18 +134,24 @@ export default function AttendanceDashboard({ darkMode }: AttendanceDashboardPro
           {/* Event Selection */}
           <div className="relative">
             <label className="block text-sm mb-2">Select Event</label>
-            <Search className="absolute left-3 top-11 transform -translate-y-1/2 text-gray-400" size={20} />
-            <Input
-              type="text"
-              placeholder="Search for an event..."
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setShowSuggestions(true);
-              }}
-              onFocus={() => setShowSuggestions(true)}
-              className="pl-10"
-            />
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 z-10" size={20} />
+              <Input
+                type="text"
+                placeholder={loadingEvents ? "Loading events..." : "Search for an event..."}
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setShowSuggestions(true);
+                }}
+                onFocus={() => setShowSuggestions(true)}
+                className="pl-10"
+                disabled={loadingEvents}
+              />
+              {loadingEvents && (
+                <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 animate-spin text-gray-400" size={20} />
+              )}
+            </div>
 
             {showSuggestions && filteredEvents.length > 0 && (
               <motion.div
@@ -137,14 +162,10 @@ export default function AttendanceDashboard({ darkMode }: AttendanceDashboardPro
                 {filteredEvents.map((event) => (
                   <button
                     key={event.id}
-                    onClick={() => {
-                      setSelectedEvent(event.id);
-                      setSearchTerm(event.name);
-                      setShowSuggestions(false);
-                    }}
+                    onClick={() => handleEventSelect(event)}
                     className="w-full px-4 py-3 text-left hover:bg-gradient-to-r hover:from-orange-50 hover:to-red-50 dark:hover:from-gray-700 dark:hover:to-gray-600 transition-all duration-200 border-b border-gray-100 dark:border-gray-700 last:border-b-0"
                   >
-                    <p>{event.name}</p>
+                    <p className="font-medium">{event.name}</p>
                     <p className="text-sm text-gray-500">{event.date} - {event.status}</p>
                   </button>
                 ))}
@@ -160,7 +181,7 @@ export default function AttendanceDashboard({ darkMode }: AttendanceDashboardPro
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {mockCommittees.map((committee) => (
+                {COMMITTEE_OPTIONS.map((committee) => (
                   <SelectItem key={committee.id} value={committee.id}>
                     {committee.name}
                   </SelectItem>
@@ -169,9 +190,26 @@ export default function AttendanceDashboard({ darkMode }: AttendanceDashboardPro
             </Select>
           </div>
         </div>
+
+        {error && (
+          <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-600 dark:text-red-400">
+            {error}
+          </div>
+        )}
       </motion.div>
 
-      {selectedEvent && selectedEventData && (
+      {loading && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="ysp-card text-center py-12"
+        >
+          <Loader2 className="animate-spin mx-auto mb-4 text-[#f6421f]" size={40} />
+          <p className="text-gray-500 dark:text-gray-400">Loading analytics...</p>
+        </motion.div>
+      )}
+
+      {!loading && selectedEvent && analytics && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -180,36 +218,44 @@ export default function AttendanceDashboard({ darkMode }: AttendanceDashboardPro
         >
           <div className="ysp-card">
             <h3 className="text-[#f6421f] dark:text-[#ee8724] mb-4">
-              {mockEvents.find(e => e.id === selectedEvent)?.name}
-              {selectedCommittee !== 'all' && ` - ${mockCommittees.find(c => c.id === selectedCommittee)?.name}`}
+              {selectedEvent.name}
+              {selectedCommittee !== 'all' && ` - ${COMMITTEE_OPTIONS.find(c => c.id === selectedCommittee)?.name}`}
             </h3>
 
             <div className="grid md:grid-cols-2 gap-6">
+              {/* Pie Chart */}
               <div className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={chartData}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="value"
-                    >
-                      {chartData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[entry.name as keyof typeof COLORS]} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
+                {chartData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={chartData}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                        outerRadius={80}
+                        fill="#8884d8"
+                        dataKey="value"
+                      >
+                        {chartData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[entry.name as keyof typeof COLORS]} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
+                    No attendance data available
+                  </div>
+                )}
               </div>
 
+              {/* Status Breakdown */}
               <div className="space-y-3">
                 {/* Present */}
-                {selectedEventData.Present > 0 && (
+                {analytics.Present.count > 0 && (
                   <motion.div
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -221,10 +267,10 @@ export default function AttendanceDashboard({ darkMode }: AttendanceDashboardPro
                     >
                       <span className="flex items-center gap-2">
                         <div className="w-4 h-4 rounded-full bg-green-400" />
-                        <span>Present</span>
+                        <span className="font-medium">Present</span>
                       </span>
                       <span className="flex items-center gap-2">
-                        {selectedEventData.Present}
+                        <span className="font-bold">{analytics.Present.count}</span>
                         {expandedStatus === 'Present' ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                       </span>
                     </button>
@@ -237,9 +283,13 @@ export default function AttendanceDashboard({ darkMode }: AttendanceDashboardPro
                           className="mt-2 p-3 bg-white dark:bg-gray-800 rounded-lg border border-green-200 dark:border-green-800 overflow-hidden"
                         >
                           <div className="flex flex-wrap gap-2">
-                            {mockAttendeeNames.Present.slice(0, selectedEventData.Present).map((name, idx) => (
-                              <span key={idx} className="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-sm rounded">
-                                {name}
+                            {analytics.Present.attendees.map((attendee, idx) => (
+                              <span 
+                                key={idx} 
+                                className="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-sm rounded-full"
+                                title={`${attendee.position} - ${attendee.committee}`}
+                              >
+                                {attendee.name}
                               </span>
                             ))}
                           </div>
@@ -250,7 +300,7 @@ export default function AttendanceDashboard({ darkMode }: AttendanceDashboardPro
                 )}
 
                 {/* Late */}
-                {selectedEventData.Late > 0 && (
+                {analytics.Late.count > 0 && (
                   <motion.div
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -262,10 +312,10 @@ export default function AttendanceDashboard({ darkMode }: AttendanceDashboardPro
                     >
                       <span className="flex items-center gap-2">
                         <div className="w-4 h-4 rounded-full bg-yellow-400" />
-                        <span>Late</span>
+                        <span className="font-medium">Late</span>
                       </span>
                       <span className="flex items-center gap-2">
-                        {selectedEventData.Late}
+                        <span className="font-bold">{analytics.Late.count}</span>
                         {expandedStatus === 'Late' ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                       </span>
                     </button>
@@ -278,9 +328,13 @@ export default function AttendanceDashboard({ darkMode }: AttendanceDashboardPro
                           className="mt-2 p-3 bg-white dark:bg-gray-800 rounded-lg border border-yellow-200 dark:border-yellow-800 overflow-hidden"
                         >
                           <div className="flex flex-wrap gap-2">
-                            {mockAttendeeNames.Late.slice(0, selectedEventData.Late).map((name, idx) => (
-                              <span key={idx} className="px-2 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-sm rounded">
-                                {name}
+                            {analytics.Late.attendees.map((attendee, idx) => (
+                              <span 
+                                key={idx} 
+                                className="px-3 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-sm rounded-full"
+                                title={`${attendee.position} - ${attendee.committee}`}
+                              >
+                                {attendee.name}
                               </span>
                             ))}
                           </div>
@@ -291,7 +345,7 @@ export default function AttendanceDashboard({ darkMode }: AttendanceDashboardPro
                 )}
 
                 {/* Absent */}
-                {selectedEventData.Absent > 0 && (
+                {analytics.Absent.count > 0 && (
                   <motion.div
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -303,10 +357,10 @@ export default function AttendanceDashboard({ darkMode }: AttendanceDashboardPro
                     >
                       <span className="flex items-center gap-2">
                         <div className="w-4 h-4 rounded-full bg-red-400" />
-                        <span>Absent</span>
+                        <span className="font-medium">Absent</span>
                       </span>
                       <span className="flex items-center gap-2">
-                        {selectedEventData.Absent}
+                        <span className="font-bold">{analytics.Absent.count}</span>
                         {expandedStatus === 'Absent' ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                       </span>
                     </button>
@@ -319,9 +373,13 @@ export default function AttendanceDashboard({ darkMode }: AttendanceDashboardPro
                           className="mt-2 p-3 bg-white dark:bg-gray-800 rounded-lg border border-red-200 dark:border-red-800 overflow-hidden"
                         >
                           <div className="flex flex-wrap gap-2">
-                            {mockAttendeeNames.Absent.slice(0, selectedEventData.Absent).map((name, idx) => (
-                              <span key={idx} className="px-2 py-1 bg-red-100 dark:bg-red-900/30 text-sm rounded">
-                                {name}
+                            {analytics.Absent.attendees.map((attendee, idx) => (
+                              <span 
+                                key={idx} 
+                                className="px-3 py-1 bg-red-100 dark:bg-red-900/30 text-sm rounded-full"
+                                title={`${attendee.position} - ${attendee.committee}`}
+                              >
+                                {attendee.name}
                               </span>
                             ))}
                           </div>
@@ -332,7 +390,7 @@ export default function AttendanceDashboard({ darkMode }: AttendanceDashboardPro
                 )}
 
                 {/* Excused */}
-                {selectedEventData.Excused > 0 && (
+                {analytics.Excused.count > 0 && (
                   <motion.div
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -344,10 +402,10 @@ export default function AttendanceDashboard({ darkMode }: AttendanceDashboardPro
                     >
                       <span className="flex items-center gap-2">
                         <div className="w-4 h-4 rounded-full bg-blue-400" />
-                        <span>Excused</span>
+                        <span className="font-medium">Excused</span>
                       </span>
                       <span className="flex items-center gap-2">
-                        {selectedEventData.Excused}
+                        <span className="font-bold">{analytics.Excused.count}</span>
                         {expandedStatus === 'Excused' ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                       </span>
                     </button>
@@ -360,9 +418,13 @@ export default function AttendanceDashboard({ darkMode }: AttendanceDashboardPro
                           className="mt-2 p-3 bg-white dark:bg-gray-800 rounded-lg border border-blue-200 dark:border-blue-800 overflow-hidden"
                         >
                           <div className="flex flex-wrap gap-2">
-                            {mockAttendeeNames.Excused.slice(0, selectedEventData.Excused).map((name, idx) => (
-                              <span key={idx} className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-sm rounded">
-                                {name}
+                            {analytics.Excused.attendees.map((attendee, idx) => (
+                              <span 
+                                key={idx} 
+                                className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-sm rounded-full"
+                                title={`${attendee.position} - ${attendee.committee}`}
+                              >
+                                {attendee.name}
                               </span>
                             ))}
                           </div>
@@ -373,29 +435,59 @@ export default function AttendanceDashboard({ darkMode }: AttendanceDashboardPro
                 )}
 
                 {/* Not Recorded */}
-                {selectedEventData.NotRecorded > 0 && (
+                {analytics['Not Recorded'].count > 0 && (
                   <motion.div
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.5 }}
-                    className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
                   >
-                    <span className="flex items-center gap-2">
-                      <div className="w-4 h-4 rounded-full bg-gray-400" />
-                      Not Recorded
-                    </span>
-                    <span>{selectedEventData.NotRecorded}</span>
+                    <button
+                      onClick={() => toggleStatus('Not Recorded')}
+                      className="w-full flex items-center justify-between p-3 bg-gradient-to-r from-gray-50 to-slate-50 dark:from-gray-800 dark:to-slate-800 rounded-lg hover:shadow-md transition-all duration-200 border border-gray-200 dark:border-gray-700"
+                    >
+                      <span className="flex items-center gap-2">
+                        <div className="w-4 h-4 rounded-full bg-gray-400" />
+                        <span className="font-medium">Not Recorded</span>
+                      </span>
+                      <span className="flex items-center gap-2">
+                        <span className="font-bold">{analytics['Not Recorded'].count}</span>
+                        {expandedStatus === 'Not Recorded' ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                      </span>
+                    </button>
+                    <AnimatePresence>
+                      {expandedStatus === 'Not Recorded' && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className="mt-2 p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden"
+                        >
+                          <div className="flex flex-wrap gap-2">
+                            {analytics['Not Recorded'].attendees.map((attendee, idx) => (
+                              <span 
+                                key={idx} 
+                                className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-sm rounded-full"
+                                title={`${attendee.position} - ${attendee.committee}`}
+                              >
+                                {attendee.name}
+                              </span>
+                            ))}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </motion.div>
                 )}
 
+                {/* Total Attendees */}
                 <motion.div
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.6 }}
                   className="flex items-center justify-between p-4 bg-gradient-to-r from-[#f6421f] to-[#ee8724] text-white rounded-lg mt-4 shadow-lg"
                 >
-                  <span>Total Attendees</span>
-                  <span>{selectedEventData.Total}</span>
+                  <span className="font-semibold">Total Attendees</span>
+                  <span className="text-xl font-bold">{totalAttendees}</span>
                 </motion.div>
               </div>
             </div>
@@ -403,13 +495,13 @@ export default function AttendanceDashboard({ darkMode }: AttendanceDashboardPro
         </motion.div>
       )}
 
-      {!selectedEvent && (
+      {!loading && !selectedEvent && !loadingEvents && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           className="ysp-card text-center py-12"
         >
-          <p className="text-gray-500 dark:text-gray-400">Select an event and committee to view attendance dashboard</p>
+          <p className="text-gray-500 dark:text-gray-400">Select an event to view attendance dashboard and analytics</p>
         </motion.div>
       )}
     </div>

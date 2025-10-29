@@ -145,4 +145,72 @@ const status = headerRow[9];       // Column J - Status
 
 ---
 
-**Last Updated**: October 28, 2025
+## 📊 Committee Mappings (Based on ID Code Prefix)
+
+| ID Code Prefix | Committee Name |
+|----------------|---------------|
+| YSPTIR | Membership and Internal Affairs Committee |
+| YSPTCM | Communications and Marketing Committee |
+| YSPTFR | Finance and Treasury Committee |
+| YSPTSD | Secretariat and Documentation Committee |
+| YSPTER | External Relations Committee |
+| YSPTPD | Program Development Committee |
+
+### Committee Filtering Rules:
+1. Extract the prefix from ID Code (Column A in Master Attendance Log, Column S in User Profiles)
+2. Example: ID Code "YSPTIR-2025" → Prefix "YSPTIR" → Membership and Internal Affairs Committee
+3. Filter "All Committees" shows all members
+4. Filter "All Heads" shows only members whose ID Number (Column D in Master Attendance Log) matches the head pattern
+
+---
+
+## 👔 Head Identification (Based on ID Number)
+
+**Head ID Number Pattern**: Ends with "00" and has specific values
+
+### Valid Head ID Numbers:
+- 25100
+- 25200
+- 25300
+- 25400
+- 25500
+- 25600
+- 25700
+
+### Head Detection Rule:
+- Check ID Number (Column D in Master Attendance Log)
+- Head if: ID Number is exactly one of the values above
+- Example: ID Number "25100" → Head ✓
+- Example: ID Number "25101" → Not a Head ✗
+
+---
+
+## 📈 Attendance Status Extraction
+
+Status is determined from the **Time IN** field value:
+
+### Status Formats in Time IN field:
+- `"Present - HH:MM AM/PM"` → Status: **Present**
+- `"Late - HH:MM AM/PM"` → Status: **Late**
+- `"Absent - HH:MM AM/PM"` → Status: **Absent**
+- `"Excused - HH:MM AM/PM"` → Status: **Excused**
+- Empty or blank → Status: **Not Recorded**
+
+### Extraction Logic:
+```javascript
+const timeInValue = row[timeInColumnIndex]; // Time IN column for specific event
+let status = 'Not Recorded';
+
+if (timeInValue && timeInValue.toString().trim() !== '') {
+  const timeInStr = timeInValue.toString();
+  if (timeInStr.includes(' - ')) {
+    status = timeInStr.split(' - ')[0].trim(); // Extract "Present", "Late", "Absent", or "Excused"
+  } else {
+    status = timeInStr.trim();
+  }
+}
+```
+
+---
+
+**Last Updated**: October 29, 2025

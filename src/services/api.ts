@@ -212,6 +212,72 @@ export interface Event {
   status: string;
 }
 
+export interface EventAnalytics {
+  Present: {
+    count: number;
+    attendees: Array<{
+      idCode: string;
+      name: string;
+      position: string;
+      idNumber: string;
+      committee: string;
+    }>;
+  };
+  Late: {
+    count: number;
+    attendees: Array<{
+      idCode: string;
+      name: string;
+      position: string;
+      idNumber: string;
+      committee: string;
+    }>;
+  };
+  Absent: {
+    count: number;
+    attendees: Array<{
+      idCode: string;
+      name: string;
+      position: string;
+      idNumber: string;
+      committee: string;
+    }>;
+  };
+  Excused: {
+    count: number;
+    attendees: Array<{
+      idCode: string;
+      name: string;
+      position: string;
+      idNumber: string;
+      committee: string;
+    }>;
+  };
+  'Not Recorded': {
+    count: number;
+    attendees: Array<{
+      idCode: string;
+      name: string;
+      position: string;
+      idNumber: string;
+      committee: string;
+    }>;
+  };
+}
+
+export interface EventAnalyticsResponse {
+  success: boolean;
+  message?: string;
+  event?: {
+    id: string;
+    name: string;
+    date: string;
+  };
+  analytics?: EventAnalytics;
+  totalAttendees?: number;
+  committeeFilter?: string;
+}
+
 export interface EventsResponse {
   success: boolean;
   message: string;
@@ -239,6 +305,13 @@ export const eventsAPI = {
    */
   toggleStatus: async (eventId: string, currentStatus: string): Promise<EventsResponse> => {
     return apiRequest('toggleEventStatus', { eventId, currentStatus });
+  },
+
+  /**
+   * Get event analytics with attendance breakdown by status
+   */
+  getAnalytics: async (eventId: string, committee?: string): Promise<EventAnalyticsResponse> => {
+    return apiRequest('getEventAnalytics', { eventId, committee });
   },
 };
 

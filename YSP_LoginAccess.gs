@@ -46,6 +46,8 @@ function handlePostRequest(data) {
       return handleRecordManualAttendance(data);
     case 'getUserAttendance':
       return handleGetUserAttendance(data);
+    case 'getEventAnalytics':
+      return handleGetEventAnalytics(data);
     default:
       return { success: false, message: 'Unknown action: ' + action };
   }
@@ -564,6 +566,103 @@ function handleGetUserAttendance(data) {
     const personRow = allData[personRowIndex];
     const attendanceRecords = [];
     
+    // Loop through events (start from column E, index 4, increment by 6)
+    for (let col = 4; col < headerRow.length; col += 6) {
+      const eventId = headerRow[col];
+      if (!eventId) continue;
+      
+      const eventName = headerRow[col + 1] || '';
+      const eventDate = headerRow[col + 2] || '';
+      const timeIn = personRow[col + 3] || '—';
+      const timeOut = personRow[col + 4] || '—';
+      
+      // Extract status from Time IN value (format: "Status - HH:MM AM/PM")
+      let status = '';
+      if (timeIn && timeIn !== '—') {
+        const timeInStr = timeIn.toString();
+        if (timeInStr.includes(' - ')) {
+          status = timeInStr.split(' - ')[0].trim();
+        }
+      }
+      
+      // Only include records where user has attended (has Time IN)
+      if (timeIn && timeIn !== '—') {
+        // Format the date
+        let formattedDate = '';
+        if (eventDate) {
+          const dateObj = new Date(eventDate);
+          if (!isNaN(dateObj.getTime())) {
+            // Format as "YYYY-MM-DD"
+            formattedDate = dateObj.getFullYear() + '-' + 
+                           String(dateObj.getMonth() + 1).padStart(2, '0') + '-' + 
+                           String(dateObj.getDate()).padStart(2, '0');
+          } else {
+            formattedDate = eventDate.toString();
+          }
+        }
+        
+        attendanceRecords.push({
+          eventId: eventId.toString(),
+          eventName: eventName,
+          date: formattedDate,
+          timeIn: timeIn.toString(),
+          timeOut: timeOut.toString(),
+          status: status
+        });
+      }
+    }
+    
+    // Sort by date (newest first)
+    attendanceRecords.sort((a, b) => {
+      const dateA = new Date(a.date);
+      const dateB = new Date(b.date);
+      return dateB - dateA;
+    });
+    
+    Logger.log('Retrieved ' + attendanceRecords.length + ' attendance records for ' + idCode);
+    
+    return {
+      success: true,
+      records: attendanceRecords
+    };
+  } catch (error) {
+    Logger.log('Error getting user attendance: ' + error.toString());
+    return { success: false, message: 'Error getting user attendance: ' + error.toString() };
+  }
+}
+
+// ===== GET USER ATTENDANCE HANDLER =====
+function handleGetUserAttendance(data) {
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const sheet = ss.getSheetByName(SHEETS.MASTER_ATTENDANCE);
+    
+    const idCode = data.idCode;
+    
+    if (!idCode) {
+      return { success: false, message: 'ID Code is required' };
+    }
+    
+    // Get all data
+    const allData = sheet.getDataRange().getValues();
+    const headerRow = allData[0];
+    
+    // Find the person's row by ID Code (Column A, index 0)
+    let personRowIndex = -1;
+    for (let row = 1; row < allData.length; row++) {
+      if (allData[row][0] && allData[row][0].toString() === idCode.toString()) {
+        personRowIndex = row;
+        break;
+      }
+    }
+    
+    if (personRowIndex === -1) {
+      return { success: false, message: 'ID Code not found in Master Attendance Log' };
+    }
+    
+    const personRow = allData[personRowIndex];
+    const attendanceRecords = [];
+    
     // Process each event (starting from column E, index 4, every 6 columns)
     for (let col = 4; col < headerRow.length; col += 6) {
       const eventId = headerRow[col];
@@ -622,6 +721,192 @@ function handleGetUserAttendance(data) {
   } catch (error) {
     Logger.log('Error fetching user attendance: ' + error.toString());
     return { success: false, message: 'Error fetching attendance: ' + error.toString() };
+  }
+}
+
+// ===== GET EVENT ANALYTICS HANDLER =====
+function handleGetEventAnalytics(data) {
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const sheet = ss.getSheetByName(SHEETS.MASTER_ATTENDANCE);
+    
+    const eventId = data.eventId;
+    const committeeFilter = data.committee || 'all'; // 'all', 'heads', or committee prefix (e.g., 'YSPTIR')
+    
+    if (!eventId) {
+      return { success: false, message: 'Event ID is required' };
+    }
+    
+    // Get all data
+    const allData = sheet.getDataRange().getValues();
+    const headerRow = allData[0];
+    
+    // Find the event column
+    let eventColIndex = -1;
+    for (let col = 4; col < headerRow.length; col += 6) {
+      if (headerRow[col] && headerRow[col].toString() === eventId.toString()) {
+        eventColIndex = col;
+        break;
+      }
+    }
+    
+    if (eventColIndex === -1) {
+      return { success: false, message: 'Event not found' };
+    }
+    
+    // Get event details
+    const eventName = headerRow[eventColIndex + 1] || '';
+    const eventDate = headerRow[eventColIndex + 2] || '';
+    const timeInColIndex = eventColIndex + 3;
+    
+    // Committee prefix mapping
+    const COMMITTEE_NAMES = {
+      'YSPTIR': 'Membership and Internal Affairs Committee',
+      'YSPTCM': 'Communications and Marketing Committee',
+      'YSPTFR': 'Finance and Treasury Committee',
+      'YSPTSD': 'Secretariat and Documentation Committee',
+      'YSPTER': 'External Relations Committee',
+      'YSPTPD': 'Program Development Committee'
+    };
+    
+    // Valid head ID numbers
+    const HEAD_ID_NUMBERS = ['25100', '25200', '25300', '25400', '25500', '25600', '25700'];
+    
+    // Initialize counters and attendee lists
+    const analytics = {
+      Present: { count: 0, attendees: [] },
+      Late: { count: 0, attendees: [] },
+      Absent: { count: 0, attendees: [] },
+      Excused: { count: 0, attendees: [] },
+      'Not Recorded': { count: 0, attendees: [] }
+    };
+    
+    let totalAttendees = 0;
+    
+    // Process each person (skip header row)
+    for (let row = 1; row < allData.length; row++) {
+      const personRow = allData[row];
+      const idCode = personRow[0] ? personRow[0].toString() : ''; // Column A - ID Code
+      const name = personRow[1] ? personRow[1].toString() : ''; // Column B - Name
+      const position = personRow[2] ? personRow[2].toString() : ''; // Column C - Position
+      const idNumber = personRow[3] ? personRow[3].toString() : ''; // Column D - ID Number
+      const timeInValue = personRow[timeInColIndex] || ''; // Time IN for this event
+      
+      // Skip empty rows
+      if (!idCode || !name) {
+        continue;
+      }
+      
+      // Extract committee prefix from ID Code (e.g., "YSPTIR-2025" -> "YSPTIR")
+      let committeePrefix = '';
+      if (idCode.includes('-')) {
+        committeePrefix = idCode.split('-')[0].trim();
+      }
+      
+      // Apply committee filter
+      let includeInAnalytics = false;
+      
+      if (committeeFilter === 'all') {
+        includeInAnalytics = true;
+      } else if (committeeFilter === 'heads') {
+        // Check if ID Number is in the head list
+        includeInAnalytics = HEAD_ID_NUMBERS.includes(idNumber);
+      } else {
+        // Filter by specific committee prefix
+        includeInAnalytics = (committeePrefix === committeeFilter);
+      }
+      
+      if (!includeInAnalytics) {
+        continue;
+      }
+      
+      // Determine status from Time IN value
+      let status = 'Not Recorded';
+      
+      if (timeInValue && timeInValue.toString().trim() !== '') {
+        const timeInStr = timeInValue.toString();
+        if (timeInStr.includes(' - ')) {
+          status = timeInStr.split(' - ')[0].trim(); // Extract "Present", "Late", "Absent", or "Excused"
+        } else {
+          status = timeInStr.trim();
+        }
+      }
+      
+      // Normalize status to match our analytics keys
+      const normalizedStatus = ['Present', 'Late', 'Absent', 'Excused'].includes(status) ? status : 'Not Recorded';
+      
+      // Add to analytics
+      if (analytics[normalizedStatus]) {
+        analytics[normalizedStatus].count++;
+        analytics[normalizedStatus].attendees.push({
+          idCode: idCode,
+          name: name,
+          position: position,
+          idNumber: idNumber,
+          committee: COMMITTEE_NAMES[committeePrefix] || committeePrefix
+        });
+      }
+      
+      totalAttendees++;
+    }
+    
+    // Format the date
+    let formattedDate = '';
+    if (eventDate) {
+      const dateObj = new Date(eventDate);
+      if (!isNaN(dateObj.getTime())) {
+        formattedDate = dateObj.getFullYear() + '-' + 
+                       String(dateObj.getMonth() + 1).padStart(2, '0') + '-' + 
+                       String(dateObj.getDate()).padStart(2, '0');
+      } else {
+        formattedDate = eventDate.toString();
+      }
+    }
+    
+    Logger.log('Event Analytics for ' + eventId + ': ' + JSON.stringify({
+      total: totalAttendees,
+      present: analytics.Present.count,
+      late: analytics.Late.count,
+      absent: analytics.Absent.count,
+      excused: analytics.Excused.count,
+      notRecorded: analytics['Not Recorded'].count
+    }));
+    
+    return {
+      success: true,
+      event: {
+        id: eventId,
+        name: eventName,
+        date: formattedDate
+      },
+      analytics: {
+        Present: {
+          count: analytics.Present.count,
+          attendees: analytics.Present.attendees
+        },
+        Late: {
+          count: analytics.Late.count,
+          attendees: analytics.Late.attendees
+        },
+        Absent: {
+          count: analytics.Absent.count,
+          attendees: analytics.Absent.attendees
+        },
+        Excused: {
+          count: analytics.Excused.count,
+          attendees: analytics.Excused.attendees
+        },
+        'Not Recorded': {
+          count: analytics['Not Recorded'].count,
+          attendees: analytics['Not Recorded'].attendees
+        }
+      },
+      totalAttendees: totalAttendees,
+      committeeFilter: committeeFilter
+    };
+  } catch (error) {
+    Logger.log('Error getting event analytics: ' + error.toString());
+    return { success: false, message: 'Error getting event analytics: ' + error.toString() };
   }
 }
 
