@@ -24,9 +24,6 @@ const COMMITTEES = [
   'Program Development Committee'
 ];
 
-// Head ID Numbers for permission checking
-const HEAD_ID_NUMBERS = ['25100', '25200', '25300', '25400', '25500', '25600', '25700'];
-
 export default function Announcements({ currentUser }: AnnouncementsProps) {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
@@ -45,10 +42,15 @@ export default function Announcements({ currentUser }: AnnouncementsProps) {
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [creating, setCreating] = useState(false);
 
-  // Check if user is a Head (role === 'Head' AND ID Number in HEAD_ID_NUMBERS)
-  const isHead = currentUser && 
-    currentUser.role === 'Head' && 
-    HEAD_ID_NUMBERS.includes(currentUser.id?.split('-').pop() || '');
+  // Check if user can create announcements (Heads, Auditor, Admin)
+  const canCreateAnnouncements = currentUser && (
+    currentUser.role === 'Head' ||
+    currentUser.role === 'Auditor' ||
+    currentUser.role === 'Admin'
+  );
+  
+  console.log('[Announcements] Can create announcements:', canCreateAnnouncements);
+  console.log('[Announcements] Current user role:', currentUser?.role);
 
   // Load announcements on mount
   useEffect(() => {
@@ -286,7 +288,7 @@ export default function Announcements({ currentUser }: AnnouncementsProps) {
             />
           </div>
 
-          {isHead && (
+          {canCreateAnnouncements && (
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Button
                 onClick={() => setShowCreateModal(true)}
