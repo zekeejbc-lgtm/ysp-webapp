@@ -43,7 +43,9 @@ export default function LoginScreen({ onLogin, darkMode, setDarkMode }: LoginScr
         // Map backend user data to frontend format
         const userData = {
           name: `${data.user.firstName} ${data.user.lastName}`,
-          idCode: data.user.id,
+          id: data.user.id,           // Add id property
+          idCode: data.user.id,       // Keep idCode for compatibility
+          username: data.user.username, // Add username property
           role: data.user.role
         };
         

@@ -2,7 +2,9 @@ export type UserRole = 'Admin' | 'Head' | 'Auditor' | 'Member' | 'Guest';
 
 export interface User {
   name: string;
+  id?: string;          // Add id property
   idCode: string;
+  username?: string;    // Add username property
   role: UserRole;
   email?: string;
   position?: string;
