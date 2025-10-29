@@ -72,11 +72,11 @@ export default function Homepage({ darkMode }: HomepageProps) {
 
       <div className="ysp-card">
         <h3 className="text-[#f6421f] dark:text-[#ee8724] mb-3">Section 3. YSP shall be guided by the following advocacy pillars:</h3>
-        <ol className="list-decimal list-inside space-y-2">
+        <div className="text-justify whitespace-pre-wrap leading-relaxed">
           {content.objectives.map((objective, index) => (
-            <li key={index} className="text-justify ml-2">{objective}</li>
+            <p key={index}>{objective}</p>
           ))}
-        </ol>
+        </div>
       </div>
 
       {content.orgChartUrl && (

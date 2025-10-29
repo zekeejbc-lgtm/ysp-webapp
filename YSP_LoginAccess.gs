@@ -1785,13 +1785,8 @@ function handleGetHomepageContent(data) {
     if (homepageData.length > 7) founderName = homepageData[7][1] || ''; // Row 7, Column B
     if (homepageData.length > 8) aboutYSP = homepageData[8][1] || ''; // Row 8, Column B
     
-    // Parse objectives into array (split by numbered items)
-    const objectivesArray = [];
-    if (objectives) {
-      // Split by numbered items (e.g., "1.) ", "2.) ", "1)", "2)", etc.)
-      const sections = objectives.split(/\d+[\.\)]\s+/).filter(s => s.trim());
-      objectivesArray.push(...sections);
-    }
+    // Keep objectives as-is, don't split
+    const objectivesArray = objectives ? [objectives] : [];
     
     // Extract projects starting from row 9 (index 9)
     // Row 9: projectImageUrl_1, Row 10: projectDesc_1
