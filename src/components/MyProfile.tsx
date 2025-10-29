@@ -274,32 +274,35 @@ export default function MyProfile({ currentUser }: MyProfileProps) {
       {/* Header with Profile Picture */}
       <div className="ysp-card text-center relative">
         {/* Edit/Save/Cancel Buttons */}
-        <div className="absolute top-4 right-4 flex gap-2 z-10">
+        <div className="absolute top-4 right-4 flex flex-col sm:flex-row gap-2 z-10">
           {!isEditing ? (
             <button
               onClick={handleEdit}
-              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#f6421f] to-[#ee8724] text-white rounded-lg hover:shadow-lg transition-all shadow-md"
+              className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-sm sm:text-base bg-gradient-to-r from-[#f6421f] to-[#ee8724] text-white rounded-lg hover:shadow-lg transition-all shadow-md whitespace-nowrap"
             >
-              <Edit2 size={16} />
-              Edit Profile
+              <Edit2 size={16} className="flex-shrink-0" />
+              <span className="hidden sm:inline">Edit Profile</span>
+              <span className="sm:hidden">Edit</span>
             </button>
           ) : (
             <>
               <button
                 onClick={handleSaveEdit}
                 disabled={saving}
-                className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-all disabled:opacity-50 shadow-md"
+                className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-sm sm:text-base bg-green-600 hover:bg-green-700 text-white rounded-lg transition-all disabled:opacity-50 shadow-md whitespace-nowrap"
               >
-                {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-                Save Changes
+                {saving ? <Loader2 size={16} className="animate-spin flex-shrink-0" /> : <Save size={16} className="flex-shrink-0" />}
+                <span className="hidden sm:inline">Save Changes</span>
+                <span className="sm:hidden">Save</span>
               </button>
               <button
                 onClick={handleCancelEdit}
                 disabled={saving}
-                className="flex items-center gap-2 px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-all disabled:opacity-50 shadow-md"
+                className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-sm sm:text-base bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-all disabled:opacity-50 shadow-md whitespace-nowrap"
               >
-                <X size={16} />
-                Cancel
+                <X size={16} className="flex-shrink-0" />
+                <span className="hidden sm:inline">Cancel</span>
+                <span className="sm:hidden">✕</span>
               </button>
             </>
           )}
