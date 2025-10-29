@@ -65,10 +65,10 @@ export default function Sidebar({ isOpen, currentPage, setCurrentPage, currentUs
       id: 'communication',
       label: 'Communication Center',
       icon: MessageSquare,
-      roles: ['Admin', 'Head', 'Auditor', 'Member'],
+      roles: ['Admin', 'Head', 'Auditor', 'Member', 'Guest'],
       subItems: [
-        { label: 'Announcements', page: 'announcements', icon: MessageSquare },
-        { label: 'Feedback', page: 'feedback', icon: FileText }
+        { label: 'Announcements', page: 'announcements', icon: MessageSquare, roles: ['Admin', 'Head', 'Auditor', 'Member'] },
+        { label: 'Feedback', page: 'feedback', icon: FileText, roles: ['Admin', 'Head', 'Auditor', 'Member', 'Guest'] }
       ]
     },
     {

@@ -383,5 +383,76 @@ export const announcementsAPI = {
   },
 };
 
+// ======================================================
+// FEEDBACK API
+// ======================================================
+
+export interface Feedback {
+  referenceId: string;
+  timestamp: string;
+  authorName: string;
+  authorIdCode?: string; // Only visible to Admin/Auditor
+  message: string;
+  hasReply: boolean;
+  replyTimestamp?: string;
+  replyMessage?: string;
+  replierName?: string; // Only visible to Admin/Auditor
+  replierIdCode?: string; // Only visible to Admin/Auditor
+}
+
+export interface CreateFeedbackRequest {
+  message: string;
+  authorName: string;
+  authorIdCode?: string; // Optional, defaults to "Guest" if not provided
+}
+
+export interface ReplyToFeedbackRequest {
+  referenceId: string;
+  reply: string;
+  replierName: string;
+  replierIdCode: string;
+  replierRole: string;
+}
+
+export interface FeedbackResponse {
+  success: boolean;
+  message: string;
+  feedback?: Feedback | Feedback[];
+  reply?: {
+    referenceId: string;
+    replyTimestamp: string;
+    replierName: string;
+    replierIdCode: string;
+    replyMessage: string;
+  };
+}
+
+export const feedbackAPI = {
+  /**
+   * Create a new feedback
+   * Available to everyone (including Guests)
+   */
+  create: async (data: CreateFeedbackRequest): Promise<FeedbackResponse> => {
+    return apiRequest('createFeedback', data);
+  },
+
+  /**
+   * Get all feedback for a specific user
+   * Regular users see only their own feedback
+   * Admin/Auditor see all feedback
+   */
+  getAll: async (idCode: string, name: string, role: string): Promise<FeedbackResponse> => {
+    return apiRequest('getFeedback', { idCode, name, role });
+  },
+
+  /**
+   * Reply to a feedback
+   * Only available to Admin and Auditor
+   */
+  reply: async (data: ReplyToFeedbackRequest): Promise<FeedbackResponse> => {
+    return apiRequest('replyToFeedback', data);
+  },
+};
+
 // Export API_CONFIG for direct access if needed
 export { API_CONFIG };
