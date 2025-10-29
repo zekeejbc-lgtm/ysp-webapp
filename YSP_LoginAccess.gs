@@ -44,6 +44,8 @@ function handlePostRequest(data) {
       return handleRecordAttendance(data);
     case 'recordManualAttendance':
       return handleRecordManualAttendance(data);
+    case 'getUserAttendance':
+      return handleGetUserAttendance(data);
     default:
       return { success: false, message: 'Unknown action: ' + action };
   }
@@ -527,6 +529,99 @@ function handleRecordManualAttendance(data) {
   } catch (error) {
     Logger.log('Error recording manual attendance: ' + error.toString());
     return { success: false, message: 'Error recording attendance: ' + error.toString() };
+  }
+}
+
+// ===== GET USER ATTENDANCE HANDLER =====
+function handleGetUserAttendance(data) {
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const sheet = ss.getSheetByName(SHEETS.MASTER_ATTENDANCE);
+    
+    const idCode = data.idCode;
+    
+    if (!idCode) {
+      return { success: false, message: 'ID Code is required' };
+    }
+    
+    // Get all data
+    const allData = sheet.getDataRange().getValues();
+    const headerRow = allData[0];
+    
+    // Find the person's row by ID Code (Column A, index 0)
+    let personRowIndex = -1;
+    for (let row = 1; row < allData.length; row++) {
+      if (allData[row][0] && allData[row][0].toString() === idCode.toString()) {
+        personRowIndex = row;
+        break;
+      }
+    }
+    
+    if (personRowIndex === -1) {
+      return { success: false, message: 'ID Code not found in Master Attendance Log' };
+    }
+    
+    const personRow = allData[personRowIndex];
+    const attendanceRecords = [];
+    
+    // Process each event (starting from column E, index 4, every 6 columns)
+    for (let col = 4; col < headerRow.length; col += 6) {
+      const eventId = headerRow[col];
+      if (eventId) {
+        const eventName = headerRow[col + 1] || '';
+        const eventDate = headerRow[col + 2] || '';
+        const timeInValue = personRow[col + 3] || '';
+        const timeOutValue = personRow[col + 4] || '';
+        
+        // Only include events where there's a Time IN value
+        if (timeInValue && timeInValue.toString().trim() !== '') {
+          // Extract status from Time IN (e.g., "Present - 2:00 PM" -> "Present")
+          let status = 'Unknown';
+          const timeInStr = timeInValue.toString();
+          if (timeInStr.includes(' - ')) {
+            status = timeInStr.split(' - ')[0].trim();
+          } else {
+            status = timeInStr.trim();
+          }
+          
+          // Format date
+          let formattedDate = '';
+          if (eventDate) {
+            const dateObj = new Date(eventDate);
+            if (!isNaN(dateObj.getTime())) {
+              formattedDate = dateObj.getFullYear() + '-' + 
+                             String(dateObj.getMonth() + 1).padStart(2, '0') + '-' + 
+                             String(dateObj.getDate()).padStart(2, '0');
+            } else {
+              formattedDate = eventDate.toString();
+            }
+          }
+          
+          attendanceRecords.push({
+            date: formattedDate,
+            eventName: eventName,
+            timeIn: timeInValue.toString(),
+            timeOut: timeOutValue ? timeOutValue.toString() : '—',
+            status: status
+          });
+        }
+      }
+    }
+    
+    // Sort by date (newest first)
+    attendanceRecords.sort((a, b) => {
+      const dateA = new Date(a.date);
+      const dateB = new Date(b.date);
+      return dateB - dateA;
+    });
+    
+    return {
+      success: true,
+      records: attendanceRecords
+    };
+  } catch (error) {
+    Logger.log('Error fetching user attendance: ' + error.toString());
+    return { success: false, message: 'Error fetching attendance: ' + error.toString() };
   }
 }
 
