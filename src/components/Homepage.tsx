@@ -102,10 +102,10 @@ export default function Homepage({ darkMode }: HomepageProps) {
         <div className="flex gap-3">
           {content.email && (
             <a
-              href={`mailto:${content.email}`}
+              href={`https://mail.google.com/mail/?view=cm&fs=1&to=${content.email}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#f6421f] to-[#ee8724] text-white rounded-lg hover:from-[#ee8724] hover:to-[#fbcb29] transition-all shadow-lg shadow-orange-300/50"
             >
               <Mail size={18} />
               Email
@@ -116,7 +116,7 @@ export default function Homepage({ darkMode }: HomepageProps) {
               href={content.facebookUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-lg"
             >
               <Facebook size={18} />
               Facebook
@@ -161,8 +161,26 @@ export default function Homepage({ darkMode }: HomepageProps) {
           <p className="text-gray-700 dark:text-gray-300">Membership and Internal Affairs Officer</p>
           <p className="text-gray-700 dark:text-gray-300">Youth Service Philippines - Tagum Chapter</p>
           <div className="mt-4 pt-4 border-t border-gray-300 dark:border-gray-600">
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Should there be any issues in the Web App, you may contact us through our Facebook page, or Email
+            <p className="text-sm text-gray-600 dark:text-gray-400 text-justify leading-relaxed">
+              Should you encounter any issues, errors, or technical difficulties while using this Web App, please do not hesitate to reach out to us. You may contact our support team through our official{' '}
+              <a 
+                href={content.facebookUrl || 'https://www.facebook.com/YSPTagumChapter'}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
+              >
+                Facebook Page
+              </a>
+              {' '}or send us an Email:{' '}
+              <a 
+                href="https://mail.google.com/mail/?view=cm&fs=1&to=YSPTagumChapter@gmail.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[#f6421f] dark:text-[#ee8724] hover:underline font-medium"
+              >
+                YSPTagumChapter@gmail.com
+              </a>
+              {' '}for further assistance. We value your feedback and will address your concerns as promptly as possible to ensure a smooth user experience.
             </p>
           </div>
         </div>

@@ -1760,39 +1760,40 @@ function handleGetHomepageContent(data) {
       const value = homepageData[i][1]; // Column B
       
       if (key && key.toString().trim() !== '') {
-        contentMap[key.toString()] = value ? value.toString() : '';
+        const keyStr = key.toString().trim().toLowerCase();
+        contentMap[keyStr] = value ? value.toString() : '';
       }
     }
     
-    // Extract mission/vision/about from specific rows
-    const mission = contentMap['mission'] || '';
-    const vision = contentMap['vision'] || '';
-    const aboutYSP = contentMap['aboutYSP'] || '';
+    // Extract mission/vision/about from specific rows (case-insensitive)
+    const mission = contentMap['mission'] || contentMap['Section 1. Vision.'.toLowerCase()] || '';
+    const vision = contentMap['vision'] || contentMap['Section 2. Mission.'.toLowerCase()] || '';
+    const aboutYSP = contentMap['aboutysp'] || contentMap['about'] || '';
     
     // Extract objectives (Section 1, 2, 3)
     const objectives = [];
-    const section1 = contentMap['objectives'] || '';
+    const section1 = contentMap['objectives'] || contentMap['Section 3. YSP shall be guided by the following advocacy pillars:'.toLowerCase()] || '';
     if (section1) {
-      // Split by numbered items (e.g., "1.) ", "2.) ", etc.)
-      const sections = section1.split(/\d+\.\)\s+/).filter(s => s.trim());
+      // Split by numbered items (e.g., "1.) ", "2.) ", "1)", "2)", etc.)
+      const sections = section1.split(/\d+[\.\)]\s+/).filter(s => s.trim());
       objectives.push(...sections);
     }
     
     // Extract org chart URL
-    const orgChartUrl = contentMap['orgChartUrl'] || '';
+    const orgChartUrl = contentMap['orgcharturl'] || '';
     
     // Extract founder info
-    const founderName = contentMap['founderName'] || '';
+    const founderName = contentMap['foundername'] || '';
     const email = contentMap['email'] || '';
-    const facebookUrl = contentMap['facebookUrl'] || '';
+    const facebookUrl = contentMap['facebookurl'] || '';
     
     // Extract projects (projectImageUrl_1, projectDesc_1, projectImageUrl_2, projectDesc_2, etc.)
     const projects = [];
     let projectIndex = 1;
     
     while (true) {
-      const imageKey = 'projectImageUrl_' + projectIndex;
-      const descKey = 'projectDesc_' + projectIndex;
+      const imageKey = ('projectImageUrl_' + projectIndex).toLowerCase();
+      const descKey = ('projectDesc_' + projectIndex).toLowerCase();
       
       const imageUrl = contentMap[imageKey];
       const description = contentMap[descKey];
