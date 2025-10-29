@@ -1096,22 +1096,31 @@ function handleCreateAnnouncement(data) {
         authorName = profilesData[i][3] || ''; // Column D - Full Name
         authorRole = profilesData[i][20] || ''; // Column U - Role
         
-        // Check if user is a Head (by role AND ID Number)
-        const masterSheet = ss.getSheetByName(SHEETS.MASTER_ATTENDANCE);
-        const masterData = masterSheet.getDataRange().getValues();
-        let isHead = false;
+        // Check if user can create announcements (Heads, Auditor, or Admin)
+        let canCreateAnnouncement = false;
         
-        for (let j = 1; j < masterData.length; j++) {
-          if (masterData[j][0] && masterData[j][0].toString() === data.authorIdCode.toString()) {
-            const idNumber = masterData[j][3] ? masterData[j][3].toString() : '';
-            const HEAD_ID_NUMBERS = ['25100', '25200', '25300', '25400', '25500', '25600', '25700'];
-            isHead = (authorRole === 'Head' && HEAD_ID_NUMBERS.includes(idNumber));
-            break;
+        if (authorRole === 'Auditor' || authorRole === 'Admin') {
+          // Auditor and Admin can always create announcements
+          canCreateAnnouncement = true;
+        } else if (authorRole === 'Head') {
+          // For Heads, verify they have a valid Head ID Number
+          const masterSheet = ss.getSheetByName(SHEETS.MASTER_ATTENDANCE);
+          const masterData = masterSheet.getDataRange().getValues();
+          
+          for (let j = 1; j < masterData.length; j++) {
+            if (masterData[j][0] && masterData[j][0].toString() === data.authorIdCode.toString()) {
+              const idNumber = masterData[j][3] ? masterData[j][3].toString() : '';
+              const HEAD_ID_NUMBERS = ['25100', '25200', '25300', '25400', '25500', '25600', '25700'];
+              if (HEAD_ID_NUMBERS.includes(idNumber)) {
+                canCreateAnnouncement = true;
+              }
+              break;
+            }
           }
         }
         
-        if (!isHead) {
-          return { success: false, message: 'Only Heads can create announcements' };
+        if (!canCreateAnnouncement) {
+          return { success: false, message: 'Only Heads, Auditor, and Admin can create announcements' };
         }
         break;
       }
