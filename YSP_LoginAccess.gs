@@ -4,7 +4,8 @@ const SHEETS = {
   ACCESS_LOGS: 'Access Logs',
   USER_PROFILES: 'User Profiles',
   MASTER_ATTENDANCE: 'Master Attendance Log',
-  ANNOUNCEMENTS: 'Announcements'
+  ANNOUNCEMENTS: 'Announcements',
+  FEEDBACK: 'Feedback'
 };
 
 // ===== MAIN ENTRY POINT =====
@@ -55,6 +56,12 @@ function handlePostRequest(data) {
       return handleGetAnnouncements(data);
     case 'markAnnouncementAsRead':
       return handleMarkAnnouncementAsRead(data);
+    case 'createFeedback':
+      return handleCreateFeedback(data);
+    case 'getFeedback':
+      return handleGetFeedback(data);
+    case 'replyToFeedback':
+      return handleReplyToFeedback(data);
     default:
       return { success: false, message: 'Unknown action: ' + action };
   }
@@ -1466,4 +1473,266 @@ function handleMarkAnnouncementAsRead(data) {
     return { success: false, message: 'Error marking announcement as read: ' + error.toString() };
   }
 }
+
+// ===== CREATE FEEDBACK HANDLER =====
+function handleCreateFeedback(data) {
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const feedbackSheet = ss.getSheetByName(SHEETS.FEEDBACK);
+    
+    // Validate required fields
+    if (!data.message || !data.authorName) {
+      return { success: false, message: 'Message and author name are required' };
+    }
+    
+    // Get PH timezone timestamp
+    const now = new Date();
+    const phTime = new Date(now.getTime() + (8 * 60 * 60 * 1000));
+    
+    // Generate Reference ID (FBC-YYYY-###)
+    const feedbackData = feedbackSheet.getDataRange().getValues();
+    const currentYear = new Date().getFullYear();
+    let maxNumber = 0;
+    
+    // Find highest feedback number for current year
+    for (let i = 1; i < feedbackData.length; i++) {
+      const refId = feedbackData[i][4]; // Column E - Reference ID
+      if (refId) {
+        const match = refId.toString().match(/^FBC-(\d{4})-(\d{3})$/);
+        if (match && parseInt(match[1]) === currentYear) {
+          const num = parseInt(match[2]);
+          if (num > maxNumber) {
+            maxNumber = num;
+          }
+        }
+      }
+    }
+    
+    const newReferenceId = 'FBC-' + currentYear + '-' + String(maxNumber + 1).padStart(3, '0');
+    
+    // Determine author ID code (Guest if not provided)
+    const authorIdCode = data.authorIdCode || 'Guest';
+    
+    // Add feedback to sheet (Columns A-E, F-I will be empty until replied)
+    const nextRow = feedbackSheet.getLastRow() + 1;
+    feedbackSheet.getRange(nextRow, 1, 1, 5).setValues([[
+      phTime.toISOString(),           // A - Timestamp
+      data.authorName,                // B - Author Name
+      authorIdCode,                   // C - Author ID Code
+      data.message,                   // D - Feedback Message
+      newReferenceId                  // E - Reference ID
+    ]]);
+    
+    Logger.log('Created feedback: ' + newReferenceId + ' by ' + data.authorName);
+    
+    return {
+      success: true,
+      message: 'Feedback submitted successfully',
+      feedback: {
+        referenceId: newReferenceId,
+        timestamp: phTime.toISOString(),
+        authorName: data.authorName,
+        authorIdCode: authorIdCode,
+        message: data.message
+      }
+    };
+  } catch (error) {
+    Logger.log('Error creating feedback: ' + error.toString());
+    return { success: false, message: 'Error creating feedback: ' + error.toString() };
+  }
+}
+
+// ===== GET FEEDBACK HANDLER =====
+function handleGetFeedback(data) {
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const feedbackSheet = ss.getSheetByName(SHEETS.FEEDBACK);
+    
+    const userIdCode = data.idCode;
+    const userName = data.name;
+    const userRole = data.role;
+    
+    if (!userIdCode && !userName) {
+      return { success: false, message: 'User ID Code or Name is required' };
+    }
+    
+    // Get all feedback data
+    const feedbackData = feedbackSheet.getDataRange().getValues();
+    const feedbackList = [];
+    
+    // Skip header row
+    for (let i = 1; i < feedbackData.length; i++) {
+      const row = feedbackData[i];
+      
+      // Skip empty rows
+      if (!row[4]) continue;
+      
+      const timestamp = row[0];
+      const authorName = row[1] || '';
+      const authorIdCode = row[2] || '';
+      const message = row[3] || '';
+      const referenceId = row[4] || '';
+      const replyTimestamp = row[5] || '';
+      const replierName = row[6] || '';
+      const replierIdCode = row[7] || '';
+      const replyMessage = row[8] || '';
+      
+      // Check if user should see this feedback
+      let shouldInclude = false;
+      
+      if (userRole === 'Admin' || userRole === 'Auditor') {
+        // Admin and Auditor see all feedback
+        shouldInclude = true;
+      } else {
+        // Regular users see only their own feedback
+        if (authorIdCode === 'Guest') {
+          // For guests, match by name
+          shouldInclude = (authorName.toLowerCase() === userName.toLowerCase());
+        } else {
+          // For members, match by ID Code
+          shouldInclude = (authorIdCode === userIdCode);
+        }
+      }
+      
+      if (!shouldInclude) continue;
+      
+      // Format timestamp
+      let formattedTimestamp = '';
+      if (timestamp) {
+        const dateObj = new Date(timestamp);
+        if (!isNaN(dateObj.getTime())) {
+          formattedTimestamp = dateObj.toISOString();
+        } else {
+          formattedTimestamp = timestamp.toString();
+        }
+      }
+      
+      // Format reply timestamp
+      let formattedReplyTimestamp = '';
+      if (replyTimestamp) {
+        const dateObj = new Date(replyTimestamp);
+        if (!isNaN(dateObj.getTime())) {
+          formattedReplyTimestamp = dateObj.toISOString();
+        } else {
+          formattedReplyTimestamp = replyTimestamp.toString();
+        }
+      }
+      
+      // Build feedback object
+      const feedbackObj = {
+        referenceId: referenceId,
+        timestamp: formattedTimestamp,
+        authorName: authorName,
+        message: message,
+        hasReply: !!(replyMessage && replyMessage.toString().trim() !== '')
+      };
+      
+      // Show author ID only to Admin/Auditor
+      if (userRole === 'Admin' || userRole === 'Auditor') {
+        feedbackObj.authorIdCode = authorIdCode;
+      }
+      
+      // Add reply information if exists
+      if (feedbackObj.hasReply) {
+        feedbackObj.replyTimestamp = formattedReplyTimestamp;
+        feedbackObj.replyMessage = replyMessage;
+        
+        // Show replier info only to Admin/Auditor
+        if (userRole === 'Admin' || userRole === 'Auditor') {
+          feedbackObj.replierName = replierName;
+          feedbackObj.replierIdCode = replierIdCode;
+        }
+      }
+      
+      feedbackList.push(feedbackObj);
+    }
+    
+    // Sort by timestamp (newest first)
+    feedbackList.sort((a, b) => {
+      const dateA = new Date(a.timestamp);
+      const dateB = new Date(b.timestamp);
+      return dateB - dateA;
+    });
+    
+    Logger.log('Retrieved ' + feedbackList.length + ' feedback items for ' + (userIdCode || userName));
+    
+    return {
+      success: true,
+      feedback: feedbackList
+    };
+  } catch (error) {
+    Logger.log('Error fetching feedback: ' + error.toString());
+    return { success: false, message: 'Error fetching feedback: ' + error.toString() };
+  }
+}
+
+// ===== REPLY TO FEEDBACK HANDLER =====
+function handleReplyToFeedback(data) {
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const feedbackSheet = ss.getSheetByName(SHEETS.FEEDBACK);
+    
+    // Validate required fields
+    if (!data.referenceId || !data.reply || !data.replierName || !data.replierIdCode) {
+      return { success: false, message: 'Reference ID, reply, replier name, and replier ID are required' };
+    }
+    
+    // Check if replier is Admin or Auditor
+    if (data.replierRole !== 'Admin' && data.replierRole !== 'Auditor') {
+      return { success: false, message: 'Only Admin and Auditor can reply to feedback' };
+    }
+    
+    // Get all feedback data
+    const feedbackData = feedbackSheet.getDataRange().getValues();
+    
+    // Find the feedback by Reference ID
+    let feedbackRowIndex = -1;
+    for (let i = 1; i < feedbackData.length; i++) {
+      if (feedbackData[i][4] && feedbackData[i][4].toString() === data.referenceId.toString()) {
+        feedbackRowIndex = i;
+        break;
+      }
+    }
+    
+    if (feedbackRowIndex === -1) {
+      return { success: false, message: 'Feedback not found' };
+    }
+    
+    // Check if already replied
+    const existingReply = feedbackData[feedbackRowIndex][8]; // Column I - Reply Message
+    if (existingReply && existingReply.toString().trim() !== '') {
+      return { success: false, message: 'This feedback has already been replied to' };
+    }
+    
+    // Get PH timezone timestamp
+    const now = new Date();
+    const phTime = new Date(now.getTime() + (8 * 60 * 60 * 1000));
+    
+    // Add reply (Columns F-I)
+    feedbackSheet.getRange(feedbackRowIndex + 1, 6, 1, 4).setValues([[
+      phTime.toISOString(),           // F - Reply Timestamp
+      data.replierName,               // G - Replier Name
+      data.replierIdCode,             // H - Replier ID Code
+      data.reply                      // I - Reply Message
+    ]]);
+    
+    Logger.log('Replied to feedback ' + data.referenceId + ' by ' + data.replierName);
+    
+    return {
+      success: true,
+      message: 'Reply submitted successfully',
+      reply: {
+        referenceId: data.referenceId,
+        replyTimestamp: phTime.toISOString(),
+        replierName: data.replierName,
+        replierIdCode: data.replierIdCode,
+        replyMessage: data.reply
+      }
+    };
+  } catch (error) {
+    Logger.log('Error replying to feedback: ' + error.toString());
+    return { success: false, message: 'Error replying to feedback: ' + error.toString() };
+  }
+}
+
 
