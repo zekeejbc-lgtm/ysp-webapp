@@ -33,6 +33,13 @@ const API_CONFIG = {
  */
 async function apiRequest<T = any>(action: string, data: Record<string, any> = {}): Promise<T> {
   try {
+    const requestBody = {
+      action,
+      ...data,
+    };
+    
+    console.log(`[API] Request [${action}]:`, requestBody);
+    
     const response = await fetch(API_CONFIG.baseURL, {
       method: 'POST',
       mode: 'cors',
@@ -41,17 +48,17 @@ async function apiRequest<T = any>(action: string, data: Record<string, any> = {
         'Content-Type': 'application/json',
         'Origin': window.location.origin,
       },
-      body: JSON.stringify({
-        action,
-        ...data,
-      }),
+      body: JSON.stringify(requestBody),
     });
+
+    console.log(`[API] Response status [${action}]:`, response.status);
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
     const result = await response.json();
+    console.log(`[API] Response data [${action}]:`, result);
     return result;
   } catch (error) {
     console.error(`API Request Error [${action}]:`, error);

@@ -52,8 +52,16 @@ export default function Announcements({ currentUser }: AnnouncementsProps) {
 
   // Load announcements on mount
   useEffect(() => {
-    if (currentUser?.id) {
+    console.log('[Announcements] currentUser:', currentUser);
+    console.log('[Announcements] currentUser.id:', currentUser?.id);
+    console.log('[Announcements] currentUser.idCode:', currentUser?.idCode);
+    
+    if (currentUser?.idCode || currentUser?.id) {
       loadAnnouncements();
+    } else {
+      console.error('[Announcements] No valid ID found in currentUser');
+      setLoading(false);
+      toast.error('User ID not found. Please log in again.');
     }
   }, [currentUser]);
 
@@ -61,12 +69,16 @@ export default function Announcements({ currentUser }: AnnouncementsProps) {
     try {
       setLoading(true);
       
+      // Use idCode first, fallback to id
+      const userId = currentUser.idCode || currentUser.id;
+      console.log('[Announcements] Loading announcements for user ID:', userId);
+      
       // Add timeout to prevent infinite loading
       const timeoutPromise = new Promise((_, reject) => 
         setTimeout(() => reject(new Error('Request timeout')), 10000)
       );
       
-      const apiPromise = announcementsAPI.getAll(currentUser.id);
+      const apiPromise = announcementsAPI.getAll(userId);
       
       const response = await Promise.race([apiPromise, timeoutPromise]) as any;
       
