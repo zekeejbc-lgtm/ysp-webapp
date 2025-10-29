@@ -1178,20 +1178,39 @@ function handleCreateAnnouncement(data) {
     let emailStatus = 'Sent';
     try {
       const emailSubject = data.subject;
+      const formattedDate = phTime.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+      
       const emailBody = 
-        'Subject: ' + data.subject + '\n\n' +
+        '====================================================================\n' +
+        '                 OFFICIAL ANNOUNCEMENT NOTICE\n' +
+        '====================================================================\n\n' +
         'Title: ' + data.title + '\n' +
-        'Date: ' + phTime.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) + '\n' +
+        'Subject: ' + data.subject + '\n' +
+        'Date Released: ' + formattedDate + '\n' +
         'Author: ' + authorName + '\n' +
         'Announcement ID: ' + newAnnouncementId + '\n' +
-        'Recipient Type: ' + data.recipientType + '\n\n' +
-        'Body:\n' + data.body + '\n\n' +
+        'Intended Recipient(s): ' + data.recipientType + '\n\n' +
+        '--------------------------------------------------------------------\n' +
+        'MESSAGE:\n' +
+        '--------------------------------------------------------------------\n' +
+        data.body + '\n\n' +
+        '--------------------------------------------------------------------\n' +
+        'End of Message\n' +
+        '--------------------------------------------------------------------\n\n' +
         'Youth Service Philippines – Tagum Chapter\n' +
-        'Web App: https://ysp-webapp.vercel.app\n\n' +
-        'Disclaimer:\n' +
+        'If you wish to see more information or related updates, you may visit our official web application:\n' +
+        '🌐 Web App: https://ysp-webapp.vercel.app\n\n' +
+        '--------------------------------------------------------------------\n' +
+        'OFFICIAL NOTICE AND DISCLAIMER:\n' +
+        '--------------------------------------------------------------------\n' +
+        'This email has been formally issued by the Youth Service Philippines – Tagum Chapter.\n' +
+        'It is intended solely for the individual(s) or organization(s) to whom it is addressed.\n' +
+        'Unauthorized review, dissemination, or duplication of this message is strictly prohibited.\n\n' +
         'If you believe this email was sent to you in error, please contact:\n' +
         'Ezequiel John B. Crisostomo\n' +
-        'Membership and Internal Affairs Officer';
+        'Membership and Internal Affairs Officer\n' +
+        'Youth Service Philippines – Tagum Chapter\n' +
+        '--------------------------------------------------------------------';
       
       MailApp.sendEmail({
         to: recipientEmails.join(','),
