@@ -121,7 +121,6 @@ export default function App() {
           setCurrentPage={setCurrentPage}
           currentUser={currentUser}
           onLogout={handleLogout}
-          darkMode={darkMode}
         />
         
         <main className="content-area">

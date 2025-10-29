@@ -7,6 +7,41 @@ interface MyProfileProps {
   currentUser: any;
 }
 
+/**
+ * Helper function to get a displayable Google Drive image URL
+ * Converts various Google Drive URL formats to the thumbnail format which works better
+ */
+function getDisplayableGoogleDriveUrl(url: string): string {
+  if (!url || url.trim() === '') return '';
+  
+  // Extract file ID from various Google Drive URL formats
+  let fileId = '';
+  
+  // Format 1: https://drive.google.com/uc?export=view&id=FILE_ID
+  if (url.includes('drive.google.com/uc')) {
+    const match = url.match(/[?&]id=([^&]+)/);
+    if (match) fileId = match[1];
+  }
+  // Format 2: https://drive.google.com/file/d/FILE_ID/view
+  else if (url.includes('drive.google.com/file/d/')) {
+    const match = url.match(/\/file\/d\/([^/]+)/);
+    if (match) fileId = match[1];
+  }
+  // Format 3: https://drive.google.com/open?id=FILE_ID
+  else if (url.includes('drive.google.com/open')) {
+    const match = url.match(/[?&]id=([^&]+)/);
+    if (match) fileId = match[1];
+  }
+  
+  // If we found a file ID, return the thumbnail URL which has fewer CORS issues
+  if (fileId) {
+    return `https://drive.google.com/thumbnail?id=${fileId}&sz=w400`;
+  }
+  
+  // If it's not a Google Drive URL or we couldn't parse it, return as-is
+  return url;
+}
+
 export default function MyProfile({ currentUser }: MyProfileProps) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -237,20 +272,8 @@ export default function MyProfile({ currentUser }: MyProfileProps) {
     <div className="max-w-5xl mx-auto space-y-6">
       {/* Header with Profile Picture */}
       <div className="ysp-card text-center relative">
-        {/* YSP Logo at Top Right */}
-        <div className="absolute top-4 right-4 flex items-center gap-3">
-          <img 
-            src="https://scontent.fdvo2-2.fna.fbcdn.net/v/t39.30808-6/462543605_122156158186224300_6848909482214993863_n.jpg?_nc_cat=103&ccb=1-7&_nc_sid=6ee11a&_nc_eui2=AeE5G9n6YhqBJXvTMhWp_6nKZgJk1z6Kt6VmAmTXPoq3pYeS36vTXNvhqxK7JoXZQiSjKjQJpNYzGh4QNlxrPGYc&_nc_ohc=VjkQVxZ75qAQ7kNvgFWQx7-&_nc_zt=23&_nc_ht=scontent.fdvo2-2.fna&_nc_gid=ANwRqFiBDMvLJQ3HpWZxXB0&oh=00_AYDPInMPYNQEBRDBRKVcJIhZoHnRlvUzHQnT0Kg7yJGnCw&oe=6727C40A" 
-            alt="YSP Logo" 
-            className="w-16 h-16 rounded-full shadow-lg ring-2 ring-[#f6421f]/20 object-cover"
-            onError={(e) => {
-              e.currentTarget.src = "https://ui-avatars.com/api/?name=YSP&size=200&background=f6421f&color=fff";
-            }}
-          />
-        </div>
-
         {/* Edit/Save/Cancel Buttons */}
-        <div className="absolute top-20 right-4 flex gap-2">
+        <div className="absolute top-4 right-4 flex gap-2">
           {!isEditing ? (
             <button
               onClick={handleEdit}
@@ -284,16 +307,16 @@ export default function MyProfile({ currentUser }: MyProfileProps) {
         <div className="relative inline-block">
           <img
             src={profile.profilePictureURL && profile.profilePictureURL.trim() !== '' 
-              ? profile.profilePictureURL 
+              ? getDisplayableGoogleDriveUrl(profile.profilePictureURL)
               : `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.fullName)}&size=200&background=f6421f&color=fff`}
             alt={profile.fullName}
             className="w-32 h-32 rounded-full object-cover mx-auto shadow-lg ring-4 ring-[#f6421f]/20"
             onError={(e) => {
               console.error('Failed to load profile picture:', profile.profilePictureURL);
+              console.error('Tried URL:', e.currentTarget.src);
               e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.fullName)}&size=200&background=f6421f&color=fff`;
             }}
-            key={profile.profilePictureURL || 'default'} 
-            crossOrigin="anonymous"
+            key={profile.profilePictureURL || 'default'}
           />
           
           {/* Upload Button Overlay */}
@@ -537,26 +560,47 @@ export default function MyProfile({ currentUser }: MyProfileProps) {
             <User size={20} className="text-[#f6421f] mt-1 flex-shrink-0" />
             <div className="flex-1 min-w-0">
               <p className="text-sm text-gray-500 dark:text-gray-400">Username</p>
-              <p className="font-medium font-mono">{profile.username}</p>
+              {isEditing ? (
+                <input
+                  type="text"
+                  value={editedProfile.username ?? profile.username}
+                  onChange={(e) => handleFieldChange('username', e.target.value)}
+                  className="w-full px-2 py-1 border rounded mt-1 text-sm font-mono"
+                />
+              ) : (
+                <p className="font-medium font-mono">{profile.username}</p>
+              )}
             </div>
           </div>
 
           <div className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
             <div className="relative flex-1 min-w-0">
-              <button
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-0 top-0 p-1 text-[#f6421f] hover:text-[#ee8724] transition-colors z-10"
-                title={showPassword ? 'Hide password' : 'Show password'}
-              >
-                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-              </button>
+              {!isEditing && (
+                <button
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-0 top-0 p-1 text-[#f6421f] hover:text-[#ee8724] transition-colors z-10"
+                  title={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              )}
               <div className="flex items-start gap-3">
                 <IdCard size={20} className="text-[#f6421f] mt-1 flex-shrink-0" />
                 <div className="flex-1 min-w-0 pr-8">
                   <p className="text-sm text-gray-500 dark:text-gray-400">Password</p>
-                  <p className="font-medium font-mono break-all">
-                    {showPassword ? profile.password : '••••••••'}
-                  </p>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      value={editedProfile.password ?? profile.password}
+                      onChange={(e) => handleFieldChange('password', e.target.value)}
+                      className="w-full px-2 py-1 border rounded mt-1 text-sm font-mono"
+                      placeholder="Enter new password"
+                    />
+                  ) : (
+                    <p className="font-medium font-mono break-all">
+                      {showPassword ? profile.password : '••••••••'}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>

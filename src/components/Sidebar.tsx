@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { 
   Home, ChevronDown, ChevronRight, Users, BarChart3, QrCode, 
   ClipboardList, Calendar, MessageSquare, FileText, ScrollText,
@@ -11,10 +11,9 @@ interface SidebarProps {
   setCurrentPage: (page: string) => void;
   currentUser: any;
   onLogout: () => void;
-  darkMode: boolean;
 }
 
-export default function Sidebar({ isOpen, currentPage, setCurrentPage, currentUser, onLogout, darkMode }: SidebarProps) {
+export default function Sidebar({ isOpen, currentPage, setCurrentPage, currentUser, onLogout }: SidebarProps) {
   const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
 
   const toggleGroup = (group: string) => {
@@ -126,7 +125,7 @@ export default function Sidebar({ isOpen, currentPage, setCurrentPage, currentUs
               {isExpanded && (
                 <div className="ml-4 space-y-1 animate-[slideDown_0.25s_ease]">
                   {group.subItems.map((subItem) => {
-                    if (subItem.roles && !hasAccess(subItem.roles)) return null;
+                    if ('roles' in subItem && subItem.roles && !hasAccess(subItem.roles)) return null;
 
                     const SubIcon = subItem.icon;
                     return (
