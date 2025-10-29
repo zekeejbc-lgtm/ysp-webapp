@@ -38,8 +38,8 @@ export default function Feedback({ darkMode, currentUser }: FeedbackProps) {
     try {
       setLoading(true);
       
-      const idCode = currentUser?.id || 'guest';
-      const name = currentUser?.firstName || 'Guest';
+      const idCode = currentUser?.id || currentUser?.idCode || 'guest';
+      const name = currentUser?.name || currentUser?.firstName || 'Guest';
       const role = currentUser?.role || 'Guest';
       
       const response = await feedbackAPI.getAll(idCode, name, role);
@@ -84,8 +84,8 @@ export default function Feedback({ darkMode, currentUser }: FeedbackProps) {
       
       const response = await feedbackAPI.create({
         message: newMessage.trim(),
-        authorName: currentUser.firstName,
-        authorIdCode: isGuest ? undefined : currentUser.id,
+        authorName: currentUser?.name || currentUser?.firstName || 'Guest',
+        authorIdCode: isGuest ? undefined : (currentUser?.id || currentUser?.idCode),
       });
 
       if (response.success && response.feedback) {
@@ -128,9 +128,9 @@ export default function Feedback({ darkMode, currentUser }: FeedbackProps) {
       const response = await feedbackAPI.reply({
         referenceId: selectedFeedback.referenceId,
         reply: replyMessage.trim(),
-        replierName: currentUser.firstName,
-        replierIdCode: currentUser.id,
-        replierRole: currentUser.role,
+        replierName: currentUser?.name || currentUser?.firstName || 'Admin',
+        replierIdCode: currentUser?.id || currentUser?.idCode || '',
+        replierRole: currentUser?.role || 'Admin',
       });
 
       if (response.success) {
