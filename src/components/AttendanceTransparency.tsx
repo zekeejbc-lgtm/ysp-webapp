@@ -41,6 +41,8 @@ export default function AttendanceTransparency({ currentUser }: AttendanceTransp
   const fetchAttendance = async () => {
     setIsLoading(true);
     try {
+      console.log('Fetching attendance for ID:', currentUser.id);
+      
       const response = await fetch('/api/gas-proxy', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -50,17 +52,28 @@ export default function AttendanceTransparency({ currentUser }: AttendanceTransp
         })
       });
 
+      console.log('Response status:', response.status);
       const result = await response.json();
+      console.log('Result:', result);
 
-      if (result.success && result.records) {
-        setRecords(result.records);
-        calculateStatusCounts(result.records);
+      if (result.success) {
+        if (result.records && result.records.length > 0) {
+          setRecords(result.records);
+          calculateStatusCounts(result.records);
+        } else {
+          // No records found, but request was successful
+          setRecords([]);
+          setStatusCounts({ present: 0, late: 0, absent: 0, excused: 0 });
+        }
       } else {
-        toast.error('Failed to load attendance records');
+        console.error('Failed to load:', result.message);
+        toast.error(result.message || 'Failed to load attendance records');
+        setRecords([]);
       }
     } catch (error) {
       console.error('Error fetching attendance:', error);
       toast.error('Unable to load attendance records');
+      setRecords([]);
     } finally {
       setIsLoading(false);
     }
