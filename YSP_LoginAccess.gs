@@ -1751,49 +1751,68 @@ function handleGetHomepageContent(data) {
     // Get all data from Homepage Content sheet
     const homepageData = homepageSheet.getDataRange().getValues();
     
-    // Create a map of key-value pairs
+    // Read data based on row positions (from screenshot)
+    // Row 1: mission (Column A has "mission", Column B has value)
+    // Row 2: vision (Column A has "vision", Column B has value)
+    // Row 3: objectives (Column A has title, Column B has value)
+    
+    let vision = '';
+    let mission = '';
+    let objectives = '';
+    let aboutYSP = '';
+    let orgChartUrl = '';
+    let founderName = '';
+    let email = '';
+    let facebookUrl = '';
+    
+    // Create a map for other fields (case-insensitive)
     const contentMap = {};
     
-    // Skip header row, process data rows
+    // Process all rows
     for (let i = 1; i < homepageData.length; i++) {
       const key = homepageData[i][0]; // Column A
       const value = homepageData[i][1]; // Column B
       
-      if (key && key.toString().trim() !== '') {
-        const keyStr = key.toString().trim().toLowerCase();
-        contentMap[keyStr] = value ? value.toString() : '';
+      if (!key || key.toString().trim() === '') continue;
+      
+      const keyStr = key.toString().trim();
+      const keyLower = keyStr.toLowerCase();
+      
+      // Direct row assignments based on position (rows 1-3)
+      if (i === 1) {
+        vision = value ? value.toString() : '';
+      } else if (i === 2) {
+        mission = value ? value.toString() : '';
+      } else if (i === 3) {
+        objectives = value ? value.toString() : '';
       }
+      
+      // Also map by key for other fields
+      contentMap[keyLower] = value ? value.toString() : '';
     }
     
-    // Extract mission/vision/about from specific rows (case-insensitive)
-    const mission = contentMap['mission'] || contentMap['Section 1. Vision.'.toLowerCase()] || '';
-    const vision = contentMap['vision'] || contentMap['Section 2. Mission.'.toLowerCase()] || '';
-    const aboutYSP = contentMap['aboutysp'] || contentMap['about'] || '';
+    // Extract other fields from contentMap
+    aboutYSP = contentMap['aboutysp'] || '';
+    orgChartUrl = contentMap['orgcharturl'] || '';
+    founderName = contentMap['foundername'] || '';
+    email = contentMap['email'] || '';
+    facebookUrl = contentMap['facebookurl'] || '';
     
-    // Extract objectives (Section 1, 2, 3)
-    const objectives = [];
-    const section1 = contentMap['objectives'] || contentMap['Section 3. YSP shall be guided by the following advocacy pillars:'.toLowerCase()] || '';
-    if (section1) {
+    // Parse objectives into array (split by numbered items)
+    const objectivesArray = [];
+    if (objectives) {
       // Split by numbered items (e.g., "1.) ", "2.) ", "1)", "2)", etc.)
-      const sections = section1.split(/\d+[\.\)]\s+/).filter(s => s.trim());
-      objectives.push(...sections);
+      const sections = objectives.split(/\d+[\.\)]\s+/).filter(s => s.trim());
+      objectivesArray.push(...sections);
     }
     
-    // Extract org chart URL
-    const orgChartUrl = contentMap['orgcharturl'] || '';
-    
-    // Extract founder info
-    const founderName = contentMap['foundername'] || '';
-    const email = contentMap['email'] || '';
-    const facebookUrl = contentMap['facebookurl'] || '';
-    
-    // Extract projects (projectImageUrl_1, projectDesc_1, projectImageUrl_2, projectDesc_2, etc.)
+    // Extract projects (projectImageUrl_1, projectDesc_1, etc.)
     const projects = [];
     let projectIndex = 1;
     
     while (true) {
-      const imageKey = ('projectImageUrl_' + projectIndex).toLowerCase();
-      const descKey = ('projectDesc_' + projectIndex).toLowerCase();
+      const imageKey = ('projectimageurl_' + projectIndex);
+      const descKey = ('projectdesc_' + projectIndex);
       
       const imageUrl = contentMap[imageKey];
       const description = contentMap[descKey];
@@ -1805,7 +1824,7 @@ function handleGetHomepageContent(data) {
       projects.push({
         image: imageUrl || '',
         description: description || '',
-        title: 'Project ' + projectIndex // Default title, can be extracted if needed
+        title: 'Project ' + projectIndex
       });
       
       projectIndex++;
@@ -1819,7 +1838,7 @@ function handleGetHomepageContent(data) {
         mission: mission,
         vision: vision,
         about: aboutYSP,
-        objectives: objectives,
+        objectives: objectivesArray,
         orgChartUrl: orgChartUrl,
         founderName: founderName,
         email: email,
