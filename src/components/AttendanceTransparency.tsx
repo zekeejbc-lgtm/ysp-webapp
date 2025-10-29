@@ -33,8 +33,18 @@ export default function AttendanceTransparency({ currentUser }: AttendanceTransp
   });
 
   useEffect(() => {
-    if (currentUser && currentUser.id) {
-      fetchAttendance();
+    console.log('AttendanceTransparency mounted. CurrentUser:', currentUser);
+    if (currentUser) {
+      console.log('CurrentUser ID:', currentUser.id);
+      if (currentUser.id) {
+        fetchAttendance();
+      } else {
+        console.error('CurrentUser has no ID!');
+        setIsLoading(false);
+      }
+    } else {
+      console.error('No currentUser!');
+      setIsLoading(false);
     }
   }, [currentUser]);
 
