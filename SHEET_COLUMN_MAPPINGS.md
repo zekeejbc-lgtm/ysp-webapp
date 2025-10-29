@@ -213,4 +213,109 @@ if (timeInValue && timeInValue.toString().trim() !== '') {
 
 ---
 
+## 📢 Announcements Sheet
+
+**Structure**: Fixed columns A-T, then dynamic announcement status columns (U onwards)
+
+### Fixed Columns (A-J): Announcement Details
+| Column | Index | Field Name |
+|--------|-------|------------|
+| A | 0 | Timestamp (PH time) |
+| B | 1 | **Announcement ID** (format: ANN-YYYY-###) |
+| C | 2 | Author ID Code |
+| D | 3 | Author Name |
+| E | 4 | **Title** |
+| F | 5 | Subject |
+| G | 6 | Body |
+| H | 7 | **Recipient Type** |
+| I | 8 | **Recipient Value** |
+| J | 9 | Email Status |
+
+### Empty Columns (K-P):
+Reserved for future use - **DO NOT MODIFY**
+
+### User Roster Columns (Q-T):
+| Column | Index | Field Name |
+|--------|-------|------------|
+| Q | 16 | **ID Code** (for matching users) |
+| R | 17 | Name |
+| S | 18 | Position |
+| T | 19 | Role |
+
+### Dynamic Announcement Status Columns (U onwards):
+Starting from column U (index 20), each announcement creates 2 columns:
+
+**Pattern**: For each announcement, there are 2 columns:
+1. **Announcement ID Column** (U, W, Y, AA, etc.) - Row 1 contains announcement ID
+2. **Title Column** (V, X, Z, AB, etc.) - Row 1 contains announcement title
+
+**Rows 2+ contain status** for each user:
+- `"Read"` - User has marked the announcement as read
+- `"Unread"` - User is a recipient but hasn't read it yet
+- `"N/A"` - User is not a recipient of this announcement
+
+Example:
+```
+| U1: ANN-2025-001 | V1: Monthly Meeting Notice |
+| U2: Unread       | V2: (empty)                 |  ← User's read status
+| U3: Read         | V3: (empty)                 |
+| U4: N/A          | V4: (empty)                 |
+```
+
+### Recipient Type Values:
+- **"All Members"** - All users in User Profiles
+- **"Only Heads"** - Users with Head role AND ID Number in [25100-25700]
+- **"Specific Committee"** - Users with specific ID Code prefix
+- **"Specific Person/s"** - Comma-separated list of ID Codes
+
+### Recipient Value Mapping:
+| Recipient Type | Recipient Value Example |
+|----------------|------------------------|
+| All Members | `"All Members"` |
+| Only Heads | `"Only Heads"` |
+| Specific Committee | `"Membership and Internal Affairs Committee"` |
+| Specific Person/s | `"YSPTIR-2025, YSPTCM-2024, YSPTFR-2023"` |
+
+### Committee Names for Recipient Value:
+- Membership and Internal Affairs Committee (YSPTIR)
+- Communications and Marketing Committee (YSPTCM)
+- Finance and Treasury Committee (YSPTFR)
+- Secretariat and Documentation Committee (YSPTSD)
+- External Relations Committee (YSPTER)
+- Program Development Committee (YSPTPD)
+
+### Code Reference:
+```javascript
+// Accessing announcement details (fixed columns)
+const timestamp = row[0];        // Column A
+const announcementId = row[1];   // Column B
+const authorIdCode = row[2];     // Column C
+const authorName = row[3];       // Column D
+const title = row[4];            // Column E
+const subject = row[5];          // Column F
+const body = row[6];             // Column G
+const recipientType = row[7];    // Column H
+const recipientValue = row[8];   // Column I
+const emailStatus = row[9];      // Column J
+
+// Accessing user roster
+const userIdCode = row[16];      // Column Q
+const userName = row[17];        // Column R
+const userPosition = row[18];    // Column S
+const userRole = row[19];        // Column T
+
+// Finding announcement status column
+// Search header row (row 0) starting from column U (index 20)
+// For each announcement, check every 2 columns (announcement ID, title)
+for (let col = 20; col < headerRow.length; col += 2) {
+  if (headerRow[col] === announcementId) {
+    const statusColIndex = col; // This column contains Read/Unread/N/A status
+    const userStatus = row[statusColIndex];
+    break;
+  }
+}
+```
+
+---
+
 **Last Updated**: October 29, 2025

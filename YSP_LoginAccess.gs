@@ -3,7 +3,8 @@ const SPREADSHEET_ID = '1zTgBQw3ISAtagKOKhMYl6JWL6DnQSpcHt7L3UnBevuU';
 const SHEETS = {
   ACCESS_LOGS: 'Access Logs',
   USER_PROFILES: 'User Profiles',
-  MASTER_ATTENDANCE: 'Master Attendance Log'
+  MASTER_ATTENDANCE: 'Master Attendance Log',
+  ANNOUNCEMENTS: 'Announcements'
 };
 
 // ===== MAIN ENTRY POINT =====
@@ -48,6 +49,12 @@ function handlePostRequest(data) {
       return handleGetUserAttendance(data);
     case 'getEventAnalytics':
       return handleGetEventAnalytics(data);
+    case 'createAnnouncement':
+      return handleCreateAnnouncement(data);
+    case 'getAnnouncements':
+      return handleGetAnnouncements(data);
+    case 'markAnnouncementAsRead':
+      return handleMarkAnnouncementAsRead(data);
     default:
       return { success: false, message: 'Unknown action: ' + action };
   }
@@ -907,6 +914,528 @@ function handleGetEventAnalytics(data) {
   } catch (error) {
     Logger.log('Error getting event analytics: ' + error.toString());
     return { success: false, message: 'Error getting event analytics: ' + error.toString() };
+  }
+}
+
+// ===== ANNOUNCEMENTS HELPER FUNCTIONS =====
+
+/**
+ * Ensure user exists in Announcements sheet (columns Q, R, S, T)
+ * Auto-populates from User Profiles if not found
+ */
+function ensureUserInAnnouncementsSheet(idCode) {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const announcementsSheet = ss.getSheetByName(SHEETS.ANNOUNCEMENTS);
+  const profilesSheet = ss.getSheetByName(SHEETS.USER_PROFILES);
+  
+  // Get all data from Announcements sheet
+  const announcementsData = announcementsSheet.getDataRange().getValues();
+  
+  // Check if user already exists in column Q (index 16)
+  for (let row = 1; row < announcementsData.length; row++) {
+    if (announcementsData[row][16] && announcementsData[row][16].toString() === idCode.toString()) {
+      return row + 1; // Return 1-indexed row number
+    }
+  }
+  
+  // User not found, fetch from User Profiles and add
+  const profilesData = profilesSheet.getDataRange().getValues();
+  
+  for (let i = 1; i < profilesData.length; i++) {
+    if (profilesData[i][18] && profilesData[i][18].toString() === idCode.toString()) {
+      const fullName = profilesData[i][3] || ''; // Column D
+      const position = profilesData[i][19] || ''; // Column T
+      const role = profilesData[i][20] || ''; // Column U
+      
+      // Add user to next available row in Announcements sheet
+      const nextRow = announcementsSheet.getLastRow() + 1;
+      announcementsSheet.getRange(nextRow, 17).setValue(idCode); // Column Q
+      announcementsSheet.getRange(nextRow, 18).setValue(fullName); // Column R
+      announcementsSheet.getRange(nextRow, 19).setValue(position); // Column S
+      announcementsSheet.getRange(nextRow, 20).setValue(role); // Column T
+      
+      Logger.log('Added user to Announcements sheet: ' + idCode + ' - ' + fullName);
+      return nextRow;
+    }
+  }
+  
+  return -1; // User not found in User Profiles
+}
+
+/**
+ * Get recipient emails based on recipient type
+ */
+function getRecipientEmails(recipientType, recipientValue) {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const profilesSheet = ss.getSheetByName(SHEETS.USER_PROFILES);
+  const profilesData = profilesSheet.getDataRange().getValues();
+  
+  const emails = [];
+  const HEAD_ID_NUMBERS = ['25100', '25200', '25300', '25400', '25500', '25600', '25700'];
+  
+  // Committee prefix mapping
+  const COMMITTEE_PREFIXES = {
+    'Membership and Internal Affairs Committee': 'YSPTIR',
+    'Communications and Marketing Committee': 'YSPTCM',
+    'Finance and Treasury Committee': 'YSPTFR',
+    'Secretariat and Documentation Committee': 'YSPTSD',
+    'External Relations Committee': 'YSPTER',
+    'Program Development Committee': 'YSPTPD'
+  };
+  
+  // Skip header row
+  for (let i = 1; i < profilesData.length; i++) {
+    const row = profilesData[i];
+    const email = row[12]; // Column M - Personal Email Address
+    const idCode = row[18]; // Column S - ID Code
+    const idNumber = row[3] ? row[3].toString() : ''; // Column D - ID number (from Master Attendance, but we'll use from context)
+    
+    if (!email) continue;
+    
+    let includeRecipient = false;
+    
+    if (recipientType === 'All Members') {
+      includeRecipient = true;
+    } else if (recipientType === 'Only Heads') {
+      // Check ID number from Master Attendance Log
+      const masterSheet = ss.getSheetByName(SHEETS.MASTER_ATTENDANCE);
+      const masterData = masterSheet.getDataRange().getValues();
+      
+      for (let j = 1; j < masterData.length; j++) {
+        if (masterData[j][0] && masterData[j][0].toString() === idCode.toString()) {
+          const personIdNumber = masterData[j][3] ? masterData[j][3].toString() : '';
+          if (HEAD_ID_NUMBERS.includes(personIdNumber)) {
+            includeRecipient = true;
+          }
+          break;
+        }
+      }
+    } else if (recipientType === 'Specific Committee') {
+      // Extract committee prefix from ID Code
+      const prefix = COMMITTEE_PREFIXES[recipientValue];
+      if (prefix && idCode && idCode.toString().startsWith(prefix)) {
+        includeRecipient = true;
+      }
+    } else if (recipientType === 'Specific Person/s') {
+      // recipientValue contains comma-separated ID Codes
+      const targetIdCodes = recipientValue.split(',').map(id => id.trim());
+      if (targetIdCodes.includes(idCode.toString())) {
+        includeRecipient = true;
+      }
+    }
+    
+    if (includeRecipient && email) {
+      emails.push(email.toString());
+    }
+  }
+  
+  return emails;
+}
+
+/**
+ * Check if user is a recipient of an announcement
+ */
+function isUserRecipient(userIdCode, recipientType, recipientValue) {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const HEAD_ID_NUMBERS = ['25100', '25200', '25300', '25400', '25500', '25600', '25700'];
+  
+  // Committee prefix mapping
+  const COMMITTEE_PREFIXES = {
+    'Membership and Internal Affairs Committee': 'YSPTIR',
+    'Communications and Marketing Committee': 'YSPTCM',
+    'Finance and Treasury Committee': 'YSPTFR',
+    'Secretariat and Documentation Committee': 'YSPTSD',
+    'External Relations Committee': 'YSPTER',
+    'Program Development Committee': 'YSPTPD'
+  };
+  
+  if (recipientType === 'All Members') {
+    return true;
+  } else if (recipientType === 'Only Heads') {
+    // Check if user's ID Number is in heads list
+    const masterSheet = ss.getSheetByName(SHEETS.MASTER_ATTENDANCE);
+    const masterData = masterSheet.getDataRange().getValues();
+    
+    for (let i = 1; i < masterData.length; i++) {
+      if (masterData[i][0] && masterData[i][0].toString() === userIdCode.toString()) {
+        const idNumber = masterData[i][3] ? masterData[i][3].toString() : '';
+        return HEAD_ID_NUMBERS.includes(idNumber);
+      }
+    }
+    return false;
+  } else if (recipientType === 'Specific Committee') {
+    const prefix = COMMITTEE_PREFIXES[recipientValue];
+    return prefix && userIdCode.toString().startsWith(prefix);
+  } else if (recipientType === 'Specific Person/s') {
+    const targetIdCodes = recipientValue.split(',').map(id => id.trim());
+    return targetIdCodes.includes(userIdCode.toString());
+  }
+  
+  return false;
+}
+
+// ===== CREATE ANNOUNCEMENT HANDLER =====
+function handleCreateAnnouncement(data) {
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const announcementsSheet = ss.getSheetByName(SHEETS.ANNOUNCEMENTS);
+    const profilesSheet = ss.getSheetByName(SHEETS.USER_PROFILES);
+    
+    // Validate required fields
+    if (!data.title || !data.subject || !data.body || !data.recipientType || !data.authorIdCode) {
+      return { success: false, message: 'Missing required fields' };
+    }
+    
+    // Get author information
+    const profilesData = profilesSheet.getDataRange().getValues();
+    let authorName = '';
+    let authorRole = '';
+    
+    for (let i = 1; i < profilesData.length; i++) {
+      if (profilesData[i][18] && profilesData[i][18].toString() === data.authorIdCode.toString()) {
+        authorName = profilesData[i][3] || ''; // Column D - Full Name
+        authorRole = profilesData[i][20] || ''; // Column U - Role
+        
+        // Check if user is a Head (by role AND ID Number)
+        const masterSheet = ss.getSheetByName(SHEETS.MASTER_ATTENDANCE);
+        const masterData = masterSheet.getDataRange().getValues();
+        let isHead = false;
+        
+        for (let j = 1; j < masterData.length; j++) {
+          if (masterData[j][0] && masterData[j][0].toString() === data.authorIdCode.toString()) {
+            const idNumber = masterData[j][3] ? masterData[j][3].toString() : '';
+            const HEAD_ID_NUMBERS = ['25100', '25200', '25300', '25400', '25500', '25600', '25700'];
+            isHead = (authorRole === 'Head' && HEAD_ID_NUMBERS.includes(idNumber));
+            break;
+          }
+        }
+        
+        if (!isHead) {
+          return { success: false, message: 'Only Heads can create announcements' };
+        }
+        break;
+      }
+    }
+    
+    if (!authorName) {
+      return { success: false, message: 'Author not found in User Profiles' };
+    }
+    
+    // Generate Announcement ID (ANN-YYYY-###)
+    const announcementsData = announcementsSheet.getDataRange().getValues();
+    const currentYear = new Date().getFullYear();
+    let maxNumber = 0;
+    
+    // Find highest announcement number for current year
+    for (let i = 1; i < announcementsData.length; i++) {
+      const annId = announcementsData[i][1]; // Column B - Announcement ID
+      if (annId) {
+        const match = annId.toString().match(/^ANN-(\d{4})-(\d{3})$/);
+        if (match && parseInt(match[1]) === currentYear) {
+          const num = parseInt(match[2]);
+          if (num > maxNumber) {
+            maxNumber = num;
+          }
+        }
+      }
+    }
+    
+    const newAnnouncementId = 'ANN-' + currentYear + '-' + String(maxNumber + 1).padStart(3, '0');
+    
+    // Get PH timezone timestamp
+    const now = new Date();
+    const phTime = new Date(now.getTime() + (8 * 60 * 60 * 1000));
+    
+    // Determine recipient value
+    let recipientValue = data.recipientValue || '';
+    if (data.recipientType === 'All Members') {
+      recipientValue = 'All Members';
+    } else if (data.recipientType === 'Only Heads') {
+      recipientValue = 'Only Heads';
+    } else if (data.recipientType === 'Specific Committee') {
+      recipientValue = data.recipientValue; // Committee name
+    } else if (data.recipientType === 'Specific Person/s') {
+      recipientValue = data.recipientValue; // Comma-separated ID Codes
+    }
+    
+    // Get recipient emails
+    const recipientEmails = getRecipientEmails(data.recipientType, recipientValue);
+    
+    if (recipientEmails.length === 0) {
+      return { success: false, message: 'No recipients found for the selected criteria' };
+    }
+    
+    // Send emails
+    let emailStatus = 'Sent';
+    try {
+      const emailSubject = data.subject;
+      const emailBody = 
+        'Subject: ' + data.subject + '\n\n' +
+        'Title: ' + data.title + '\n' +
+        'Date: ' + phTime.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) + '\n' +
+        'Author: ' + authorName + '\n' +
+        'Announcement ID: ' + newAnnouncementId + '\n' +
+        'Recipient Type: ' + data.recipientType + '\n\n' +
+        'Body:\n' + data.body + '\n\n' +
+        'Youth Service Philippines – Tagum Chapter\n' +
+        'Web App: https://ysp-webapp.vercel.app\n\n' +
+        'Disclaimer:\n' +
+        'If you believe this email was sent to you in error, please contact:\n' +
+        'Ezequiel John B. Crisostomo\n' +
+        'Membership and Internal Affairs Officer';
+      
+      MailApp.sendEmail({
+        to: recipientEmails.join(','),
+        subject: emailSubject,
+        body: emailBody
+      });
+      
+      Logger.log('Sent announcement emails to ' + recipientEmails.length + ' recipients');
+    } catch (emailError) {
+      emailStatus = 'Error: ' + emailError.toString();
+      Logger.log('Error sending emails: ' + emailError.toString());
+    }
+    
+    // Add announcement to sheet (Columns A-J)
+    const nextRow = announcementsSheet.getLastRow() + 1;
+    announcementsSheet.getRange(nextRow, 1, 1, 10).setValues([[
+      phTime.toISOString(),           // A - Timestamp
+      newAnnouncementId,              // B - Announcement ID
+      data.authorIdCode,              // C - Author ID Code
+      authorName,                     // D - Author Name
+      data.title,                     // E - Title
+      data.subject,                   // F - Subject
+      data.body,                      // G - Body
+      data.recipientType,             // H - Recipient Type
+      recipientValue,                 // I - Recipient Value
+      emailStatus                     // J - Email Status
+    ]]);
+    
+    // Add announcement status columns (U onwards)
+    const headerRow = announcementsSheet.getRange(1, 1, 1, announcementsSheet.getLastColumn()).getValues()[0];
+    
+    // Find next available column (after existing announcements)
+    let nextCol = 21; // Start at column U (index 20, 1-indexed = 21)
+    
+    // Find the last used column for announcements
+    for (let col = 20; col < headerRow.length; col += 2) {
+      if (!headerRow[col] || headerRow[col].toString().trim() === '') {
+        nextCol = col + 1; // 1-indexed
+        break;
+      } else {
+        nextCol = col + 3; // Skip to next pair (col + 2 for next announcement)
+      }
+    }
+    
+    // Add announcement ID and Title to row 1
+    announcementsSheet.getRange(1, nextCol).setValue(newAnnouncementId); // Announcement ID
+    announcementsSheet.getRange(1, nextCol + 1).setValue(data.title); // Title
+    
+    // Initialize read/unread status for all users in the sheet
+    const announcementsAllData = announcementsSheet.getDataRange().getValues();
+    
+    for (let row = 1; row < announcementsAllData.length; row++) {
+      const userIdCode = announcementsAllData[row][16]; // Column Q - ID Code
+      
+      if (userIdCode) {
+        const isRecipient = isUserRecipient(userIdCode.toString(), data.recipientType, recipientValue);
+        const status = isRecipient ? 'Unread' : 'N/A';
+        
+        announcementsSheet.getRange(row + 1, nextCol).setValue(status);
+      }
+    }
+    
+    Logger.log('Created announcement: ' + newAnnouncementId + ' - ' + data.title);
+    
+    return {
+      success: true,
+      message: 'Announcement created and sent successfully',
+      announcement: {
+        id: newAnnouncementId,
+        title: data.title,
+        subject: data.subject,
+        timestamp: phTime.toISOString(),
+        authorName: authorName,
+        recipientType: data.recipientType,
+        emailStatus: emailStatus,
+        recipientCount: recipientEmails.length
+      }
+    };
+  } catch (error) {
+    Logger.log('Error creating announcement: ' + error.toString());
+    return { success: false, message: 'Error creating announcement: ' + error.toString() };
+  }
+}
+
+// ===== GET ANNOUNCEMENTS HANDLER =====
+function handleGetAnnouncements(data) {
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const announcementsSheet = ss.getSheetByName(SHEETS.ANNOUNCEMENTS);
+    
+    const userIdCode = data.idCode;
+    
+    if (!userIdCode) {
+      return { success: false, message: 'User ID Code is required' };
+    }
+    
+    // Ensure user exists in Announcements sheet
+    ensureUserInAnnouncementsSheet(userIdCode);
+    
+    // Get all data
+    const allData = announcementsSheet.getDataRange().getValues();
+    const headerRow = allData[0];
+    
+    // Find user's row
+    let userRowIndex = -1;
+    for (let row = 1; row < allData.length; row++) {
+      if (allData[row][16] && allData[row][16].toString() === userIdCode.toString()) {
+        userRowIndex = row;
+        break;
+      }
+    }
+    
+    if (userRowIndex === -1) {
+      return { success: false, message: 'User not found in Announcements sheet' };
+    }
+    
+    const announcements = [];
+    
+    // Process announcements (rows 2 onwards, columns A-J)
+    for (let row = 1; row < allData.length; row++) {
+      const announcementRow = allData[row];
+      
+      // Skip if no announcement ID
+      if (!announcementRow[1]) continue;
+      
+      const annId = announcementRow[1].toString();
+      const recipientType = announcementRow[7] || '';
+      const recipientValue = announcementRow[8] || '';
+      
+      // Check if user is a recipient
+      const isRecipient = isUserRecipient(userIdCode.toString(), recipientType.toString(), recipientValue.toString());
+      
+      if (!isRecipient) continue;
+      
+      // Find the announcement's status column for this user
+      let readStatus = 'Unread';
+      
+      // Search for announcement ID in header row (columns U onwards)
+      for (let col = 20; col < headerRow.length; col += 2) {
+        if (headerRow[col] && headerRow[col].toString() === annId) {
+          // Found the announcement column, get user's status
+          readStatus = allData[userRowIndex][col] || 'Unread';
+          break;
+        }
+      }
+      
+      // Format timestamp
+      let formattedTimestamp = '';
+      if (announcementRow[0]) {
+        const dateObj = new Date(announcementRow[0]);
+        if (!isNaN(dateObj.getTime())) {
+          formattedTimestamp = dateObj.toISOString();
+        } else {
+          formattedTimestamp = announcementRow[0].toString();
+        }
+      }
+      
+      announcements.push({
+        announcementId: annId,
+        timestamp: formattedTimestamp,
+        authorIdCode: announcementRow[2] || '',
+        authorName: announcementRow[3] || '',
+        title: announcementRow[4] || '',
+        subject: announcementRow[5] || '',
+        body: announcementRow[6] || '',
+        recipientType: recipientType,
+        recipientValue: recipientValue.toString(),
+        emailStatus: announcementRow[9] || '',
+        readStatus: readStatus
+      });
+    }
+    
+    // Sort by timestamp (newest first)
+    announcements.sort((a, b) => {
+      const dateA = new Date(a.timestamp);
+      const dateB = new Date(b.timestamp);
+      return dateB - dateA;
+    });
+    
+    Logger.log('Retrieved ' + announcements.length + ' announcements for ' + userIdCode);
+    
+    return {
+      success: true,
+      announcements: announcements
+    };
+  } catch (error) {
+    Logger.log('Error fetching announcements: ' + error.toString());
+    return { success: false, message: 'Error fetching announcements: ' + error.toString() };
+  }
+}
+
+// ===== MARK ANNOUNCEMENT AS READ HANDLER =====
+function handleMarkAnnouncementAsRead(data) {
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const announcementsSheet = ss.getSheetByName(SHEETS.ANNOUNCEMENTS);
+    
+    const userIdCode = data.idCode;
+    const announcementId = data.announcementId;
+    
+    if (!userIdCode || !announcementId) {
+      return { success: false, message: 'User ID Code and Announcement ID are required' };
+    }
+    
+    // Get all data
+    const allData = announcementsSheet.getDataRange().getValues();
+    const headerRow = allData[0];
+    
+    // Find user's row
+    let userRowIndex = -1;
+    for (let row = 1; row < allData.length; row++) {
+      if (allData[row][16] && allData[row][16].toString() === userIdCode.toString()) {
+        userRowIndex = row;
+        break;
+      }
+    }
+    
+    if (userRowIndex === -1) {
+      return { success: false, message: 'User not found in Announcements sheet' };
+    }
+    
+    // Find announcement column
+    let annColIndex = -1;
+    for (let col = 20; col < headerRow.length; col += 2) {
+      if (headerRow[col] && headerRow[col].toString() === announcementId.toString()) {
+        annColIndex = col;
+        break;
+      }
+    }
+    
+    if (annColIndex === -1) {
+      return { success: false, message: 'Announcement not found' };
+    }
+    
+    // Check current status
+    const currentStatus = allData[userRowIndex][annColIndex] || '';
+    
+    if (currentStatus === 'N/A') {
+      return { success: false, message: 'You are not a recipient of this announcement' };
+    }
+    
+    // Mark as Read
+    announcementsSheet.getRange(userRowIndex + 1, annColIndex + 1).setValue('Read');
+    
+    Logger.log('Marked announcement ' + announcementId + ' as Read for user ' + userIdCode);
+    
+    return {
+      success: true,
+      message: 'Announcement marked as read'
+    };
+  } catch (error) {
+    Logger.log('Error marking announcement as read: ' + error.toString());
+    return { success: false, message: 'Error marking announcement as read: ' + error.toString() };
   }
 }
 

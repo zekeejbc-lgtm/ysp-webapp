@@ -1,138 +1,244 @@
-import React, { useState } from 'react';
-import { Search, Plus, X, Users } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Search, Plus, X, Users, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { Badge } from './ui/badge';
+import { announcementsAPI, userAPI, type Announcement } from '../services/api';
 
 interface AnnouncementsProps {
   darkMode: boolean;
   currentUser: any;
 }
 
-const recipientOptions = [
-  { value: 'All', label: 'All Members' },
-  { value: 'Head', label: 'Only Heads' },
-  { value: 'Programs', label: 'Programs Committee' },
-  { value: 'Logistics', label: 'Logistics Committee' },
-  { value: 'Media', label: 'Media Committee' },
-  { value: 'Finance', label: 'Finance Committee' },
-  { value: 'YSP-001', label: 'Juan Dela Cruz (YSP-001)' },
-  { value: 'YSP-002', label: 'Maria Santos (YSP-002)' },
-  { value: 'YSP-003', label: 'Pedro Reyes (YSP-003)' }
+// Committee mapping for recipient dropdown
+const COMMITTEES = [
+  'Membership and Internal Affairs Committee',
+  'Communications and Marketing Committee',
+  'Finance and Treasury Committee',
+  'Secretariat and Documentation Committee',
+  'External Relations Committee',
+  'Program Development Committee'
 ];
 
-export default function Announcements({ darkMode, currentUser }: AnnouncementsProps) {
-  const [announcements, setAnnouncements] = useState([
-    {
-      id: 1,
-      title: 'Upcoming General Assembly',
-      subject: 'Important Meeting Announcement',
-      body: 'Dear YSP Members, we are pleased to announce our upcoming General Assembly scheduled for October 15, 2024 at 2:00 PM. This is a mandatory meeting for all active members. We will discuss important matters regarding upcoming projects and organizational updates. Please mark your calendars and ensure your attendance. Thank you!',
-      author: 'Juan Dela Cruz',
-      date: '2024-10-08',
-      read: false,
-      recipient: 'All',
-      recipientLabel: 'All Members'
-    },
-    {
-      id: 2,
-      title: 'Community Clean-Up Drive Success',
-      subject: 'Event Update',
-      body: 'Congratulations to all volunteers who participated in our Community Clean-Up Drive last October 10, 2024! We successfully mobilized 38 volunteers and collected over 150 kilograms of waste materials. Your dedication and hard work made this event a huge success. Special thanks to the Logistics Committee for the excellent coordination. More photos will be shared on our social media pages.',
-      author: 'Maria Santos',
-      date: '2024-10-11',
-      read: true,
-      recipient: 'All',
-      recipientLabel: 'All Members'
-    },
-    {
-      id: 3,
-      title: 'Committee Head Meeting Reminder',
-      subject: 'Meeting Schedule',
-      body: 'This is a reminder for all Committee Heads to attend the monthly coordination meeting on October 18, 2024 at 4:00 PM. We will be discussing budget allocations and project timelines for the next quarter. Please prepare your committee reports and bring necessary documents.',
-      author: 'Juan Dela Cruz',
-      date: '2024-10-12',
-      read: false,
-      recipient: 'Head',
-      recipientLabel: 'Only Heads'
-    }
-  ]);
+// Head ID Numbers for permission checking
+const HEAD_ID_NUMBERS = ['25100', '25200', '25300', '25400', '25500', '25600', '25700'];
 
+export default function Announcements({ currentUser }: AnnouncementsProps) {
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [selectedAnnouncement, setSelectedAnnouncement] = useState<typeof announcements[0] | null>(null);
+  const [selectedAnnouncement, setSelectedAnnouncement] = useState<Announcement | null>(null);
+  
+  // Create form fields
   const [newTitle, setNewTitle] = useState('');
   const [newSubject, setNewSubject] = useState('');
   const [newBody, setNewBody] = useState('');
-  const [recipientType, setRecipientType] = useState('All');
+  const [recipientType, setRecipientType] = useState<'All Members' | 'Only Heads' | 'Specific Committee' | 'Specific Person/s'>('All Members');
+  const [recipientValue, setRecipientValue] = useState('');
   const [recipientSearch, setRecipientSearch] = useState('');
-  const [showRecipientSuggestions, setShowRecipientSuggestions] = useState(false);
+  const [userSuggestions, setUserSuggestions] = useState<any[]>([]);
+  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+  const [creating, setCreating] = useState(false);
 
-  const canCreate = currentUser && ['Admin', 'Head', 'Auditor'].includes(currentUser.role);
+  // Check if user is a Head (role === 'Head' AND ID Number in HEAD_ID_NUMBERS)
+  const isHead = currentUser && 
+    currentUser.role === 'Head' && 
+    HEAD_ID_NUMBERS.includes(currentUser.id?.split('-').pop() || '');
 
-  const filteredAnnouncements = announcements.filter(a => {
-    const matchesSearch = searchTerm
-      ? a.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        a.subject.toLowerCase().includes(searchTerm.toLowerCase())
-      : true;
+  // Load announcements on mount
+  useEffect(() => {
+    if (currentUser?.id) {
+      loadAnnouncements();
+    }
+  }, [currentUser]);
 
-    const matchesRecipient = a.recipient === 'All' || a.recipient === currentUser.role || a.recipient === currentUser.idCode;
-    
-    return matchesSearch && matchesRecipient;
-  });
+  const loadAnnouncements = async () => {
+    try {
+      setLoading(true);
+      const response = await announcementsAPI.getAll(currentUser.id);
+      
+      if (response.success && response.announcements) {
+        setAnnouncements(response.announcements);
+      } else {
+        toast.error(response.message || 'Failed to load announcements');
+      }
+    } catch (error) {
+      console.error('Error loading announcements:', error);
+      toast.error('Error loading announcements');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const filteredRecipients = recipientSearch
-    ? recipientOptions.filter(r =>
-        r.label.toLowerCase().includes(recipientSearch.toLowerCase()) ||
-        r.value.toLowerCase().includes(recipientSearch.toLowerCase())
-      )
-    : recipientOptions;
-
-  const handleCreateAnnouncement = () => {
-    if (!newTitle || !newSubject || !newBody) {
-      toast.error('Please fill in all fields');
+  // Search users for "Specific Person/s" recipient type
+  const searchUsers = async (searchTerm: string) => {
+    if (!searchTerm || searchTerm.length < 2) {
+      setUserSuggestions([]);
       return;
     }
 
-    const recipientLabel = recipientOptions.find(r => r.value === recipientType)?.label || recipientType;
+    try {
+      const response = await userAPI.searchProfiles(searchTerm);
+      if (response.success && response.profiles) {
+        setUserSuggestions(response.profiles);
+      }
+    } catch (error) {
+      console.error('Error searching users:', error);
+    }
+  };
 
-    const newAnnouncement = {
-      id: announcements.length + 1,
-      title: newTitle,
-      subject: newSubject,
-      body: newBody,
-      author: currentUser.fullName,
-      date: new Date().toISOString().split('T')[0],
-      read: false,
-      recipient: recipientType,
-      recipientLabel
-    };
+  // Filter announcements by search term
+  const filteredAnnouncements = announcements.filter(a =>
+    a.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    a.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    a.body.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
-    setAnnouncements([newAnnouncement, ...announcements]);
+  // Sort announcements by date (newest first) and unread first
+  const sortedAnnouncements = [...filteredAnnouncements].sort((a, b) => {
+    // First, sort by read status (unread first)
+    if (a.readStatus === 'Unread' && b.readStatus !== 'Unread') return -1;
+    if (a.readStatus !== 'Unread' && b.readStatus === 'Unread') return 1;
     
-    toast.success('Announcement created successfully', {
-      description: 'Email notification sent to all recipients'
-    });
+    // Then sort by timestamp (newest first)
+    return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+  });
 
-    // Reset form
-    setNewTitle('');
-    setNewSubject('');
-    setNewBody('');
-    setRecipientType('All');
+  const handleCreateAnnouncement = async () => {
+    if (!newTitle.trim() || !newSubject.trim() || !newBody.trim()) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
+    // Validate recipient value based on type
+    let finalRecipientValue = recipientValue;
+    
+    if (recipientType === 'All Members') {
+      finalRecipientValue = 'All Members';
+    } else if (recipientType === 'Only Heads') {
+      finalRecipientValue = 'Only Heads';
+    } else if (recipientType === 'Specific Committee') {
+      if (!recipientValue || !COMMITTEES.includes(recipientValue)) {
+        toast.error('Please select a valid committee');
+        return;
+      }
+    } else if (recipientType === 'Specific Person/s') {
+      if (selectedUsers.length === 0) {
+        toast.error('Please select at least one recipient');
+        return;
+      }
+      finalRecipientValue = selectedUsers.join(', ');
+    }
+
+    try {
+      setCreating(true);
+      const response = await announcementsAPI.create({
+        title: newTitle.trim(),
+        subject: newSubject.trim(),
+        body: newBody.trim(),
+        recipientType,
+        recipientValue: finalRecipientValue,
+        authorIdCode: currentUser.id,
+        authorName: currentUser.fullName || `${currentUser.firstName} ${currentUser.lastName}`,
+      });
+
+      if (response.success) {
+        toast.success('Announcement created successfully!', {
+          description: 'Email notifications have been sent to all recipients'
+        });
+        
+        // Reset form
+        setNewTitle('');
+        setNewSubject('');
+        setNewBody('');
+        setRecipientType('All Members');
+        setRecipientValue('');
+        setRecipientSearch('');
+        setSelectedUsers([]);
+        setShowCreateModal(false);
+        
+        // Reload announcements
+        await loadAnnouncements();
+      } else {
+        toast.error(response.message || 'Failed to create announcement');
+      }
+    } catch (error) {
+      console.error('Error creating announcement:', error);
+      toast.error('Error creating announcement');
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleMarkAsRead = async (announcement: Announcement) => {
+    if (announcement.readStatus === 'Read') return;
+
+    try {
+      const response = await announcementsAPI.markAsRead(announcement.announcementId, currentUser.id);
+      
+      if (response.success) {
+        // Update local state
+        setAnnouncements(announcements.map(a =>
+          a.announcementId === announcement.announcementId
+            ? { ...a, readStatus: 'Read' }
+            : a
+        ));
+        
+        // Update selected announcement if viewing
+        if (selectedAnnouncement?.announcementId === announcement.announcementId) {
+          setSelectedAnnouncement({ ...announcement, readStatus: 'Read' });
+        }
+        
+        toast.success('Marked as read');
+      } else {
+        toast.error(response.message || 'Failed to mark as read');
+      }
+    } catch (error) {
+      console.error('Error marking as read:', error);
+      toast.error('Error marking as read');
+    }
+  };
+
+  const handleRecipientTypeChange = (type: typeof recipientType) => {
+    setRecipientType(type);
+    setRecipientValue('');
     setRecipientSearch('');
-    setShowCreateModal(false);
+    setSelectedUsers([]);
   };
 
-  const handleMarkAsRead = (id: number) => {
-    setAnnouncements(announcements.map(a =>
-      a.id === id ? { ...a, read: true } : a
-    ));
-    toast.success('Marked as read');
+  const handleAddUser = (idCode: string) => {
+    if (!selectedUsers.includes(idCode)) {
+      setSelectedUsers([...selectedUsers, idCode]);
+      setRecipientSearch('');
+      setUserSuggestions([]);
+    }
   };
+
+  const handleRemoveUser = (idCode: string) => {
+    setSelectedUsers(selectedUsers.filter(u => u !== idCode));
+  };
+
+  const formatDate = (timestamp: string) => {
+    const date = new Date(timestamp);
+    return date.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric', 
+      year: 'numeric' 
+    });
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="animate-spin text-[#f6421f]" size={32} />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-5xl mx-auto">
@@ -153,7 +259,7 @@ export default function Announcements({ darkMode, currentUser }: AnnouncementsPr
             />
           </div>
 
-          {canCreate && (
+          {isHead && (
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Button
                 onClick={() => setShowCreateModal(true)}
@@ -167,9 +273,9 @@ export default function Announcements({ darkMode, currentUser }: AnnouncementsPr
         </div>
 
         <div className="grid md:grid-cols-2 gap-4 max-h-[600px] overflow-y-auto pr-2">
-          {filteredAnnouncements.map((announcement, index) => (
+          {sortedAnnouncements.map((announcement, index) => (
             <motion.div
-              key={announcement.id}
+              key={announcement.announcementId}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
@@ -178,23 +284,23 @@ export default function Announcements({ darkMode, currentUser }: AnnouncementsPr
             >
               <div className="flex items-start justify-between mb-2">
                 <h4 className="text-[#f6421f] dark:text-[#ee8724] flex-1 pr-2">{announcement.title}</h4>
-                {!announcement.read && (
+                {announcement.readStatus === 'Unread' && (
                   <Badge className="bg-[#f6421f] shadow-md">New</Badge>
                 )}
               </div>
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{announcement.subject}</p>
               <p className="text-sm text-gray-500 line-clamp-2 mb-3">{announcement.body}</p>
               <div className="flex items-center justify-between text-xs text-gray-400">
-                <span>By {announcement.author}</span>
-                <span>{announcement.date}</span>
+                <span>By {announcement.authorName}</span>
+                <span>{formatDate(announcement.timestamp)}</span>
               </div>
             </motion.div>
           ))}
         </div>
 
-        {filteredAnnouncements.length === 0 && (
+        {sortedAnnouncements.length === 0 && (
           <div className="text-center py-12 text-gray-500">
-            No announcements found
+            {searchTerm ? 'No announcements found matching your search' : 'No announcements available'}
           </div>
         )}
       </motion.div>
@@ -222,13 +328,15 @@ export default function Announcements({ darkMode, currentUser }: AnnouncementsPr
                   <h3 className="text-[#f6421f] dark:text-[#ee8724] mb-2">{selectedAnnouncement.title}</h3>
                   <p className="text-gray-600 dark:text-gray-400 mb-3">{selectedAnnouncement.subject}</p>
                   <div className="flex items-center gap-3 flex-wrap">
-                    <span className="text-sm text-gray-500">By {selectedAnnouncement.author}</span>
+                    <span className="text-sm text-gray-500">By {selectedAnnouncement.authorName}</span>
                     <span className="text-gray-400">•</span>
-                    <span className="text-sm text-gray-500">{selectedAnnouncement.date}</span>
+                    <span className="text-sm text-gray-500">{formatDate(selectedAnnouncement.timestamp)}</span>
+                    <span className="text-gray-400">•</span>
+                    <span className="text-sm text-gray-500">ID: {selectedAnnouncement.announcementId}</span>
                     <span className="text-gray-400">•</span>
                     <Badge className="bg-blue-500 flex items-center gap-1">
                       <Users size={12} />
-                      {selectedAnnouncement.recipientLabel}
+                      {selectedAnnouncement.recipientType}
                     </Badge>
                   </div>
                 </div>
@@ -247,11 +355,11 @@ export default function Announcements({ darkMode, currentUser }: AnnouncementsPr
               </div>
 
               <div className="flex gap-3">
-                {!selectedAnnouncement.read && (
+                {selectedAnnouncement.readStatus === 'Unread' && (
                   <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="flex-1">
                     <Button
                       onClick={() => {
-                        handleMarkAsRead(selectedAnnouncement.id);
+                        handleMarkAsRead(selectedAnnouncement);
                         setSelectedAnnouncement(null);
                       }}
                       className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
@@ -306,7 +414,7 @@ export default function Announcements({ darkMode, currentUser }: AnnouncementsPr
 
               <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
                 <div>
-                  <Label htmlFor="title">Title</Label>
+                  <Label htmlFor="title">Title *</Label>
                   <Input
                     id="title"
                     value={newTitle}
@@ -317,70 +425,128 @@ export default function Announcements({ darkMode, currentUser }: AnnouncementsPr
                 </div>
 
                 <div>
-                  <Label htmlFor="subject">Subject</Label>
+                  <Label htmlFor="subject">Subject *</Label>
                   <Input
                     id="subject"
                     value={newSubject}
                     onChange={(e) => setNewSubject(e.target.value)}
-                    placeholder="Enter subject"
+                    placeholder="Enter email subject"
                     className="mt-2"
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="recipient">Recipient Type</Label>
-                  <div className="relative mt-2">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-                    <Input
-                      type="text"
-                      placeholder="Search recipients..."
-                      value={recipientSearch}
-                      onChange={(e) => {
-                        setRecipientSearch(e.target.value);
-                        setShowRecipientSuggestions(true);
-                      }}
-                      onFocus={() => setShowRecipientSuggestions(true)}
-                      className="pl-10"
-                    />
-
-                    {showRecipientSuggestions && filteredRecipients.length > 0 && (
-                      <motion.div
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="absolute z-10 w-full mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg max-h-60 overflow-y-auto border border-gray-200 dark:border-gray-700"
-                      >
-                        {filteredRecipients.map((recipient) => (
-                          <button
-                            key={recipient.value}
-                            onClick={() => {
-                              setRecipientType(recipient.value);
-                              setRecipientSearch(recipient.label);
-                              setShowRecipientSuggestions(false);
-                            }}
-                            className="w-full px-4 py-3 text-left hover:bg-gradient-to-r hover:from-orange-50 hover:to-red-50 dark:hover:from-gray-700 dark:hover:to-gray-600 transition-all duration-200 border-b border-gray-100 dark:border-gray-700 last:border-b-0"
-                          >
-                            <p>{recipient.label}</p>
-                          </button>
-                        ))}
-                      </motion.div>
-                    )}
-                  </div>
-                  {recipientType && (
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      className="mt-2"
+                  <Label htmlFor="recipientType">Recipient Type *</Label>
+                  <div className="grid grid-cols-2 gap-2 mt-2">
+                    <Button
+                      type="button"
+                      variant={recipientType === 'All Members' ? 'default' : 'outline'}
+                      onClick={() => handleRecipientTypeChange('All Members')}
+                      className={recipientType === 'All Members' ? 'bg-[#f6421f] hover:bg-[#ee8724]' : ''}
                     >
-                      <Badge className="bg-blue-500">
-                        <Users size={12} className="mr-1" />
-                        {recipientOptions.find(r => r.value === recipientType)?.label || recipientType}
-                      </Badge>
-                    </motion.div>
-                  )}
+                      All Members
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={recipientType === 'Only Heads' ? 'default' : 'outline'}
+                      onClick={() => handleRecipientTypeChange('Only Heads')}
+                      className={recipientType === 'Only Heads' ? 'bg-[#f6421f] hover:bg-[#ee8724]' : ''}
+                    >
+                      Only Heads
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={recipientType === 'Specific Committee' ? 'default' : 'outline'}
+                      onClick={() => handleRecipientTypeChange('Specific Committee')}
+                      className={recipientType === 'Specific Committee' ? 'bg-[#f6421f] hover:bg-[#ee8724]' : ''}
+                    >
+                      Specific Committee
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={recipientType === 'Specific Person/s' ? 'default' : 'outline'}
+                      onClick={() => handleRecipientTypeChange('Specific Person/s')}
+                      className={recipientType === 'Specific Person/s' ? 'bg-[#f6421f] hover:bg-[#ee8724]' : ''}
+                    >
+                      Specific Person/s
+                    </Button>
+                  </div>
                 </div>
 
+                {recipientType === 'Specific Committee' && (
+                  <div>
+                    <Label htmlFor="committee">Select Committee *</Label>
+                    <select
+                      id="committee"
+                      value={recipientValue}
+                      onChange={(e) => setRecipientValue(e.target.value)}
+                      className="w-full mt-2 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                    >
+                      <option value="">Select a committee...</option>
+                      {COMMITTEES.map((committee) => (
+                        <option key={committee} value={committee}>
+                          {committee}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {recipientType === 'Specific Person/s' && (
+                  <div>
+                    <Label htmlFor="personSearch">Search and Select Recipients *</Label>
+                    <div className="relative mt-2">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                      <Input
+                        id="personSearch"
+                        type="text"
+                        placeholder="Type name or ID code..."
+                        value={recipientSearch}
+                        onChange={(e) => {
+                          setRecipientSearch(e.target.value);
+                          searchUsers(e.target.value);
+                        }}
+                        className="pl-10"
+                      />
+                    </div>
+                    
+                    {userSuggestions.length > 0 && recipientSearch && (
+                      <div className="mt-2 max-h-48 overflow-y-auto border border-gray-300 dark:border-gray-600 rounded-md">
+                        {userSuggestions.map((user) => (
+                          <button
+                            key={user.idCode}
+                            type="button"
+                            onClick={() => handleAddUser(user.idCode)}
+                            className="w-full px-3 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 border-b border-gray-200 dark:border-gray-700 last:border-b-0"
+                          >
+                            <p className="font-medium">{user.fullName}</p>
+                            <p className="text-sm text-gray-500">{user.idCode}</p>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {selectedUsers.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {selectedUsers.map((idCode) => (
+                          <Badge key={idCode} className="bg-blue-500 flex items-center gap-1">
+                            {idCode}
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveUser(idCode)}
+                              className="ml-1 hover:text-red-300"
+                            >
+                              <X size={12} />
+                            </button>
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 <div>
-                  <Label htmlFor="body">Body</Label>
+                  <Label htmlFor="body">Body *</Label>
                   <Textarea
                     id="body"
                     value={newBody}
@@ -395,14 +561,23 @@ export default function Announcements({ darkMode, currentUser }: AnnouncementsPr
                 <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="flex-1">
                   <Button
                     onClick={handleCreateAnnouncement}
+                    disabled={creating}
                     className="w-full bg-gradient-to-r from-[#f6421f] to-[#ee8724] hover:from-[#ee8724] hover:to-[#fbcb29]"
                   >
-                    Create & Send
+                    {creating ? (
+                      <>
+                        <Loader2 className="mr-2 animate-spin" size={18} />
+                        Creating...
+                      </>
+                    ) : (
+                      'Create & Send'
+                    )}
                   </Button>
                 </motion.div>
                 <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="flex-1">
                   <Button
                     onClick={() => setShowCreateModal(false)}
+                    disabled={creating}
                     className="w-full bg-gray-500 hover:bg-gray-600"
                   >
                     Cancel

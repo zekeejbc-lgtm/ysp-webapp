@@ -315,5 +315,66 @@ export const eventsAPI = {
   },
 };
 
+// ======================================================
+// ANNOUNCEMENTS API
+// ======================================================
+
+export interface Announcement {
+  announcementId: string;
+  timestamp: string;
+  authorIdCode: string;
+  authorName: string;
+  title: string;
+  subject: string;
+  body: string;
+  recipientType: 'All Members' | 'Only Heads' | 'Specific Committee' | 'Specific Person/s';
+  recipientValue: string;
+  emailStatus: string;
+  readStatus?: 'Read' | 'Unread' | 'N/A';
+}
+
+export interface CreateAnnouncementRequest {
+  title: string;
+  subject: string;
+  body: string;
+  recipientType: 'All Members' | 'Only Heads' | 'Specific Committee' | 'Specific Person/s';
+  recipientValue: string;
+  authorIdCode: string;
+  authorName: string;
+}
+
+export interface AnnouncementResponse {
+  success: boolean;
+  message: string;
+  announcement?: Announcement;
+  announcements?: Announcement[];
+  announcementId?: string;
+}
+
+export const announcementsAPI = {
+  /**
+   * Create a new announcement
+   * Only available to Heads (role === 'Head' AND ID Number in [25100-25700])
+   */
+  create: async (data: CreateAnnouncementRequest): Promise<AnnouncementResponse> => {
+    return apiRequest('createAnnouncement', data);
+  },
+
+  /**
+   * Get all announcements for a specific user
+   * Returns only announcements where user is a recipient
+   */
+  getAll: async (idCode: string): Promise<AnnouncementResponse> => {
+    return apiRequest('getAnnouncements', { idCode });
+  },
+
+  /**
+   * Mark an announcement as read for a specific user
+   */
+  markAsRead: async (announcementId: string, idCode: string): Promise<AnnouncementResponse> => {
+    return apiRequest('markAnnouncementAsRead', { announcementId, idCode });
+  },
+};
+
 // Export API_CONFIG for direct access if needed
 export { API_CONFIG };
