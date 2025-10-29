@@ -216,7 +216,7 @@ export default function Announcements({ currentUser }: AnnouncementsProps) {
       body: newBody.trim(),
       recipientType,
       recipientValue: finalRecipientValue,
-      authorIdCode: currentUser.id,
+      authorIdCode: currentUser.idCode || currentUser.id,
       authorName: currentUser.fullName || `${currentUser.firstName} ${currentUser.lastName}`,
     };
     
@@ -258,7 +258,7 @@ export default function Announcements({ currentUser }: AnnouncementsProps) {
     if (announcement.readStatus === 'Read') return;
 
     try {
-      const response = await announcementsAPI.markAsRead(announcement.announcementId, currentUser.id);
+      const response = await announcementsAPI.markAsRead(announcement.announcementId, currentUser.idCode || currentUser.id);
       
       if (response.success) {
         // Update local state
