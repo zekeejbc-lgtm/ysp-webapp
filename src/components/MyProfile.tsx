@@ -180,6 +180,7 @@ export default function MyProfile({ currentUser }: MyProfileProps) {
   };
 
   const handleEdit = () => {
+    console.log('Edit button clicked - entering edit mode');
     setIsEditing(true);
     setEditedProfile({ ...profile });
   };
@@ -273,11 +274,11 @@ export default function MyProfile({ currentUser }: MyProfileProps) {
       {/* Header with Profile Picture */}
       <div className="ysp-card text-center relative">
         {/* Edit/Save/Cancel Buttons */}
-        <div className="absolute top-4 right-4 flex gap-2">
+        <div className="absolute top-4 right-4 flex gap-2 z-10">
           {!isEditing ? (
             <button
               onClick={handleEdit}
-              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#f6421f] to-[#ee8724] text-white rounded-lg hover:shadow-lg transition-all"
+              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#f6421f] to-[#ee8724] text-white rounded-lg hover:shadow-lg transition-all shadow-md"
             >
               <Edit2 size={16} />
               Edit Profile
@@ -287,15 +288,15 @@ export default function MyProfile({ currentUser }: MyProfileProps) {
               <button
                 onClick={handleSaveEdit}
                 disabled={saving}
-                className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-all disabled:opacity-50"
+                className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-all disabled:opacity-50 shadow-md"
               >
                 {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-                Save
+                Save Changes
               </button>
               <button
                 onClick={handleCancelEdit}
                 disabled={saving}
-                className="flex items-center gap-2 px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-all disabled:opacity-50"
+                className="flex items-center gap-2 px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-all disabled:opacity-50 shadow-md"
               >
                 <X size={16} />
                 Cancel
