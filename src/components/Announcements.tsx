@@ -60,16 +60,31 @@ export default function Announcements({ currentUser }: AnnouncementsProps) {
   const loadAnnouncements = async () => {
     try {
       setLoading(true);
-      const response = await announcementsAPI.getAll(currentUser.id);
+      
+      // Add timeout to prevent infinite loading
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Request timeout')), 10000)
+      );
+      
+      const apiPromise = announcementsAPI.getAll(currentUser.id);
+      
+      const response = await Promise.race([apiPromise, timeoutPromise]) as any;
       
       if (response.success && response.announcements) {
         setAnnouncements(response.announcements);
+        toast.success(`Loaded ${response.announcements.length} announcements`);
       } else {
         toast.error(response.message || 'Failed to load announcements');
+        console.error('API Response:', response);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading announcements:', error);
-      toast.error('Error loading announcements');
+      
+      if (error.message === 'Request timeout') {
+        toast.error('Backend not responding. Please update Google Apps Script and redeploy.');
+      } else {
+        toast.error('Error loading announcements. Check console for details.');
+      }
     } finally {
       setLoading(false);
     }
