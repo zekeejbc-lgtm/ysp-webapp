@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, AlertTriangle, X } from 'lucide-react';
+import { Search, X, AlertCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
@@ -373,12 +373,12 @@ export default function ManualAttendance(_props: ManualAttendanceProps) {
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-5 border-b border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-between p-5 border-b border-gray-700">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-orange-500/20 flex items-center justify-center">
-                  <AlertTriangle className="w-5 h-5 text-orange-500" />
+                  <AlertCircle className="w-5 h-5 text-orange-500" />
                 </div>
-                <h3 className="text-gray-900 dark:text-white font-semibold">
+                <h3 className="text-gray-900 dark:text-white">
                   Overwrite Attendance
                 </h3>
               </div>
@@ -394,7 +394,7 @@ export default function ManualAttendance(_props: ManualAttendanceProps) {
             <div className="p-5 space-y-4">
               {/* Warning Message */}
               <p className="text-gray-700 dark:text-gray-300">
-                <span className="text-gray-900 dark:text-white font-medium">{selectedMember?.fullName}</span> already has an attendance record for this event.
+                <span className="text-gray-900 dark:text-white">{selectedMember?.fullName}</span> already has an attendance record for this event.
               </p>
 
               {/* Current Record */}
@@ -422,10 +422,26 @@ export default function ManualAttendance(_props: ManualAttendanceProps) {
                   <div className="my-2 border-t border-gray-200 dark:border-gray-700" />
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600 dark:text-gray-400">
+                      Time In:
+                    </span>
+                    <span className="text-gray-900 dark:text-white">
+                      {existingRecord || '—'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600 dark:text-gray-400">
+                      Time Out:
+                    </span>
+                    <span className="text-gray-900 dark:text-white">
+                      —
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600 dark:text-gray-400">
                       Status:
                     </span>
                     <span className="text-gray-900 dark:text-white">
-                      {existingRecord}
+                      {status}
                     </span>
                   </div>
                 </div>
@@ -434,13 +450,13 @@ export default function ManualAttendance(_props: ManualAttendanceProps) {
               {/* New Value Indicator */}
               <div className="p-3 rounded-lg border bg-orange-50 dark:bg-orange-500/5 border-orange-200 dark:border-orange-500/30">
                 <p className="text-sm text-orange-800 dark:text-orange-300">
-                  New {timeType === 'timeIn' ? 'Time In' : 'Time Out'}: <span className="text-orange-900 dark:text-orange-200">{status} - {new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}</span>
+                  New {timeType === 'timeIn' ? 'Time In' : 'Time Out'}: <span className="text-orange-900 dark:text-orange-200">{new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}</span>
                 </p>
               </div>
             </div>
 
             {/* Footer */}
-            <div className="flex gap-3 p-5 border-t border-gray-200 dark:border-gray-700">
+            <div className="flex gap-3 p-5 border-t border-gray-700">
               <button
                 onClick={handleCancelOverwrite}
                 className="flex-1 py-2.5 px-4 rounded-md border transition-colors border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
