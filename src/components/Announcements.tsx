@@ -139,8 +139,32 @@ export default function Announcements({ currentUser }: AnnouncementsProps) {
   });
 
   const handleCreateAnnouncement = async () => {
-    if (!newTitle.trim() || !newSubject.trim() || !newBody.trim()) {
-      toast.error('Please fill in all required fields');
+    // Validate all required fields
+    if (!newTitle.trim()) {
+      toast.error('Missing required fields', {
+        description: 'Please enter a title'
+      });
+      return;
+    }
+
+    if (!newSubject.trim()) {
+      toast.error('Missing required fields', {
+        description: 'Please enter a subject'
+      });
+      return;
+    }
+
+    if (!newBody.trim()) {
+      toast.error('Missing required fields', {
+        description: 'Please enter the announcement body'
+      });
+      return;
+    }
+
+    if (!recipientType) {
+      toast.error('Missing required fields', {
+        description: 'Please select a recipient type'
+      });
       return;
     }
 
@@ -153,12 +177,16 @@ export default function Announcements({ currentUser }: AnnouncementsProps) {
       finalRecipientValue = 'Only Heads';
     } else if (recipientType === 'Specific Committee') {
       if (!recipientValue || !COMMITTEES.includes(recipientValue)) {
-        toast.error('Please select a valid committee');
+        toast.error('Missing required fields', {
+          description: 'Please select a committee'
+        });
         return;
       }
     } else if (recipientType === 'Specific Person/s') {
       if (selectedUsers.length === 0) {
-        toast.error('Please select at least one recipient');
+        toast.error('Missing required fields', {
+          description: 'Please select at least one recipient'
+        });
         return;
       }
       finalRecipientValue = selectedUsers.join(', ');
@@ -426,7 +454,7 @@ export default function Announcements({ currentUser }: AnnouncementsProps) {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               transition={{ type: "spring", duration: 0.5 }}
-              className="modal-content max-w-2xl"
+              className="modal-content max-w-2xl max-h-[85vh] flex flex-col"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
@@ -441,7 +469,7 @@ export default function Announcements({ currentUser }: AnnouncementsProps) {
                 </motion.button>
               </div>
 
-              <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+              <div className="space-y-4 flex-1 overflow-y-auto pr-2">
                 <div>
                   <Label htmlFor="title">Title *</Label>
                   <Input
