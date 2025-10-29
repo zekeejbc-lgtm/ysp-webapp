@@ -1986,51 +1986,69 @@ function handleUpdateProfile(data) {
       const rowIdCode = row[18]; // Column S - ID Code
       
       if (rowIdCode === idCode) {
-        // Update allowed fields
-        // Column B - Email Address
+        // Update allowed fields based on SHEET_COLUMN_MAPPINGS.md
+        
+        // Column B (index 1) - Email Address
         if (data.email !== undefined) {
           userProfilesSheet.getRange(i + 1, 2).setValue(data.email);
         }
         
-        // Column G - Sex/Gender
+        // Column E (index 4) - Date of Birth (Birthday)
+        if (data.birthday !== undefined) {
+          userProfilesSheet.getRange(i + 1, 5).setValue(data.birthday);
+        }
+        
+        // Column F (index 5) - Age
+        if (data.age !== undefined) {
+          userProfilesSheet.getRange(i + 1, 6).setValue(data.age);
+        }
+        
+        // Column G (index 6) - Sex/Gender
         if (data.gender !== undefined) {
           userProfilesSheet.getRange(i + 1, 7).setValue(data.gender);
         }
         
-        // Column H - Pronouns
+        // Column H (index 7) - Pronouns
         if (data.pronouns !== undefined) {
           userProfilesSheet.getRange(i + 1, 8).setValue(data.pronouns);
         }
         
-        // Column I - Civil Status
+        // Column I (index 8) - Civil Status
         if (data.civilStatus !== undefined) {
           userProfilesSheet.getRange(i + 1, 9).setValue(data.civilStatus);
         }
         
-        // Column J - Contact Number
+        // Column J (index 9) - Contact Number
         if (data.contactNumber !== undefined) {
           userProfilesSheet.getRange(i + 1, 10).setValue(data.contactNumber);
         }
         
-        // Column K - Religion
+        // Column K (index 10) - Religion
         if (data.religion !== undefined) {
           userProfilesSheet.getRange(i + 1, 11).setValue(data.religion);
         }
         
-        // Column L - Nationality
+        // Column L (index 11) - Nationality
         if (data.nationality !== undefined) {
           userProfilesSheet.getRange(i + 1, 12).setValue(data.nationality);
         }
         
-        // Column C - Date of Birth (Birthday)
-        if (data.birthday !== undefined) {
-          userProfilesSheet.getRange(i + 1, 3).setValue(data.birthday);
+        // Column M (index 12) - Personal Email Address (if different from primary email)
+        if (data.personalEmail !== undefined) {
+          userProfilesSheet.getRange(i + 1, 13).setValue(data.personalEmail);
         }
         
-        // Column D - Age
-        if (data.age !== undefined) {
-          userProfilesSheet.getRange(i + 1, 4).setValue(data.age);
+        // Column N (index 13) - Username
+        if (data.username !== undefined) {
+          userProfilesSheet.getRange(i + 1, 14).setValue(data.username);
         }
+        
+        // Column O (index 14) - Password
+        if (data.password !== undefined) {
+          userProfilesSheet.getRange(i + 1, 15).setValue(data.password);
+        }
+        
+        Logger.log('Profile updated successfully for ID Code: ' + idCode);
         
         return { 
           success: true, 
