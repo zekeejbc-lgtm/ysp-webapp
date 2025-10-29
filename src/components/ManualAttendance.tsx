@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, X, AlertCircle } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
@@ -25,9 +25,6 @@ export default function ManualAttendance(_props: ManualAttendanceProps) {
   const [showEventSuggestions, setShowEventSuggestions] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
-  const [showOverwriteDialog, setShowOverwriteDialog] = useState(false);
-  const [pendingData, setPendingData] = useState<any>(null);
-  const [existingRecord, setExistingRecord] = useState('');
 
   // Fetch active events on mount
   useEffect(() => {
@@ -76,7 +73,7 @@ export default function ManualAttendance(_props: ManualAttendanceProps) {
     ? events.filter(e => e.name.toLowerCase().includes(eventSearch.toLowerCase()))
     : events;
 
-  const handleSubmit = async (overwrite = false) => {
+  const handleSubmit = async () => {
     if (!selectedMember || !selectedEvent) {
       toast.error('Please select both member and event');
       return;
@@ -101,7 +98,7 @@ export default function ManualAttendance(_props: ManualAttendanceProps) {
         timeType: timeType,
         status: status,
         formattedValue: formattedValue,
-        overwrite: overwrite
+        overwrite: false
       };
 
       const response = await fetch('/api/gas-proxy', {
@@ -121,13 +118,12 @@ export default function ManualAttendance(_props: ManualAttendanceProps) {
         setMemberSearch('');
         setEventSearch('');
         setStatus('Present');
-        setShowOverwriteDialog(false);
-        setPendingData(null);
-      } else if (result.alreadyRecorded && !overwrite) {
-        // Show overwrite dialog
-        setExistingRecord(result.existingValue || 'Unknown');
-        setPendingData(requestData);
-        setShowOverwriteDialog(true);
+      } else if (result.alreadyRecorded) {
+        // Show info toast with existing record
+        toast.info('⚠️ Already Recorded', {
+          description: `${selectedMember.fullName} is already recorded for this event.\nExisting record: ${result.existingValue}`,
+          duration: 5000
+        });
       } else {
         toast.error('Recording Failed', {
           description: result.message || 'Unable to record attendance'
@@ -141,22 +137,6 @@ export default function ManualAttendance(_props: ManualAttendanceProps) {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleConfirmOverwrite = async () => {
-    if (pendingData) {
-      setShowOverwriteDialog(false);
-      await handleSubmit(true);
-    }
-  };
-
-  const handleCancelOverwrite = () => {
-    setShowOverwriteDialog(false);
-    setPendingData(null);
-    setIsLoading(false);
-    toast.info('Cancelled', {
-      description: 'Record was not overwritten'
-    });
   };
 
   return (
@@ -350,7 +330,7 @@ export default function ManualAttendance(_props: ManualAttendanceProps) {
             whileTap={{ scale: 0.98 }}
           >
             <Button
-              onClick={() => handleSubmit(false)}
+              onClick={handleSubmit}
               disabled={isLoading || !selectedMember || !selectedEvent}
               className="w-full bg-gradient-to-r from-[#f6421f] to-[#ee8724] hover:from-[#ee8724] hover:to-[#fbcb29] shadow-lg shadow-orange-300/50"
             >
@@ -359,114 +339,6 @@ export default function ManualAttendance(_props: ManualAttendanceProps) {
           </motion.div>
         </div>
       </motion.div>
-
-      {/* Overwrite Confirmation Modal */}
-      {showOverwriteDialog && (
-        <div 
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-          onClick={handleCancelOverwrite}
-        >
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="w-full max-w-md mx-auto bg-white dark:bg-[#1e2130] rounded-xl shadow-2xl overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 bg-white dark:bg-[#252839] border-b border-gray-200 dark:border-gray-700">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-orange-500/10 dark:bg-orange-500/20 flex items-center justify-center flex-shrink-0">
-                  <AlertCircle className="w-5 h-5 text-orange-500 dark:text-orange-400" />
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                  Overwrite Attendance
-                </h3>
-              </div>
-              <button
-                onClick={handleCancelOverwrite}
-                className="p-2 rounded-lg transition-all hover:bg-gray-100 dark:hover:bg-gray-700/50 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Content */}
-            <div className="px-6 py-5 bg-white dark:bg-[#1e2130]">
-              <div className="space-y-4">
-                {/* Warning Message */}
-                <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-                  <span className="font-semibold text-gray-900 dark:text-white">{selectedMember?.fullName}</span> already has an attendance record for this event.
-                </p>
-
-                {/* Current Record Box */}
-                <div className="rounded-lg bg-gray-50 dark:bg-[#252839] border border-gray-200 dark:border-gray-700/50 p-4">
-                  <div className="mb-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                    Current Record:
-                  </div>
-                  <div className="space-y-2.5">
-                    <div className="flex justify-between items-start gap-4">
-                      <span className="text-sm text-gray-600 dark:text-gray-400 flex-shrink-0">
-                        Member:
-                      </span>
-                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100 text-right">
-                        {selectedMember?.fullName || 'N/A'}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-start gap-4">
-                      <span className="text-sm text-gray-600 dark:text-gray-400 flex-shrink-0">
-                        Event:
-                      </span>
-                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100 text-right">
-                        {selectedEvent?.name || 'N/A'}
-                      </span>
-                    </div>
-                    <div className="border-t border-gray-200 dark:border-gray-700 my-2"></div>
-                    <div className="flex justify-between items-start gap-4">
-                      <span className="text-sm text-gray-600 dark:text-gray-400 flex-shrink-0">
-                        {timeType === 'timeIn' ? 'Time In:' : 'Time Out:'}
-                      </span>
-                      <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 text-right">
-                        {existingRecord || '—'}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* New Value Indicator */}
-                <div className="rounded-lg bg-gradient-to-r from-orange-50 to-orange-100/50 dark:from-orange-500/10 dark:to-orange-500/5 border border-orange-200 dark:border-orange-500/30 px-4 py-3">
-                  <p className="text-sm font-medium text-orange-900 dark:text-orange-300">
-                    New {timeType === 'timeIn' ? 'Time In' : 'Time Out'}: <span className="font-bold text-orange-600 dark:text-orange-400">{status} - {(() => {
-                      const now = new Date();
-                      const phTime = new Date(now.getTime() + (8 * 60 * 60 * 1000));
-                      const hours = phTime.getUTCHours();
-                      const minutes = phTime.getUTCMinutes();
-                      const ampm = hours >= 12 ? 'PM' : 'AM';
-                      const displayHours = hours % 12 || 12;
-                      return String(displayHours).padStart(2, '0') + ':' + String(minutes).padStart(2, '0') + ' ' + ampm;
-                    })()}</span>
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div className="flex gap-3 px-6 py-4 bg-gray-50 dark:bg-[#252839] border-t border-gray-200 dark:border-gray-700">
-              <button
-                onClick={handleCancelOverwrite}
-                className="flex-1 py-2.5 px-4 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#1e2130] text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all font-medium shadow-sm"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleConfirmOverwrite}
-                className="flex-1 py-2.5 px-4 rounded-lg bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white transition-all font-semibold shadow-lg shadow-orange-500/30"
-              >
-                Change
-              </button>
-            </div>
-          </motion.div>
-        </div>
-      )}
     </div>
   );
 }
