@@ -87,14 +87,14 @@ export default function OfficerSearch({ darkMode }: OfficerSearchProps) {
                   }}
                   className="w-full px-4 py-3 text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-3"
                 >
-                  {profile.profilePic && (
+                  {profile.profilePictureURL && (
                     <img
-                      src={profile.profilePic}
+                      src={profile.profilePictureURL}
                       alt={profile.fullName}
                       className="w-10 h-10 rounded-full object-cover"
                     />
                   )}
-                  {!profile.profilePic && (
+                  {!profile.profilePictureURL && (
                     <div className="w-10 h-10 rounded-full bg-gradient-to-r from-[#f6421f] to-[#ee8724] flex items-center justify-center">
                       <User size={20} className="text-white" />
                     </div>
@@ -129,14 +129,14 @@ export default function OfficerSearch({ darkMode }: OfficerSearchProps) {
           className="ysp-card"
         >
           <div className="text-center mb-6">
-            {selectedProfile.profilePic && (
+            {selectedProfile.profilePictureURL && (
               <img
-                src={selectedProfile.profilePic}
+                src={selectedProfile.profilePictureURL}
                 alt={selectedProfile.fullName}
                 className="w-32 h-32 rounded-full object-cover mx-auto mb-4 shadow-lg"
               />
             )}
-            {!selectedProfile.profilePic && (
+            {!selectedProfile.profilePictureURL && (
               <div className="w-32 h-32 rounded-full bg-gradient-to-r from-[#f6421f] to-[#ee8724] flex items-center justify-center mx-auto mb-4 shadow-lg">
                 <User size={48} className="text-white" />
               </div>
@@ -166,7 +166,7 @@ export default function OfficerSearch({ darkMode }: OfficerSearchProps) {
               <Phone size={20} className="text-[#f6421f]" />
               <div>
                 <p className="text-sm text-gray-500">Contact</p>
-                <p className="text-sm">{selectedProfile.contact}</p>
+                <p className="text-sm">{selectedProfile.contactNumber}</p>
               </div>
             </div>
 

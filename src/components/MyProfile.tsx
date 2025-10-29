@@ -3,11 +3,10 @@ import { User, Mail, Phone, Calendar, MapPin, Briefcase, IdCard, Users, Eye, Eye
 import { userAPI, UserProfile } from '../services/api';
 
 interface MyProfileProps {
-  darkMode: boolean;
   currentUser: any;
 }
 
-export default function MyProfile({ darkMode, currentUser }: MyProfileProps) {
+export default function MyProfile({ currentUser }: MyProfileProps) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
