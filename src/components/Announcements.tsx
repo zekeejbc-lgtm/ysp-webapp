@@ -210,17 +210,21 @@ export default function Announcements({ currentUser }: AnnouncementsProps) {
 
     console.log('VALIDATION PASSED! Final recipient value:', finalRecipientValue);
 
+    const requestData = {
+      title: newTitle.trim(),
+      subject: newSubject.trim(),
+      body: newBody.trim(),
+      recipientType,
+      recipientValue: finalRecipientValue,
+      authorIdCode: currentUser.id,
+      authorName: currentUser.fullName || `${currentUser.firstName} ${currentUser.lastName}`,
+    };
+    
+    console.log('Sending to API:', JSON.stringify(requestData, null, 2));
+
     try {
       setCreating(true);
-      const response = await announcementsAPI.create({
-        title: newTitle.trim(),
-        subject: newSubject.trim(),
-        body: newBody.trim(),
-        recipientType,
-        recipientValue: finalRecipientValue,
-        authorIdCode: currentUser.id,
-        authorName: currentUser.fullName || `${currentUser.firstName} ${currentUser.lastName}`,
-      });
+      const response = await announcementsAPI.create(requestData);
 
       if (response.success) {
         toast.success('Announcement created successfully!', {
