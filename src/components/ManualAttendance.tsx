@@ -175,7 +175,7 @@ export default function ManualAttendance(_props: ManualAttendanceProps) {
             <Label>Select Member</Label>
             <div className="mt-2">
               <div className="relative">
-                <Search className="pointer-events-none absolute left-3 inset-y-0 my-auto text-gray-400" size={20} />
+                <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
                 <Input
                 type="text"
                 placeholder="Search by name or ID code..."
@@ -237,7 +237,7 @@ export default function ManualAttendance(_props: ManualAttendanceProps) {
             <Label>Select Event</Label>
             <div className="mt-2">
               <div className="relative">
-                <Search className="pointer-events-none absolute left-3 inset-y-0 my-auto text-gray-400" size={20} />
+                <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
                 <Input
                 type="text"
                 placeholder="Search for an active event..."
