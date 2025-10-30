@@ -59,6 +59,52 @@ function getOriginalGoogleDriveUrl(url: string): string {
   return fileId ? `https://drive.google.com/file/d/${fileId}/view?usp=sharing` : url;
 }
 
+/**
+ * Convert plain text into React nodes with clickable links.
+ * Detects: http/https URLs, www.* URLs, and email addresses.
+ * Preserves line breaks and spacing when rendered inside a pre-wrap container.
+ */
+function renderLinkifiedText(text: string): Array<string | JSX.Element> {
+  if (!text) return [''];
+  const elements: Array<string | JSX.Element> = [];
+  const regex = /(https?:\/\/[^\s]+)|((?:www\.)[^\s]+)|([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})/g;
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = regex.exec(text)) !== null) {
+    const [full, httpUrl, wwwUrl, email] = match;
+    const start = match.index;
+    const end = start + full.length;
+    if (lastIndex < start) {
+      elements.push(text.slice(lastIndex, start));
+    }
+
+    let href = full;
+    if (wwwUrl) href = `http://${wwwUrl}`;
+    if (email) href = `mailto:${email}`;
+
+    elements.push(
+      <a
+        key={`lnk-${start}`}
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-[#f6421f] dark:text-[#ee8724] underline hover:opacity-90"
+      >
+        {full}
+      </a>
+    );
+
+    lastIndex = end;
+  }
+
+  if (lastIndex < text.length) {
+    elements.push(text.slice(lastIndex));
+  }
+
+  return elements;
+}
+
 interface HomepageProps {
   darkMode: boolean;
   currentUser?: any;
@@ -877,7 +923,7 @@ export default function Homepage({ darkMode, currentUser }: HomepageProps) {
               </a>
             </div>
             <h3 className="text-[#f6421f] dark:text-[#ee8724] mb-3">{selectedProject.title}</h3>
-            <p className="text-justify whitespace-pre-wrap">{selectedProject.description}</p>
+            <p className="text-justify whitespace-pre-wrap">{renderLinkifiedText(selectedProject.description)}</p>
           </div>
         </div>
       )}
