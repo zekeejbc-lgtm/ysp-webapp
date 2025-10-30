@@ -3,6 +3,7 @@ import { User, Mail, Phone, Calendar, MapPin, Briefcase, IdCard, Users, Eye, Eye
 import { userAPI, UserProfile } from '../services/api';
 import { toast } from 'sonner';
 import { ProfileSkeleton } from './ui/skeletons';
+import { OptimizedImage } from './OptimizedImage';
 
 interface MyProfileProps {
   currentUser: any;
@@ -428,17 +429,14 @@ export default function MyProfile({ currentUser }: MyProfileProps) {
         </div>
         
         <div className="relative inline-block">
-          <img
+          <OptimizedImage
             src={profile.profilePictureURL && profile.profilePictureURL.trim() !== '' 
               ? getDisplayableGoogleDriveUrl(profile.profilePictureURL)
               : `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.fullName)}&size=200&background=f6421f&color=fff`}
             alt={profile.fullName}
             className="w-32 h-32 rounded-full object-cover mx-auto shadow-lg ring-4 ring-[#f6421f]/20"
-            onError={(e) => {
-              console.error('Failed to load profile picture:', profile.profilePictureURL);
-              console.error('Tried URL:', e.currentTarget.src);
-              e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.fullName)}&size=200&background=f6421f&color=fff`;
-            }}
+            fallbackSrc={`https://ui-avatars.com/api/?name=${encodeURIComponent(profile.fullName)}&size=200&background=f6421f&color=fff`}
+            loading="eager"
             key={profile.profilePictureURL || 'default'}
           />
           

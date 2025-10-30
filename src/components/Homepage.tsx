@@ -4,6 +4,7 @@ import { Mail, Facebook, X, Loader2, Plus, Upload, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { homepageAPI, type HomepageContent, type HomepageProject } from '../services/api';
 import { CardSkeleton, TextSkeleton } from './ui/skeletons';
+import { OptimizedImage } from './OptimizedImage';
 
 /**
  * Helper function to get a displayable Google Drive image URL
@@ -530,22 +531,14 @@ export default function Homepage({ darkMode, currentUser }: HomepageProps) {
         </div>
         <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
           {content.orgChartUrl ? (
-            <img
+            <OptimizedImage
               src={getDisplayableGoogleDriveUrl(content.orgChartUrl, 1200)}
-              srcSet={`
-                ${getDisplayableGoogleDriveUrl(content.orgChartUrl, 800)} 800w,
-                ${getDisplayableGoogleDriveUrl(content.orgChartUrl, 1200)} 1200w,
-                ${getDisplayableGoogleDriveUrl(content.orgChartUrl, 1600)} 1600w
-              `}
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 80vw, 80vw"
               alt="Organizational Chart"
               className="w-full rounded-lg cursor-pointer"
               style={{ maxHeight: '70vh', objectFit: 'contain' }}
               onClick={() => setOrgModalOpen(true)}
-              onError={(e) => {
-                (e.currentTarget as HTMLImageElement).style.display = 'none';
-                e.currentTarget.parentElement!.innerHTML = '<p class="text-gray-500 text-center">Organizational chart not available</p>';
-              }}
+              fallbackSrc="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect fill='%23f3f4f6' width='400' height='300'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' fill='%239ca3af' dy='.3em'%3EOrg Chart%3C/text%3E%3C/svg%3E"
+              loading="lazy"
             />
           ) : (
             <p className="text-gray-500 text-center">No organizational chart uploaded yet.</p>
@@ -782,19 +775,12 @@ export default function Homepage({ darkMode, currentUser }: HomepageProps) {
                   onClick={() => setSelectedProject(project)}
                   className="cursor-pointer"
                 >
-                  <img
+                  <OptimizedImage
                     src={getDisplayableGoogleDriveUrl(project.image, cardImgWidth)}
-                    srcSet={`
-                      ${getDisplayableGoogleDriveUrl(project.image, 800)} 800w,
-                      ${getDisplayableGoogleDriveUrl(project.image, 1200)} 1200w,
-                      ${getDisplayableGoogleDriveUrl(project.image, 1600)} 1600w
-                    `}
-                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 50vw"
                     alt={project.title}
                     className="w-full h-48 object-cover"
-                    onError={(e) => {
-                      e.currentTarget.src = 'https://via.placeholder.com/400x300?text=Project+Image';
-                    }}
+                    fallbackSrc="https://via.placeholder.com/400x300?text=Project+Image"
+                    loading="lazy"
                   />
                   <div className="p-4 bg-white dark:bg-gray-800">
                     <h4 className="text-[#f6421f] dark:text-[#ee8724] mb-2">{project.title}</h4>

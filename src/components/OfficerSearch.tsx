@@ -6,6 +6,8 @@ import { Button } from './ui/button';
 import { userAPI, type UserProfile } from '../services/api';
 import { toast } from 'sonner';
 import { ListSkeleton } from './ui/skeletons';
+import { OptimizedImage } from './OptimizedImage';
+import { debounce } from '../utils/performance';
 
 interface OfficerSearchProps {
   darkMode: boolean;
@@ -38,7 +40,7 @@ export default function OfficerSearch({ darkMode }: OfficerSearchProps) {
     return fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w400` : url;
   }
 
-  // Search profiles as user types
+  // Search profiles as user types with debouncing
   useEffect(() => {
     const searchProfiles = async () => {
       if (!searchTerm || searchTerm.length < 2) {
@@ -82,8 +84,13 @@ export default function OfficerSearch({ darkMode }: OfficerSearchProps) {
       }
     };
 
-    const debounceTimer = setTimeout(searchProfiles, 300);
-    return () => clearTimeout(debounceTimer);
+    // Debounce search for better performance
+    const debouncedSearch = debounce(searchProfiles, 500);
+    debouncedSearch();
+
+    return () => {
+      // Cleanup is handled by debounce function
+    };
   }, [searchTerm]);
 
   const filteredProfiles = profiles;
@@ -166,14 +173,15 @@ export default function OfficerSearch({ darkMode }: OfficerSearchProps) {
           className="ysp-card"
         >
           <div className="text-center mb-6">
-            {selectedProfile.profilePictureURL && (
-              <img
+            {selectedProfile.profilePictureURL ? (
+              <OptimizedImage
                 src={selectedProfile.profilePictureURL}
                 alt={selectedProfile.fullName}
                 className="w-32 h-32 rounded-full object-cover mx-auto mb-4 shadow-lg"
+                fallbackSrc={`https://ui-avatars.com/api/?name=${encodeURIComponent(selectedProfile.fullName)}&size=200&background=f6421f&color=fff`}
+                loading="eager"
               />
-            )}
-            {!selectedProfile.profilePictureURL && (
+            ) : (
               <div className="w-32 h-32 rounded-full bg-gradient-to-r from-[#f6421f] to-[#ee8724] flex items-center justify-center mx-auto mb-4 shadow-lg">
                 <User size={48} className="text-white" />
               </div>

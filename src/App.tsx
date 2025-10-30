@@ -1,9 +1,11 @@
 import { useState, useEffect, lazy, Suspense } from 'react';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import Sidebar from './components/Sidebar';
 import TopBar from './components/TopBar';
 import LoginScreen from './components/LoginScreen';
 import { Toaster } from './components/ui/sonner';
+import { queryClient } from './services/queryClient';
 import './styles/globals.css';
 
 // Lazy load all page components for better performance
@@ -198,26 +200,28 @@ export default function App() {
   };
 
   return (
-    <div className={`app-container ${darkMode ? 'dark' : ''}`}>
-      <TopBar darkMode={darkMode} setDarkMode={setDarkMode} setSidebarOpen={setSidebarOpen} sidebarOpen={sidebarOpen} />
-      
-      <div className="main-layout">
-        <Sidebar 
-          isOpen={sidebarOpen} 
-          currentPage={currentPage} 
-          setCurrentPage={handleNavigate}
-          currentUser={currentUser}
-          onLogout={handleLogout}
-        />
+    <QueryClientProvider client={queryClient}>
+      <div className={`app-container ${darkMode ? 'dark' : ''}`}>
+        <TopBar darkMode={darkMode} setDarkMode={setDarkMode} setSidebarOpen={setSidebarOpen} sidebarOpen={sidebarOpen} />
         
-        <main className="content-area">
-          <Suspense fallback={<PageLoadingFallback />}>
-            {renderPage()}
-          </Suspense>
-        </main>
+        <div className="main-layout">
+          <Sidebar 
+            isOpen={sidebarOpen} 
+            currentPage={currentPage} 
+            setCurrentPage={handleNavigate}
+            currentUser={currentUser}
+            onLogout={handleLogout}
+          />
+          
+          <main className="content-area">
+            <Suspense fallback={<PageLoadingFallback />}>
+              {renderPage()}
+            </Suspense>
+          </main>
+        </div>
+        
+        <Toaster position="top-center" />
       </div>
-      
-      <Toaster position="top-center" />
-    </div>
+    </QueryClientProvider>
   );
 }

@@ -305,3 +305,59 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* Removed duplicate line-clamp utilities; provided by compiled Tailwind.*/
+
+/* ============================================
+   PERFORMANCE OPTIMIZATIONS
+   ============================================ */
+
+/* Respect user's motion preferences for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* GPU acceleration for frequently animated elements */
+.ysp-card,
+.modal-overlay,
+.modal-content {
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Optimize images for performance */
+img {
+  content-visibility: auto;
+}
+
+/* Smooth scrolling with performance consideration */
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* Font loading optimization - fonts loaded via index.html */
+body {
+  font-display: swap;
+}
+
+/* Passive touch listeners hint */
+* {
+  touch-action: manipulation;
+}
+
+/* Prevent layout shift from scrollbar */
+html {
+  scrollbar-gutter: stable;
+}

@@ -2,11 +2,26 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react-swc';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { compression } from 'vite-plugin-compression2';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    // Brotli compression for production builds
+    compression({
+      algorithm: 'brotliCompress' as any,
+      exclude: [/\.(br)$/, /\.(gz)$/],
+      threshold: 1024, // Only compress files > 1KB
+    }),
+    // Gzip compression as fallback
+    compression({
+      algorithm: 'gzip' as any,
+      exclude: [/\.(br)$/, /\.(gz)$/],
+      threshold: 1024,
+    }),
+  ],
   resolve: {
     extensions: ['.js', '.jsx', '.ts', '.tsx', '.json'],
     alias: {
@@ -54,6 +69,46 @@ export default defineConfig({
   build: {
     target: 'esnext',
     outDir: 'dist',
+    // Optimize chunks
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Separate vendor chunks for better caching
+          'vendor-react': ['react', 'react-dom'],
+          'vendor-radix': [
+            '@radix-ui/react-accordion',
+            '@radix-ui/react-alert-dialog',
+            '@radix-ui/react-avatar',
+            '@radix-ui/react-checkbox',
+            '@radix-ui/react-dialog',
+            '@radix-ui/react-dropdown-menu',
+            '@radix-ui/react-label',
+            '@radix-ui/react-popover',
+            '@radix-ui/react-select',
+            '@radix-ui/react-separator',
+            '@radix-ui/react-switch',
+            '@radix-ui/react-tabs',
+            '@radix-ui/react-tooltip',
+          ],
+          'vendor-ui': ['framer-motion', 'lucide-react', 'sonner'],
+          'vendor-charts': ['recharts'],
+          'vendor-forms': ['react-hook-form', 'react-day-picker'],
+        },
+      },
+    },
+    // Minification optimizations
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true, // Remove console.logs in production
+        drop_debugger: true,
+        pure_funcs: ['console.log', 'console.info'], // Remove specific console methods
+      },
+    },
+    // Source map for debugging (disable in production for smaller bundles)
+    sourcemap: false,
+    // Chunk size warnings
+    chunkSizeWarningLimit: 1000,
   },
   server: {
     port: 3000,
