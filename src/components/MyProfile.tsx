@@ -273,12 +273,12 @@ export default function MyProfile({ currentUser }: MyProfileProps) {
     <div className="max-w-5xl mx-auto space-y-6">
       {/* Header with Profile Picture */}
       <div className="ysp-card text-center relative">
-        {/* Edit/Save/Cancel Buttons */}
-        <div className="mt-4 flex justify-end gap-3">
+        {/* Edit/Save/Cancel Buttons - ABSOLUTE TOP RIGHT */}
+        <div className="absolute top-4 right-4 flex flex-col sm:flex-row gap-3 z-50">
           {!isEditing ? (
             <button
               onClick={handleEdit}
-              className="flex items-center justify-center gap-2 bg-gradient-to-r from-orange-500 to-orange-400 hover:opacity-90 text-white font-semibold px-4 py-2 rounded-md transition duration-200 ease-in-out dark:shadow-[0_0_10px_rgba(255,140,0,0.4)]"
+              className="flex items-center justify-center gap-2 bg-gradient-to-r from-orange-500 to-orange-400 hover:from-orange-600 hover:to-orange-500 text-white font-bold px-5 py-2.5 rounded-lg shadow-xl border-2 border-orange-600 transition-all duration-200"
             >
               <Edit2 size={18} className="flex-shrink-0" />
               <span>Edit Profile</span>
@@ -288,7 +288,7 @@ export default function MyProfile({ currentUser }: MyProfileProps) {
               <button
                 onClick={handleSaveEdit}
                 disabled={saving}
-                className="flex items-center justify-center gap-2 bg-green-600 dark:bg-green-500 hover:bg-green-700 dark:hover:bg-green-600 text-white font-semibold px-4 py-2 rounded-md transition duration-200 ease-in-out disabled:opacity-50"
+                className="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white font-bold px-5 py-2.5 rounded-lg shadow-xl border-2 border-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
               >
                 {saving ? <Loader2 size={18} className="animate-spin flex-shrink-0" /> : <Save size={18} className="flex-shrink-0" />}
                 <span>Save Changes</span>
@@ -296,7 +296,7 @@ export default function MyProfile({ currentUser }: MyProfileProps) {
               <button
                 onClick={handleCancelEdit}
                 disabled={saving}
-                className="flex items-center justify-center gap-2 bg-gray-500 dark:bg-gray-600 hover:bg-gray-600 dark:hover:bg-gray-700 text-white font-semibold px-4 py-2 rounded-md transition duration-200 ease-in-out disabled:opacity-50"
+                className="flex items-center justify-center gap-2 bg-gray-600 hover:bg-gray-700 text-white font-bold px-5 py-2.5 rounded-lg shadow-xl border-2 border-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
               >
                 <X size={18} className="flex-shrink-0" />
                 <span>Cancel</span>
