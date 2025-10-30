@@ -278,31 +278,28 @@ export default function MyProfile({ currentUser }: MyProfileProps) {
           {!isEditing ? (
             <button
               onClick={handleEdit}
-              className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-sm sm:text-base bg-gradient-to-r from-[#f6421f] to-[#ee8724] text-white rounded-lg hover:shadow-lg transition-all shadow-md whitespace-nowrap"
+              className="flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-[#f6421f] to-[#ee8724] text-white rounded-lg hover:shadow-lg transition-all shadow-lg font-medium"
             >
-              <Edit2 size={16} className="flex-shrink-0" />
-              <span className="hidden sm:inline">Edit Profile</span>
-              <span className="sm:hidden">Edit</span>
+              <Edit2 size={18} className="flex-shrink-0" />
+              <span>Edit Profile</span>
             </button>
           ) : (
             <>
               <button
                 onClick={handleSaveEdit}
                 disabled={saving}
-                className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-sm sm:text-base bg-green-600 hover:bg-green-700 text-white rounded-lg transition-all disabled:opacity-50 shadow-md whitespace-nowrap"
+                className="flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-all disabled:opacity-50 shadow-lg font-medium"
               >
-                {saving ? <Loader2 size={16} className="animate-spin flex-shrink-0" /> : <Save size={16} className="flex-shrink-0" />}
-                <span className="hidden sm:inline">Save Changes</span>
-                <span className="sm:hidden">Save</span>
+                {saving ? <Loader2 size={18} className="animate-spin flex-shrink-0" /> : <Save size={18} className="flex-shrink-0" />}
+                <span>Save Changes</span>
               </button>
               <button
                 onClick={handleCancelEdit}
                 disabled={saving}
-                className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-sm sm:text-base bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-all disabled:opacity-50 shadow-md whitespace-nowrap"
+                className="flex items-center justify-center gap-2 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-all disabled:opacity-50 shadow-lg font-medium"
               >
-                <X size={16} className="flex-shrink-0" />
-                <span className="hidden sm:inline">Cancel</span>
-                <span className="sm:hidden">✕</span>
+                <X size={18} className="flex-shrink-0" />
+                <span>Cancel</span>
               </button>
             </>
           )}
