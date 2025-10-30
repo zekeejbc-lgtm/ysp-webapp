@@ -3168,6 +3168,7 @@ function updateUserProfiles() {
     for (var j = 0; j < userData.length; j++) {
       var row = j + 2;
       var fullName = userData[j][3]; // Column D = Full Name
+      var currentRole = userData[j][20]; // Column U = Current Role
 
       if (!fullName) continue;
 
@@ -3176,10 +3177,26 @@ function updateUserProfiles() {
       var position = nameToPosition[key];
 
       if (idCode || position) {
-        var role = determineRole(idCode, position);
+        var newRole = determineRole(idCode, position);
+        
+        // Protect existing Head and Banned roles from being overridden
+        // Only override if:
+        // 1. Current role is NOT 'Head' (unless new role is also 'Head' based on ID)
+        // 2. Current role is NOT 'Banned'
+        var shouldUpdateRole = true;
+        if (currentRole === 'Banned') {
+          // Never override Banned status
+          shouldUpdateRole = false;
+          newRole = 'Banned';
+        } else if (currentRole === 'Head' && newRole !== 'Head') {
+          // Preserve existing Head role unless new ID code also indicates Head
+          shouldUpdateRole = false;
+          newRole = 'Head';
+        }
+        
         userProfiles.getRange(row, 19).setValue(idCode || '');
         userProfiles.getRange(row, 20).setValue(position || '');
-        userProfiles.getRange(row, 21).setValue(role || '');
+        userProfiles.getRange(row, 21).setValue(newRole || '');
         updates++;
       }
     }
@@ -3229,12 +3246,24 @@ function onEdit(e) {
     var key = String(name).replace(/\s+/g, ' ').trim().toLowerCase();
     var idCode = nameToID[key];
     var position = nameToPosition[key];
-    var role = determineRole(idCode, position);
+    var newRole = determineRole(idCode, position);
+    
+    // Get current role to check if it should be protected
+    var currentRole = sheet.getRange(row, 21).getValue();
 
     if (idCode || position) {
+      // Protect existing Head and Banned roles
+      if (currentRole === 'Banned') {
+        // Never override Banned status
+        newRole = 'Banned';
+      } else if (currentRole === 'Head' && newRole !== 'Head') {
+        // Preserve existing Head role unless new ID code also indicates Head
+        newRole = 'Head';
+      }
+      
       sheet.getRange(row, 19).setValue(idCode || '');
       sheet.getRange(row, 20).setValue(position || '');
-      sheet.getRange(row, 21).setValue(role || '');
+      sheet.getRange(row, 21).setValue(newRole || '');
     }
 
     Logger.log('✅ Row ' + row + ' updated for ' + name);

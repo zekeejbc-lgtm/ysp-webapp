@@ -274,7 +274,8 @@ export default function SystemTools({ currentUser }: SystemToolsProps) {
           <li>Trigger runs daily at 00:05 Asia/Manila.</li>
           <li>If dates don't parse, check that Column E contains real dates (Format → Number → Date).</li>
           <li><strong>Assign Roles (Bulk)</strong> syncs User Profiles with Officer Directory based on name matching.</li>
-          <li>Roles can be manually overridden in the table below.</li>
+          <li><strong className="text-green-600 dark:text-green-400">Head</strong> and <strong className="text-red-600 dark:text-red-400">Banned</strong> roles are protected and will NOT be overridden by bulk assignment.</li>
+          <li>Roles can be manually changed in the table below using the color-coded dropdown.</li>
         </ul>
       </div>
 
@@ -328,11 +329,11 @@ export default function SystemTools({ currentUser }: SystemToolsProps) {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead>
+              <thead className="bg-gray-100 dark:bg-gray-700">
                 <tr className="border-b-2 border-gray-300 dark:border-gray-600">
-                  <th className="text-left py-3 px-4 font-semibold text-gray-800 dark:text-gray-100">ID Code</th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-800 dark:text-gray-100">Full Name</th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-800 dark:text-gray-100">Role</th>
+                  <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">ID Code</th>
+                  <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">Full Name</th>
+                  <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">Role</th>
                 </tr>
               </thead>
               <tbody>
@@ -343,47 +344,78 @@ export default function SystemTools({ currentUser }: SystemToolsProps) {
                     </td>
                   </tr>
                 ) : (
-                  users.map((user, idx) => (
-                    <tr 
-                      key={user.idCode} 
-                      className={`border-b border-gray-200 dark:border-gray-700 ${
-                        idx % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-750'
-                      }`}
-                    >
-                      <td className="py-3 px-4 text-gray-700 dark:text-gray-300 font-mono text-xs">
-                        {user.idCode}
-                      </td>
-                      <td className="py-3 px-4 text-gray-800 dark:text-gray-200">
-                        {user.fullName}
-                      </td>
-                      <td className="py-3 px-4">
-                        <select
-                          value={editedRoles[user.idCode] || user.role}
-                          onChange={(e) => handleRoleChange(user.idCode, e.target.value)}
-                          className="px-3 py-1.5 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-[#f6421f] text-sm"
-                          style={{
-                            minWidth: '120px'
-                          }}
-                        >
-                          <option value="Admin">Admin</option>
-                          <option value="Auditor">Auditor</option>
-                          <option value="Head">Head</option>
-                          <option value="Member">Member</option>
-                          <option value="Banned">Banned</option>
-                        </select>
-                      </td>
-                    </tr>
-                  ))
+                  users.map((user, idx) => {
+                    const currentRole = editedRoles[user.idCode] || user.role;
+                    return (
+                      <tr 
+                        key={user.idCode} 
+                        className={`border-b border-gray-200 dark:border-gray-600 ${
+                          idx % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-750'
+                        }`}
+                      >
+                        <td className="py-3 px-4 font-mono text-xs" style={{ color: '#374151' }}>
+                          <span className="text-gray-900 dark:text-gray-100">{user.idCode}</span>
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className="text-gray-900 dark:text-gray-100 font-medium">{user.fullName}</span>
+                        </td>
+                        <td className="py-3 px-4">
+                          <select
+                            value={currentRole}
+                            onChange={(e) => handleRoleChange(user.idCode, e.target.value)}
+                            style={{
+                              minWidth: '130px',
+                              padding: '0.5rem 0.75rem',
+                              borderRadius: '0.375rem',
+                              border: '2px solid #d1d5db',
+                              backgroundColor: '#ffffff',
+                              fontSize: '0.875rem',
+                              fontWeight: '600',
+                              cursor: 'pointer',
+                              outline: 'none',
+                              color: 
+                                currentRole === 'Banned' ? '#dc2626' :
+                                currentRole === 'Head' ? '#16a34a' :
+                                currentRole === 'Admin' ? '#ea580c' :
+                                currentRole === 'Auditor' ? '#2563eb' :
+                                '#6b7280'
+                            }}
+                            onFocus={(e) => {
+                              e.currentTarget.style.borderColor = '#f6421f';
+                              e.currentTarget.style.boxShadow = '0 0 0 3px rgba(246, 66, 31, 0.1)';
+                            }}
+                            onBlur={(e) => {
+                              e.currentTarget.style.borderColor = '#d1d5db';
+                              e.currentTarget.style.boxShadow = 'none';
+                            }}
+                          >
+                            <option value="Admin" style={{ color: '#ea580c', fontWeight: '600' }}>🟠 Admin</option>
+                            <option value="Auditor" style={{ color: '#2563eb', fontWeight: '600' }}>🔵 Auditor</option>
+                            <option value="Head" style={{ color: '#16a34a', fontWeight: '600' }}>🟢 Head</option>
+                            <option value="Member" style={{ color: '#6b7280', fontWeight: '600' }}>⚪ Member</option>
+                            <option value="Banned" style={{ color: '#dc2626', fontWeight: '600' }}>🔴 Banned</option>
+                          </select>
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>
           </div>
         )}
 
-        <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
-          <p className="text-sm text-yellow-800 dark:text-yellow-200">
-            <strong>Warning:</strong> Setting a role to <strong>"Banned"</strong> will immediately restrict that user's access to all features and API endpoints. Use with caution.
-          </p>
+        <div className="mt-4 space-y-3">
+          <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
+            <p className="text-sm text-yellow-800 dark:text-yellow-200">
+              <strong>⚠️ Warning:</strong> Setting a role to <strong>"Banned"</strong> will immediately restrict that user's access to all features and API endpoints. Use with caution.
+            </p>
+          </div>
+          <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+            <p className="text-sm text-blue-800 dark:text-blue-200">
+              <strong>ℹ️ Note:</strong> The <strong>"Assign Roles (Bulk)"</strong> button will NOT override existing <strong className="text-green-600 dark:text-green-400">Head</strong> or <strong className="text-red-600 dark:text-red-400">Banned</strong> roles. These must be changed manually in the table above.
+            </p>
+          </div>
         </div>
       </div>
     </div>
