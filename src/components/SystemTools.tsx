@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { systemAPI } from '../services/api';
 import { toast } from 'sonner';
 import { Wrench, RefreshCw, Clock } from 'lucide-react';

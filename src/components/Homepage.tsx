@@ -3,6 +3,41 @@ import { Mail, Facebook, X, Loader2, Plus, Upload, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { homepageAPI, type HomepageContent, type HomepageProject } from '../services/api';
 
+/**
+ * Helper function to get a displayable Google Drive image URL
+ * Converts various Google Drive URL formats to the thumbnail format which works better
+ */
+function getDisplayableGoogleDriveUrl(url: string): string {
+  if (!url || url.trim() === '') return '';
+  
+  // Extract file ID from various Google Drive URL formats
+  let fileId = '';
+  
+  // Format 1: https://drive.google.com/uc?export=view&id=FILE_ID
+  if (url.includes('drive.google.com/uc')) {
+    const match = url.match(/[?&]id=([^&]+)/);
+    if (match) fileId = match[1];
+  }
+  // Format 2: https://drive.google.com/file/d/FILE_ID/view
+  else if (url.includes('drive.google.com/file/d/')) {
+    const match = url.match(/\/file\/d\/([^/]+)/);
+    if (match) fileId = match[1];
+  }
+  // Format 3: https://drive.google.com/open?id=FILE_ID
+  else if (url.includes('drive.google.com/open')) {
+    const match = url.match(/[?&]id=([^&]+)/);
+    if (match) fileId = match[1];
+  }
+  
+  // If we found a file ID, return the thumbnail URL which has fewer CORS issues
+  if (fileId) {
+    return `https://drive.google.com/thumbnail?id=${fileId}&sz=w400`;
+  }
+  
+  // If it's not a Google Drive URL or we couldn't parse it, return as-is
+  return url;
+}
+
 interface HomepageProps {
   darkMode: boolean;
   currentUser?: any;
@@ -262,7 +297,29 @@ export default function Homepage({ darkMode, currentUser }: HomepageProps) {
           {isAdminOrAuditor && !showAddProjectForm && (
             <button
               onClick={() => setShowAddProjectForm(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#f6421f] to-[#ee8724] text-white rounded-lg hover:shadow-lg transition-all"
+              style={{
+                background: 'linear-gradient(to right, #f97316, #fb923c)',
+                color: '#ffffff',
+                fontWeight: 'bold',
+                padding: '0.5rem 1rem',
+                borderRadius: '0.5rem',
+                boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                transition: 'all 0.2s',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem',
+                border: 'none',
+                cursor: 'pointer'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'linear-gradient(to right, #ea580c, #f97316)';
+                e.currentTarget.style.boxShadow = '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'linear-gradient(to right, #f97316, #fb923c)';
+                e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)';
+              }}
             >
               <Plus size={18} />
               Add Project
@@ -299,7 +356,29 @@ export default function Homepage({ darkMode, currentUser }: HomepageProps) {
                   />
                   <button
                     onClick={() => fileInputRef.current?.click()}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    style={{
+                      backgroundColor: '#2563eb',
+                      color: '#ffffff',
+                      fontWeight: 'bold',
+                      padding: '0.5rem 1rem',
+                      borderRadius: '0.5rem',
+                      boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                      transition: 'all 0.2s',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.5rem',
+                      border: 'none',
+                      cursor: 'pointer'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = '#1d4ed8';
+                      e.currentTarget.style.boxShadow = '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = '#2563eb';
+                      e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)';
+                    }}
                   >
                     <Upload size={18} />
                     {projectImageFile ? 'Change Image' : 'Upload Image'}
@@ -330,7 +409,34 @@ export default function Homepage({ darkMode, currentUser }: HomepageProps) {
                 <button
                   onClick={handleAddProject}
                   disabled={uploading}
-                  className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  style={{
+                    backgroundColor: '#16a34a',
+                    color: '#ffffff',
+                    fontWeight: 'bold',
+                    padding: '0.5rem 1rem',
+                    borderRadius: '0.5rem',
+                    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                    transition: 'all 0.2s',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem',
+                    border: 'none',
+                    cursor: uploading ? 'not-allowed' : 'pointer',
+                    opacity: uploading ? 0.5 : 1
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!uploading) {
+                      e.currentTarget.style.backgroundColor = '#15803d';
+                      e.currentTarget.style.boxShadow = '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!uploading) {
+                      e.currentTarget.style.backgroundColor = '#16a34a';
+                      e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)';
+                    }
+                  }}
                 >
                   {uploading ? <Loader2 size={18} className="animate-spin" /> : <Plus size={18} />}
                   {uploading ? 'Adding...' : 'Add Project'}
@@ -338,7 +444,34 @@ export default function Homepage({ darkMode, currentUser }: HomepageProps) {
                 <button
                   onClick={handleCancelAdd}
                   disabled={uploading}
-                  className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 disabled:opacity-50 transition-colors"
+                  style={{
+                    backgroundColor: '#4b5563',
+                    color: '#ffffff',
+                    fontWeight: 'bold',
+                    padding: '0.5rem 1rem',
+                    borderRadius: '0.5rem',
+                    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                    transition: 'all 0.2s',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem',
+                    border: 'none',
+                    cursor: uploading ? 'not-allowed' : 'pointer',
+                    opacity: uploading ? 0.5 : 1
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!uploading) {
+                      e.currentTarget.style.backgroundColor = '#374151';
+                      e.currentTarget.style.boxShadow = '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!uploading) {
+                      e.currentTarget.style.backgroundColor = '#4b5563';
+                      e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)';
+                    }
+                  }}
                 >
                   Cancel
                 </button>
@@ -359,7 +492,7 @@ export default function Homepage({ darkMode, currentUser }: HomepageProps) {
                   className="cursor-pointer"
                 >
                   <img
-                    src={project.image}
+                    src={getDisplayableGoogleDriveUrl(project.image)}
                     alt={project.title}
                     className="w-full h-48 object-cover"
                     onError={(e) => {
@@ -368,7 +501,7 @@ export default function Homepage({ darkMode, currentUser }: HomepageProps) {
                   />
                   <div className="p-4 bg-white dark:bg-gray-800">
                     <h4 className="text-[#f6421f] dark:text-[#ee8724] mb-2">{project.title}</h4>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">{project.description}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 whitespace-pre-wrap">{project.description}</p>
                   </div>
                 </div>
                 {isAdminOrAuditor && (
@@ -376,7 +509,35 @@ export default function Homepage({ darkMode, currentUser }: HomepageProps) {
                     <button
                       onClick={() => handleDeleteProject(project.number)}
                       disabled={uploading}
-                      className="flex items-center gap-2 px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50 transition-colors"
+                      style={{
+                        backgroundColor: '#dc2626',
+                        color: '#ffffff',
+                        fontWeight: 'bold',
+                        padding: '0.25rem 0.75rem',
+                        borderRadius: '0.375rem',
+                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                        transition: 'all 0.2s',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.5rem',
+                        border: 'none',
+                        cursor: uploading ? 'not-allowed' : 'pointer',
+                        opacity: uploading ? 0.5 : 1,
+                        fontSize: '0.875rem'
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!uploading) {
+                          e.currentTarget.style.backgroundColor = '#b91c1c';
+                          e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!uploading) {
+                          e.currentTarget.style.backgroundColor = '#dc2626';
+                          e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)';
+                        }
+                      }}
                     >
                       <Trash2 size={14} />
                       Delete
@@ -430,18 +591,34 @@ export default function Homepage({ darkMode, currentUser }: HomepageProps) {
           <div className="modal-content max-w-2xl" onClick={(e) => e.stopPropagation()}>
             <button
               onClick={() => setSelectedProject(null)}
-              className="absolute top-4 right-4 p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors"
+              style={{
+                position: 'absolute',
+                top: '1rem',
+                right: '1rem',
+                padding: '0.5rem',
+                borderRadius: '9999px',
+                backgroundColor: 'transparent',
+                transition: 'all 0.2s',
+                border: 'none',
+                cursor: 'pointer'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = darkMode ? '#374151' : '#e5e7eb';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+              }}
             >
               <X size={20} />
             </button>
             
             <img
-              src={selectedProject.image}
+              src={getDisplayableGoogleDriveUrl(selectedProject.image)}
               alt={selectedProject.title}
               className="w-full h-64 object-cover rounded-lg mb-4"
             />
             <h3 className="text-[#f6421f] dark:text-[#ee8724] mb-3">{selectedProject.title}</h3>
-            <p className="text-justify">{selectedProject.description}</p>
+            <p className="text-justify whitespace-pre-wrap">{selectedProject.description}</p>
           </div>
         </div>
       )}
