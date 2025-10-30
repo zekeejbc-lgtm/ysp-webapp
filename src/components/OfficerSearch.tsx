@@ -20,6 +20,23 @@ export default function OfficerSearch({ darkMode }: OfficerSearchProps) {
   // keep darkMode referenced
   void darkMode;
 
+  // Helper: Convert Google Drive URLs to thumbnail form for reliable display
+  function getDisplayableGoogleDriveUrl(url: string): string {
+    if (!url || url.trim() === '') return '';
+    let fileId = '';
+    if (url.includes('drive.google.com/uc')) {
+      const match = url.match(/[?&]id=([^&]+)/);
+      if (match) fileId = match[1];
+    } else if (url.includes('drive.google.com/file/d/')) {
+      const match = url.match(/\/file\/d\/([^/]+)/);
+      if (match) fileId = match[1];
+    } else if (url.includes('drive.google.com/open')) {
+      const match = url.match(/[?&]id=([^&]+)/);
+      if (match) fileId = match[1];
+    }
+    return fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w400` : url;
+  }
+
   // Search profiles as user types
   useEffect(() => {
     const searchProfiles = async () => {
@@ -30,9 +47,28 @@ export default function OfficerSearch({ darkMode }: OfficerSearchProps) {
 
       setIsLoading(true);
       try {
-        const response = await userAPI.searchProfiles(searchTerm);
+        const response: any = await userAPI.searchProfiles(searchTerm);
         if (response.success && response.profiles) {
-          setProfiles(response.profiles);
+          // Normalize backend keys to match UserProfile shape expected here
+          const normalized: UserProfile[] = response.profiles.map((p: any) => ({
+            fullName: p.fullName || '',
+            username: p.username || '',
+            idCode: p.idCode || '',
+            email: p.email || '',
+            contactNumber: p.contact || '',
+            birthday: p.birthday || '',
+            age: String(p.age ?? ''),
+            gender: p.gender || '',
+            pronouns: p.pronouns || '',
+            civilStatus: p.civilStatus || '',
+            religion: p.religion || '',
+            nationality: p.nationality || '',
+            password: '',
+            position: p.position || '',
+            role: p.role || '',
+            profilePictureURL: getDisplayableGoogleDriveUrl(p.profilePic || p.profilePictureURL || ''),
+          }));
+          setProfiles(normalized);
         } else {
           setProfiles([]);
         }
