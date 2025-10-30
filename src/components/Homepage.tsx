@@ -7,7 +7,7 @@ import { homepageAPI, type HomepageContent, type HomepageProject } from '../serv
  * Helper function to get a displayable Google Drive image URL
  * Converts various Google Drive URL formats to the thumbnail format which works better
  */
-function getDisplayableGoogleDriveUrl(url: string): string {
+function getDisplayableGoogleDriveUrl(url: string, width: number = 1200): string {
   if (!url || url.trim() === '') return '';
   
   // Extract file ID from various Google Drive URL formats
@@ -31,11 +31,32 @@ function getDisplayableGoogleDriveUrl(url: string): string {
   
   // If we found a file ID, return the thumbnail URL which has fewer CORS issues
   if (fileId) {
-    return `https://drive.google.com/thumbnail?id=${fileId}&sz=w400`;
+    // Cap width to a reasonable max to avoid huge downloads
+    const w = Math.max(200, Math.min(width, 2400));
+    return `https://drive.google.com/thumbnail?id=${fileId}&sz=w${w}`;
   }
   
   // If it's not a Google Drive URL or we couldn't parse it, return as-is
   return url;
+}
+
+/**
+ * Returns an original Google Drive viewer URL for opening in a new tab.
+ */
+function getOriginalGoogleDriveUrl(url: string): string {
+  if (!url || url.trim() === '') return '';
+  let fileId = '';
+  if (url.includes('drive.google.com/uc')) {
+    const match = url.match(/[?&]id=([^&]+)/);
+    if (match) fileId = match[1];
+  } else if (url.includes('drive.google.com/file/d/')) {
+    const match = url.match(/\/file\/d\/([^/]+)/);
+    if (match) fileId = match[1];
+  } else if (url.includes('drive.google.com/open')) {
+    const match = url.match(/[?&]id=([^&]+)/);
+    if (match) fileId = match[1];
+  }
+  return fileId ? `https://drive.google.com/file/d/${fileId}/view?usp=sharing` : url;
 }
 
 interface HomepageProps {
@@ -54,12 +75,57 @@ export default function Homepage({ darkMode, currentUser }: HomepageProps) {
   const [projectImageFile, setProjectImageFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
+  const modalContentRef = useRef<HTMLDivElement>(null);
+  const [cardImgWidth, setCardImgWidth] = useState<number>(800);
+  const [modalImgWidth, setModalImgWidth] = useState<number>(1200);
 
   const isAdminOrAuditor = currentUser && (currentUser.role === 'Admin' || currentUser.role === 'Auditor');
 
   useEffect(() => {
     fetchHomepageContent();
   }, []);
+
+  // Compute adaptive widths for project card images based on container width and device pixel ratio
+  useEffect(() => {
+    const calcCardWidth = () => {
+      const container = gridRef.current;
+      if (!container) return;
+      const containerWidth = container.clientWidth || 800;
+      const isMd = window.matchMedia('(min-width: 768px)').matches;
+      const columns = isMd ? 2 : 1;
+      const gap = 16; // gap-4 ~ 1rem
+      const widthPerCard = (containerWidth - gap * (columns - 1)) / columns;
+      const dpr = Math.min(3, Math.max(1, window.devicePixelRatio || 1));
+      const target = Math.round(widthPerCard * dpr);
+      const clamped = Math.max(500, Math.min(1600, target));
+      setCardImgWidth(clamped);
+    };
+
+    calcCardWidth();
+    const onResize = () => calcCardWidth();
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
+  // Compute adaptive width for modal image when opened and on resize
+  useEffect(() => {
+    const calcModalWidth = () => {
+      const container = modalContentRef.current;
+      if (!container) return;
+      const contentWidth = container.clientWidth || 800;
+      const dpr = Math.min(3, Math.max(1, window.devicePixelRatio || 1));
+      const target = Math.round(contentWidth * dpr);
+      const clamped = Math.max(800, Math.min(2000, target));
+      setModalImgWidth(clamped);
+    };
+    if (selectedProject) {
+      calcModalWidth();
+      const onResize = () => calcModalWidth();
+      window.addEventListener('resize', onResize);
+      return () => window.removeEventListener('resize', onResize);
+    }
+  }, [selectedProject]);
 
   const fetchHomepageContent = async () => {
     try {
@@ -481,7 +547,7 @@ export default function Homepage({ darkMode, currentUser }: HomepageProps) {
         )}
 
         {content.projects.length > 0 ? (
-          <div className="grid md:grid-cols-2 gap-4">
+          <div ref={gridRef} className="grid md:grid-cols-2 gap-4">
             {content.projects.map((project, index) => (
               <div
                 key={index}
@@ -492,7 +558,13 @@ export default function Homepage({ darkMode, currentUser }: HomepageProps) {
                   className="cursor-pointer"
                 >
                   <img
-                    src={getDisplayableGoogleDriveUrl(project.image)}
+                    src={getDisplayableGoogleDriveUrl(project.image, cardImgWidth)}
+                    srcSet={`
+                      ${getDisplayableGoogleDriveUrl(project.image, 800)} 800w,
+                      ${getDisplayableGoogleDriveUrl(project.image, 1200)} 1200w,
+                      ${getDisplayableGoogleDriveUrl(project.image, 1600)} 1600w
+                    `}
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 50vw"
                     alt={project.title}
                     className="w-full h-48 object-cover"
                     onError={(e) => {
@@ -588,7 +660,7 @@ export default function Homepage({ darkMode, currentUser }: HomepageProps) {
       {/* Project Modal */}
       {selectedProject && (
         <div className="modal-overlay" onClick={() => setSelectedProject(null)}>
-          <div className="modal-content max-w-2xl" onClick={(e) => e.stopPropagation()}>
+          <div ref={modalContentRef} className="modal-content max-w-2xl" onClick={(e) => e.stopPropagation()}>
             <button
               onClick={() => setSelectedProject(null)}
               style={{
@@ -613,10 +685,47 @@ export default function Homepage({ darkMode, currentUser }: HomepageProps) {
             </button>
             
             <img
-              src={getDisplayableGoogleDriveUrl(selectedProject.image)}
+              src={getDisplayableGoogleDriveUrl(selectedProject.image, modalImgWidth)}
+              srcSet={`
+                ${getDisplayableGoogleDriveUrl(selectedProject.image, 800)} 800w,
+                ${getDisplayableGoogleDriveUrl(selectedProject.image, 1200)} 1200w,
+                ${getDisplayableGoogleDriveUrl(selectedProject.image, 1600)} 1600w,
+                ${getDisplayableGoogleDriveUrl(selectedProject.image, 2000)} 2000w
+              `}
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 80vw, 70vw"
               alt={selectedProject.title}
-              className="w-full h-64 object-cover rounded-lg mb-4"
+              className="w-full rounded-lg mb-4"
+              style={{ maxHeight: '70vh', objectFit: 'contain' }}
             />
+            <div className="mb-3">
+              <a
+                href={getOriginalGoogleDriveUrl(selectedProject.image)}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  backgroundColor: '#2563eb',
+                  color: '#ffffff',
+                  fontWeight: 'bold',
+                  padding: '0.5rem 1rem',
+                  borderRadius: '0.5rem',
+                  boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                  transition: 'all 0.2s',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem',
+                  textDecoration: 'none'
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLAnchorElement).style.backgroundColor = '#1d4ed8';
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLAnchorElement).style.backgroundColor = '#2563eb';
+                }}
+              >
+                View Full Size
+              </a>
+            </div>
             <h3 className="text-[#f6421f] dark:text-[#ee8724] mb-3">{selectedProject.title}</h3>
             <p className="text-justify whitespace-pre-wrap">{selectedProject.description}</p>
           </div>
