@@ -273,14 +273,36 @@ export default function MyProfile({ currentUser }: MyProfileProps) {
     <div className="max-w-5xl mx-auto space-y-6">
       {/* Header with Profile Picture */}
       <div className="ysp-card text-center relative">
-        {/* Edit/Save/Cancel Buttons - ABSOLUTE TOP RIGHT */}
+        {/* Edit/Save/Cancel Buttons - Top Right */}
         <div className="absolute top-4 right-4 flex flex-col sm:flex-row gap-3 z-50">
           {!isEditing ? (
             <button
               onClick={handleEdit}
-              className="flex items-center justify-center gap-2 bg-gradient-to-r from-orange-500 to-orange-400 hover:from-orange-600 hover:to-orange-500 text-white dark:text-white font-bold px-5 py-2.5 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200"
+              style={{
+                background: 'linear-gradient(to right, #f97316, #fb923c)',
+                color: '#ffffff',
+                fontWeight: 'bold',
+                padding: '0.625rem 1.25rem',
+                borderRadius: '0.5rem',
+                boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                transition: 'all 0.2s',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem',
+                border: 'none',
+                cursor: 'pointer'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'linear-gradient(to right, #ea580c, #f97316)';
+                e.currentTarget.style.boxShadow = '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'linear-gradient(to right, #f97316, #fb923c)';
+                e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)';
+              }}
             >
-              <Edit2 size={18} className="flex-shrink-0" />
+              <Edit2 size={18} />
               <span>Edit Profile</span>
             </button>
           ) : (
@@ -288,23 +310,86 @@ export default function MyProfile({ currentUser }: MyProfileProps) {
               <button
                 onClick={handleSaveEdit}
                 disabled={saving}
-                className="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700 text-white dark:text-white font-bold px-5 py-2.5 rounded-lg shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                style={{
+                  backgroundColor: '#16a34a',
+                  color: '#ffffff',
+                  fontWeight: 'bold',
+                  padding: '0.625rem 1.25rem',
+                  borderRadius: '0.5rem',
+                  boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                  transition: 'all 0.2s',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem',
+                  border: 'none',
+                  cursor: saving ? 'not-allowed' : 'pointer',
+                  opacity: saving ? 0.5 : 1
+                }}
+                onMouseEnter={(e) => {
+                  if (!saving) {
+                    e.currentTarget.style.backgroundColor = '#15803d';
+                    e.currentTarget.style.boxShadow = '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!saving) {
+                    e.currentTarget.style.backgroundColor = '#16a34a';
+                    e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)';
+                  }
+                }}
               >
-                {saving ? <Loader2 size={18} className="animate-spin flex-shrink-0" /> : <Save size={18} className="flex-shrink-0" />}
-                <span>Save Changes</span>
+                {saving ? (
+                  <>
+                    <Loader2 size={18} className="animate-spin" />
+                    <span>Saving...</span>
+                  </>
+                ) : (
+                  <>
+                    <Save size={18} />
+                    <span>Save Changes</span>
+                  </>
+                )}
               </button>
               <button
                 onClick={handleCancelEdit}
                 disabled={saving}
-                className="flex items-center justify-center gap-2 bg-gray-600 hover:bg-gray-700 dark:bg-gray-600 dark:hover:bg-gray-700 text-white dark:text-white font-bold px-5 py-2.5 rounded-lg shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                style={{
+                  backgroundColor: '#4b5563',
+                  color: '#ffffff',
+                  fontWeight: 'bold',
+                  padding: '0.625rem 1.25rem',
+                  borderRadius: '0.5rem',
+                  boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                  transition: 'all 0.2s',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem',
+                  border: 'none',
+                  cursor: saving ? 'not-allowed' : 'pointer',
+                  opacity: saving ? 0.5 : 1
+                }}
+                onMouseEnter={(e) => {
+                  if (!saving) {
+                    e.currentTarget.style.backgroundColor = '#374151';
+                    e.currentTarget.style.boxShadow = '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!saving) {
+                    e.currentTarget.style.backgroundColor = '#4b5563';
+                    e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)';
+                  }
+                }}
               >
-                <X size={18} className="flex-shrink-0" />
+                <X size={18} />
                 <span>Cancel</span>
               </button>
             </>
           )}
         </div>
-
+        
         <div className="relative inline-block">
           <img
             src={profile.profilePictureURL && profile.profilePictureURL.trim() !== '' 
