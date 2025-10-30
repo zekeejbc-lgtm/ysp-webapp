@@ -1962,6 +1962,135 @@ function handleGetUserProfile(data) {
   }
 }
 
+// ===== SEND PROFILE UPDATE EMAIL =====
+/**
+ * Sends an email notification when profile is updated
+ * @param {string} fullName - User's full name
+ * @param {string} email - Email address to send to
+ * @param {Array} changes - Array of changed fields with old and new values
+ * @param {Array} unchanged - Array of unchanged field names
+ */
+function sendProfileUpdateEmail(fullName, email, changes, unchanged) {
+  if (!email || email.trim() === '') {
+    Logger.log('No email address provided, skipping notification');
+    return;
+  }
+  
+  const timestamp = new Date();
+  const dateStr = Utilities.formatDate(timestamp, 'Asia/Manila', 'MMMM dd, yyyy');
+  const timeStr = Utilities.formatDate(timestamp, 'Asia/Manila', 'hh:mm a');
+  
+  // Build changes HTML
+  let changesHtml = '';
+  if (changes.length > 0) {
+    changesHtml = '<div style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0;">';
+    changesHtml += '<h3 style="color: #856404; margin-top: 0;">📝 Changes Made:</h3>';
+    changesHtml += '<table style="width: 100%; border-collapse: collapse;">';
+    changes.forEach(function(change) {
+      changesHtml += '<tr style="border-bottom: 1px solid #ddd;">';
+      changesHtml += '<td style="padding: 10px; font-weight: bold; color: #333;">' + change.field + '</td>';
+      changesHtml += '<td style="padding: 10px;">';
+      changesHtml += '<span style="color: #dc3545; text-decoration: line-through;">' + (change.old || '(empty)') + '</span>';
+      changesHtml += ' → ';
+      changesHtml += '<span style="color: #28a745; font-weight: bold;">' + change.new + '</span>';
+      changesHtml += '</td>';
+      changesHtml += '</tr>';
+    });
+    changesHtml += '</table>';
+    changesHtml += '</div>';
+  }
+  
+  // Build unchanged HTML
+  let unchangedHtml = '';
+  if (unchanged.length > 0) {
+    unchangedHtml = '<div style="background-color: #d4edda; border-left: 4px solid #28a745; padding: 15px; margin: 20px 0;">';
+    unchangedHtml += '<h3 style="color: #155724; margin-top: 0;">✓ Unchanged Fields:</h3>';
+    unchangedHtml += '<p style="color: #155724; margin: 0;">' + unchanged.join(', ') + '</p>';
+    unchangedHtml += '</div>';
+  }
+  
+  const subject = 'Your YSP Profile Has Been Updated';
+  
+  const htmlBody = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #f6421f 0%, #ee8724 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+    .content { background-color: #ffffff; padding: 30px; border: 1px solid #ddd; border-top: none; }
+    .footer { background-color: #f8f9fa; padding: 20px; text-align: center; border-radius: 0 0 10px 10px; border: 1px solid #ddd; border-top: none; color: #6c757d; font-size: 14px; }
+    .alert-warning { background-color: #fff3cd; border: 1px solid #ffc107; padding: 15px; border-radius: 5px; margin: 20px 0; color: #856404; }
+    .developer-info { margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd; }
+    .btn { display: inline-block; padding: 12px 30px; background: linear-gradient(135deg, #f6421f 0%, #ee8724 100%); color: white; text-decoration: none; border-radius: 5px; font-weight: bold; margin: 20px 0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1 style="margin: 0; font-size: 28px;">Youth Service Philippines</h1>
+      <p style="margin: 10px 0 0 0; font-size: 14px;">Tagum Chapter</p>
+    </div>
+    
+    <div class="content">
+      <h2 style="color: #f6421f; margin-top: 0;">Profile Update Notification</h2>
+      
+      <p>Dear <strong>${fullName}</strong>,</p>
+      
+      <p>Your Youth Service Philippines profile was successfully updated on <strong>${dateStr}</strong> at <strong>${timeStr}</strong>.</p>
+      
+      ${changesHtml}
+      
+      ${unchangedHtml}
+      
+      <div class="alert-warning">
+        <strong>⚠️ Security Notice:</strong> If you did not make these changes, please contact the administrator immediately or reply to this email.
+      </div>
+      
+      <p style="text-align: center;">
+        <a href="https://ysp-webapp.vercel.app" class="btn">Access Web App</a>
+      </p>
+      
+      <p style="margin-top: 30px;">For announcements and more information, you may access our web app at:<br>
+      <a href="https://ysp-webapp.vercel.app" style="color: #f6421f;">https://ysp-webapp.vercel.app</a></p>
+      
+    </div>
+    
+    <div class="footer">
+      <p style="margin: 0 0 10px 0;">This is an automated notification from the YSP Management System.</p>
+      
+      <div class="developer-info">
+        <p style="margin: 5px 0; font-weight: bold;">System Developer:</p>
+        <p style="margin: 5px 0;"><strong>Ezequiel John B. Crisostomo</strong></p>
+        <p style="margin: 5px 0;">Membership and Internal Affairs Officer</p>
+        <p style="margin: 5px 0;">Youth Service Philippines - Tagum Chapter</p>
+      </div>
+      
+      <p style="margin-top: 20px; font-size: 12px; color: #999;">
+        © ${new Date().getFullYear()} Youth Service Philippines - Tagum Chapter. All rights reserved.
+      </p>
+    </div>
+  </div>
+</body>
+</html>
+  `;
+  
+  // Send email
+  try {
+    MailApp.sendEmail({
+      to: email,
+      subject: subject,
+      htmlBody: htmlBody
+    });
+    Logger.log('Profile update email sent successfully to: ' + email);
+  } catch (error) {
+    Logger.log('Error sending profile update email: ' + error.toString());
+    throw error;
+  }
+}
+
 // ===== UPDATE USER PROFILE =====
 function handleUpdateProfile(data) {
   try {
@@ -1986,66 +2115,132 @@ function handleUpdateProfile(data) {
       const rowIdCode = row[18]; // Column S - ID Code
       
       if (rowIdCode === idCode) {
+        // Store old values for comparison
+        const oldValues = {
+          fullName: row[3] || '',
+          email: row[1] || '',
+          birthday: row[4] || '',
+          age: row[5] || '',
+          gender: row[6] || '',
+          pronouns: row[7] || '',
+          civilStatus: row[8] || '',
+          contactNumber: row[9] || '',
+          religion: row[10] || '',
+          nationality: row[11] || '',
+          personalEmail: row[12] || '',
+          username: row[13] || '',
+          password: row[14] || ''
+        };
+        
+        // Track changes for email notification
+        const changes = [];
+        const unchanged = [];
         // Update allowed fields based on SHEET_COLUMN_MAPPINGS.md
         
         // Column B (index 1) - Email Address
-        if (data.email !== undefined) {
+        if (data.email !== undefined && data.email !== oldValues.email) {
           userProfilesSheet.getRange(i + 1, 2).setValue(data.email);
+          changes.push({ field: 'Email Address', old: oldValues.email, new: data.email });
+        } else if (data.email === undefined) {
+          unchanged.push('Email Address');
         }
         
         // Column E (index 4) - Date of Birth (Birthday)
-        if (data.birthday !== undefined) {
+        if (data.birthday !== undefined && data.birthday !== oldValues.birthday) {
           userProfilesSheet.getRange(i + 1, 5).setValue(data.birthday);
+          changes.push({ field: 'Date of Birth', old: oldValues.birthday, new: data.birthday });
+        } else if (data.birthday === undefined) {
+          unchanged.push('Date of Birth');
         }
         
         // Column F (index 5) - Age
-        if (data.age !== undefined) {
+        if (data.age !== undefined && data.age !== oldValues.age) {
           userProfilesSheet.getRange(i + 1, 6).setValue(data.age);
+          changes.push({ field: 'Age', old: oldValues.age, new: data.age });
+        } else if (data.age === undefined) {
+          unchanged.push('Age');
         }
         
         // Column G (index 6) - Sex/Gender
-        if (data.gender !== undefined) {
+        if (data.gender !== undefined && data.gender !== oldValues.gender) {
           userProfilesSheet.getRange(i + 1, 7).setValue(data.gender);
+          changes.push({ field: 'Gender', old: oldValues.gender, new: data.gender });
+        } else if (data.gender === undefined) {
+          unchanged.push('Gender');
         }
         
         // Column H (index 7) - Pronouns
-        if (data.pronouns !== undefined) {
+        if (data.pronouns !== undefined && data.pronouns !== oldValues.pronouns) {
           userProfilesSheet.getRange(i + 1, 8).setValue(data.pronouns);
+          changes.push({ field: 'Pronouns', old: oldValues.pronouns, new: data.pronouns });
+        } else if (data.pronouns === undefined) {
+          unchanged.push('Pronouns');
         }
         
         // Column I (index 8) - Civil Status
-        if (data.civilStatus !== undefined) {
+        if (data.civilStatus !== undefined && data.civilStatus !== oldValues.civilStatus) {
           userProfilesSheet.getRange(i + 1, 9).setValue(data.civilStatus);
+          changes.push({ field: 'Civil Status', old: oldValues.civilStatus, new: data.civilStatus });
+        } else if (data.civilStatus === undefined) {
+          unchanged.push('Civil Status');
         }
         
         // Column J (index 9) - Contact Number
-        if (data.contactNumber !== undefined) {
+        if (data.contactNumber !== undefined && data.contactNumber !== oldValues.contactNumber) {
           userProfilesSheet.getRange(i + 1, 10).setValue(data.contactNumber);
+          changes.push({ field: 'Contact Number', old: oldValues.contactNumber, new: data.contactNumber });
+        } else if (data.contactNumber === undefined) {
+          unchanged.push('Contact Number');
         }
         
         // Column K (index 10) - Religion
-        if (data.religion !== undefined) {
+        if (data.religion !== undefined && data.religion !== oldValues.religion) {
           userProfilesSheet.getRange(i + 1, 11).setValue(data.religion);
+          changes.push({ field: 'Religion', old: oldValues.religion, new: data.religion });
+        } else if (data.religion === undefined) {
+          unchanged.push('Religion');
         }
         
         // Column L (index 11) - Nationality
-        if (data.nationality !== undefined) {
+        if (data.nationality !== undefined && data.nationality !== oldValues.nationality) {
           userProfilesSheet.getRange(i + 1, 12).setValue(data.nationality);
+          changes.push({ field: 'Nationality', old: oldValues.nationality, new: data.nationality });
+        } else if (data.nationality === undefined) {
+          unchanged.push('Nationality');
         }
         
-        // Column M (index 12) - Personal Email Address (if different from primary email)
-        if (data.personalEmail !== undefined) {
+        // Column M (index 12) - Personal Email Address
+        if (data.personalEmail !== undefined && data.personalEmail !== oldValues.personalEmail) {
           userProfilesSheet.getRange(i + 1, 13).setValue(data.personalEmail);
+          changes.push({ field: 'Personal Email', old: oldValues.personalEmail, new: data.personalEmail });
+        } else if (data.personalEmail === undefined) {
+          unchanged.push('Personal Email');
         }
         
         // Column N (index 13) - Username
-        if (data.username !== undefined) {
+        if (data.username !== undefined && data.username !== oldValues.username) {
           userProfilesSheet.getRange(i + 1, 14).setValue(data.username);
+          changes.push({ field: 'Username', old: oldValues.username, new: data.username });
+        } else if (data.username === undefined) {
+          unchanged.push('Username');
         }
         
-        // Column O (index 14) - Password
-        if (data.password !== undefined) {
+        // Column O (index 14) - Password (Don't show actual passwords in email)
+        if (data.password !== undefined && data.password !== oldValues.password) {
           userProfilesSheet.getRange(i + 1, 15).setValue(data.password);
+          changes.push({ field: 'Password', old: '••••••••', new: '••••••••' });
+        } else if (data.password === undefined) {
+          unchanged.push('Password');
+        }
+        
+        // Send email notification if there are changes
+        if (changes.length > 0) {
+          try {
+            sendProfileUpdateEmail(oldValues.fullName, oldValues.personalEmail || oldValues.email, changes, unchanged);
+          } catch (emailError) {
+            Logger.log('Failed to send email notification: ' + emailError.toString());
+            // Don't fail the update if email fails
+          }
         }
         
         Logger.log('Profile updated successfully for ID Code: ' + idCode);
