@@ -278,7 +278,7 @@ export default function MyProfile({ currentUser }: MyProfileProps) {
           {!isEditing ? (
             <button
               onClick={handleEdit}
-              className="flex items-center justify-center gap-2 bg-gradient-to-r from-orange-500 to-orange-400 hover:from-orange-600 hover:to-orange-500 text-white font-bold px-5 py-2.5 rounded-lg shadow-xl border-2 border-orange-600 transition-all duration-200"
+              className="flex items-center justify-center gap-2 bg-gradient-to-r from-orange-500 to-orange-400 hover:from-orange-600 hover:to-orange-500 text-white dark:text-white font-bold px-5 py-2.5 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200"
             >
               <Edit2 size={18} className="flex-shrink-0" />
               <span>Edit Profile</span>
@@ -288,7 +288,7 @@ export default function MyProfile({ currentUser }: MyProfileProps) {
               <button
                 onClick={handleSaveEdit}
                 disabled={saving}
-                className="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white font-bold px-5 py-2.5 rounded-lg shadow-xl border-2 border-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                className="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700 text-white dark:text-white font-bold px-5 py-2.5 rounded-lg shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
               >
                 {saving ? <Loader2 size={18} className="animate-spin flex-shrink-0" /> : <Save size={18} className="flex-shrink-0" />}
                 <span>Save Changes</span>
@@ -296,7 +296,7 @@ export default function MyProfile({ currentUser }: MyProfileProps) {
               <button
                 onClick={handleCancelEdit}
                 disabled={saving}
-                className="flex items-center justify-center gap-2 bg-gray-600 hover:bg-gray-700 text-white font-bold px-5 py-2.5 rounded-lg shadow-xl border-2 border-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                className="flex items-center justify-center gap-2 bg-gray-600 hover:bg-gray-700 dark:bg-gray-600 dark:hover:bg-gray-700 text-white dark:text-white font-bold px-5 py-2.5 rounded-lg shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
               >
                 <X size={18} className="flex-shrink-0" />
                 <span>Cancel</span>
