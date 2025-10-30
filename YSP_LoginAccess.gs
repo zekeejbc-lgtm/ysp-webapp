@@ -2,6 +2,7 @@
 const SPREADSHEET_ID = '1zTgBQw3ISAtagKOKhMYl6JWL6DnQSpcHt7L3UnBevuU';
 const PROFILE_PICTURES_FOLDER_ID = '192-pVluL93fYKpyJoukfi_H5az_9fqFK'; // Google Drive folder for profile pictures
 const PROJECTS_FOLDER_ID = '1G68-t3Urdc6iBW6Utl7zbvlb4xa6MvSH'; // Google Drive folder for homepage project images
+const ORG_CHART_FOLDER_ID = '1-svfAWzLOwzY2WlNUom-KXoAF9_wNckR'; // Google Drive folder for org chart images
 const SHEETS = {
   ACCESS_LOGS: 'Access Logs',
   USER_PROFILES: 'User Profiles',
@@ -85,6 +86,12 @@ function handlePostRequest(data) {
       return handleAddHomepageProject(data);
     case 'deleteHomepageProject':
       return handleDeleteHomepageProject(data);
+      case 'uploadOrgChartImage':
+        return handleUploadOrgChartImage(data);
+      case 'updateOrgChartUrl':
+        return handleUpdateOrgChartUrl(data);
+      case 'deleteOrgChart':
+        return handleDeleteOrgChart(data);
     default:
       return { success: false, message: 'Unknown action: ' + action };
   }
@@ -2750,6 +2757,134 @@ function handleUploadProjectImage(data) {
   }
 }
 
+// ===== ORG CHART MANAGEMENT =====
+/**
+ * Upload an org chart image to Google Drive (Admin/Auditor only)
+ * Expects: { action: 'uploadOrgChartImage', base64Image, fileName, mimeType, idCode }
+ */
+function handleUploadOrgChartImage(data) {
+  try {
+    if (!data || !data.idCode) {
+      return { success: false, message: 'ID Code is required' };
+    }
+    var role = _getUserRoleByIdCode(data.idCode);
+    if (role !== 'Admin' && role !== 'Auditor') {
+      return { success: false, message: 'Forbidden: Only Admin and Auditor can upload org chart images' };
+    }
+    if (!data.base64Image) {
+      return { success: false, message: 'Image data is required' };
+    }
+
+    var folder = DriveApp.getFolderById(ORG_CHART_FOLDER_ID);
+    var base64Data = data.base64Image.split(',')[1] || data.base64Image;
+
+    var timestamp = new Date().getTime();
+    var ext = (data.mimeType || 'image/jpeg').split('/')[1] || 'jpg';
+    var finalName = 'orgchart_' + timestamp + '.' + ext;
+
+    var blob = Utilities.newBlob(
+      Utilities.base64Decode(base64Data),
+      data.mimeType || 'image/jpeg',
+      finalName
+    );
+
+    // Remove any existing file with the same name (unlikely) then create new
+    var existingFiles = folder.getFilesByName(finalName);
+    while (existingFiles.hasNext()) {
+      existingFiles.next().setTrashed(true);
+    }
+
+    var file = folder.createFile(blob);
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+
+    var fileUrl = 'https://drive.google.com/uc?export=view&id=' + file.getId();
+
+    return {
+      success: true,
+      message: 'Org chart image uploaded successfully',
+      imageUrl: fileUrl,
+      fileName: finalName
+    };
+  } catch (e) {
+    Logger.log('Error in handleUploadOrgChartImage: ' + e.toString());
+    return { success: false, message: 'Error uploading org chart image: ' + e.toString() };
+  }
+}
+
+/**
+ * Update the org chart URL in the sheet (Admin/Auditor only)
+ * Expects: { action: 'updateOrgChartUrl', imageUrl, idCode }
+ */
+function handleUpdateOrgChartUrl(data) {
+  try {
+    if (!data || !data.idCode) {
+      return { success: false, message: 'ID Code is required' };
+    }
+    var role = _getUserRoleByIdCode(data.idCode);
+    if (role !== 'Admin' && role !== 'Auditor') {
+      return { success: false, message: 'Forbidden: Only Admin and Auditor can update org chart' };
+    }
+    if (!data.imageUrl) {
+      return { success: false, message: 'Image URL is required' };
+    }
+
+    var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    var sheet = ss.getSheetByName(SHEETS.HOMEPAGE_CONTENT);
+    if (!sheet) {
+      return { success: false, message: 'Homepage Content sheet not found' };
+    }
+
+    // Row 4 (index 3) Column B holds orgChartUrl according to handleGetHomepageContent
+    sheet.getRange(4, 2).setValue(data.imageUrl);
+    return { success: true, message: 'Org chart updated' };
+  } catch (e) {
+    Logger.log('Error in handleUpdateOrgChartUrl: ' + e.toString());
+    return { success: false, message: 'Error updating org chart link: ' + e.toString() };
+  }
+}
+
+/**
+ * Delete the org chart (clear link and optionally trash the file) (Admin/Auditor only)
+ * Expects: { action: 'deleteOrgChart', idCode }
+ */
+function handleDeleteOrgChart(data) {
+  try {
+    if (!data || !data.idCode) {
+      return { success: false, message: 'ID Code is required' };
+    }
+    var role = _getUserRoleByIdCode(data.idCode);
+    if (role !== 'Admin' && role !== 'Auditor') {
+      return { success: false, message: 'Forbidden: Only Admin and Auditor can delete org chart' };
+    }
+
+    var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    var sheet = ss.getSheetByName(SHEETS.HOMEPAGE_CONTENT);
+    if (!sheet) {
+      return { success: false, message: 'Homepage Content sheet not found' };
+    }
+
+    // Optionally trash existing file if link present
+    var currentUrl = sheet.getRange(4, 2).getValue();
+    try {
+      if (currentUrl && typeof currentUrl === 'string') {
+        var idMatch = currentUrl.match(/[?&]id=([^&]+)/) || currentUrl.match(/\/file\/d\/([^/]+)/);
+        if (idMatch && idMatch[1]) {
+          var file = DriveApp.getFileById(idMatch[1]);
+          file.setTrashed(true);
+        }
+      }
+    } catch (inner) {
+      Logger.log('Warning (non-fatal) trashing org chart file: ' + inner.toString());
+    }
+
+    // Clear the URL from the sheet
+    sheet.getRange(4, 2).setValue('');
+    return { success: true, message: 'Org chart link cleared' };
+  } catch (e) {
+    Logger.log('Error in handleDeleteOrgChart: ' + e.toString());
+    return { success: false, message: 'Error deleting org chart: ' + e.toString() };
+  }
+}
 /**
  * Add a new homepage project (Admin/Auditor only)
  * Expects: { action: 'addHomepageProject', title, imageUrl, description, idCode }

@@ -560,6 +560,37 @@ export const homepageAPI = {
   ): Promise<{ success: boolean; message?: string; projectNumber?: number }> => {
     return apiRequest('deleteHomepageProject', { projectNumber, idCode });
   },
+
+  /**
+   * Upload an org chart image to Google Drive (Admin/Auditor only)
+   */
+  uploadOrgChartImage: async (
+    base64Image: string,
+    fileName: string,
+    mimeType: string,
+    idCode: string
+  ): Promise<{ success: boolean; message?: string; imageUrl?: string; fileName?: string }> => {
+    return apiRequest('uploadOrgChartImage', { base64Image, fileName, mimeType, idCode });
+  },
+
+  /**
+   * Update the org chart URL in the sheet (Admin/Auditor only)
+   */
+  updateOrgChartUrl: async (
+    imageUrl: string,
+    idCode: string
+  ): Promise<{ success: boolean; message?: string }> => {
+    return apiRequest('updateOrgChartUrl', { imageUrl, idCode });
+  },
+
+  /**
+   * Delete the org chart (clear link; optionally trash file server-side) (Admin/Auditor only)
+   */
+  deleteOrgChart: async (
+    idCode: string
+  ): Promise<{ success: boolean; message?: string }> => {
+    return apiRequest('deleteOrgChart', { idCode });
+  },
 };
 
 // Export API_CONFIG for direct access if needed

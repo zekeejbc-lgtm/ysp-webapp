@@ -75,6 +75,9 @@ export default function Homepage({ darkMode, currentUser }: HomepageProps) {
   const [projectImageFile, setProjectImageFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const orgFileInputRef = useRef<HTMLInputElement>(null);
+  const [orgUploading, setOrgUploading] = useState(false);
+  const [orgModalOpen, setOrgModalOpen] = useState(false);
   const gridRef = useRef<HTMLDivElement>(null);
   const modalContentRef = useRef<HTMLDivElement>(null);
   const [cardImgWidth, setCardImgWidth] = useState<number>(800);
@@ -311,22 +314,169 @@ export default function Homepage({ darkMode, currentUser }: HomepageProps) {
         </div>
       </div>
 
-      {content.orgChartUrl && (
-        <div className="ysp-card">
-          <h3 className="text-[#f6421f] dark:text-[#ee8724] mb-3">Organizational Chart</h3>
-          <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+      <div className="ysp-card">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-[#f6421f] dark:text-[#ee8724]">Organizational Chart</h3>
+          {isAdminOrAuditor && (
+            <div className="flex gap-2">
+              <input
+                ref={orgFileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  if (!file.type.startsWith('image/')) {
+                    toast.error('Please select an image file');
+                    return;
+                  }
+                  if (file.size > 10 * 1024 * 1024) {
+                    toast.error('Image size should be less than 10MB');
+                    return;
+                  }
+                  try {
+                    if (!currentUser?.id) {
+                      toast.error('User session invalid');
+                      return;
+                    }
+                    setOrgUploading(true);
+                    // Read base64
+                    const base64 = await new Promise<string>((resolve, reject) => {
+                      const reader = new FileReader();
+                      reader.onload = () => resolve(reader.result as string);
+                      reader.onerror = (err) => reject(err);
+                      reader.readAsDataURL(file);
+                    });
+                    // Upload to Drive
+                    const up = await homepageAPI.uploadOrgChartImage(base64, file.name, file.type, currentUser.id);
+                    if (!up.success || !up.imageUrl) {
+                      toast.error(up.message || 'Failed to upload org chart');
+                      return;
+                    }
+                    // Update sheet link
+                    const upd = await homepageAPI.updateOrgChartUrl(up.imageUrl, currentUser.id);
+                    if (!upd.success) {
+                      toast.error(upd.message || 'Failed to update org chart link');
+                      return;
+                    }
+                    toast.success('Organizational chart updated');
+                    await fetchHomepageContent();
+                  } catch (err: any) {
+                    console.error('Org chart upload error:', err);
+                    toast.error(err?.message || 'Failed to update org chart');
+                  } finally {
+                    setOrgUploading(false);
+                    if (orgFileInputRef.current) orgFileInputRef.current.value = '';
+                  }
+                }}
+                style={{ display: 'none' }}
+              />
+              <button
+                onClick={() => orgFileInputRef.current?.click()}
+                disabled={orgUploading}
+                style={{
+                  backgroundColor: '#2563eb',
+                  color: '#ffffff',
+                  fontWeight: 'bold',
+                  padding: '0.5rem 1rem',
+                  borderRadius: '0.5rem',
+                  boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                  transition: 'all 0.2s',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem',
+                  border: 'none',
+                  cursor: orgUploading ? 'not-allowed' : 'pointer',
+                  opacity: orgUploading ? 0.5 : 1
+                }}
+                onMouseEnter={(e) => {
+                  if (!orgUploading) (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#1d4ed8';
+                }}
+                onMouseLeave={(e) => {
+                  if (!orgUploading) (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#2563eb';
+                }}
+              >
+                {content.orgChartUrl ? 'Change Org Chart' : 'Upload Org Chart'}
+              </button>
+              {content.orgChartUrl && (
+                <button
+                  onClick={async () => {
+                    if (!currentUser?.id) {
+                      toast.error('User session invalid');
+                      return;
+                    }
+                    if (!confirm('Delete the organizational chart?')) return;
+                    try {
+                      setOrgUploading(true);
+                      const res = await homepageAPI.deleteOrgChart(currentUser.id);
+                      if (!res.success) {
+                        toast.error(res.message || 'Failed to delete org chart');
+                        return;
+                      }
+                      toast.success('Organizational chart removed');
+                      await fetchHomepageContent();
+                    } catch (err: any) {
+                      console.error('Delete org chart error:', err);
+                      toast.error(err?.message || 'Failed to delete org chart');
+                    } finally {
+                      setOrgUploading(false);
+                    }
+                  }}
+                  disabled={orgUploading}
+                  style={{
+                    backgroundColor: '#dc2626',
+                    color: '#ffffff',
+                    fontWeight: 'bold',
+                    padding: '0.5rem 1rem',
+                    borderRadius: '0.5rem',
+                    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                    transition: 'all 0.2s',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem',
+                    border: 'none',
+                    cursor: orgUploading ? 'not-allowed' : 'pointer',
+                    opacity: orgUploading ? 0.5 : 1
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!orgUploading) (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#b91c1c';
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!orgUploading) (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#dc2626';
+                  }}
+                >
+                  Delete
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+        <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+          {content.orgChartUrl ? (
             <img
-              src={content.orgChartUrl}
+              src={getDisplayableGoogleDriveUrl(content.orgChartUrl, 1200)}
+              srcSet={`
+                ${getDisplayableGoogleDriveUrl(content.orgChartUrl, 800)} 800w,
+                ${getDisplayableGoogleDriveUrl(content.orgChartUrl, 1200)} 1200w,
+                ${getDisplayableGoogleDriveUrl(content.orgChartUrl, 1600)} 1600w
+              `}
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 80vw, 80vw"
               alt="Organizational Chart"
-              className="w-full h-auto rounded-lg"
+              className="w-full rounded-lg cursor-pointer"
+              style={{ maxHeight: '70vh', objectFit: 'contain' }}
+              onClick={() => setOrgModalOpen(true)}
               onError={(e) => {
-                e.currentTarget.style.display = 'none';
+                (e.currentTarget as HTMLImageElement).style.display = 'none';
                 e.currentTarget.parentElement!.innerHTML = '<p class="text-gray-500 text-center">Organizational chart not available</p>';
               }}
             />
-          </div>
+          ) : (
+            <p className="text-gray-500 text-center">No organizational chart uploaded yet.</p>
+          )}
         </div>
-      )}
+      </div>
 
       <div className="ysp-card">
         <h3 className="text-[#f6421f] dark:text-[#ee8724] mb-3">Founder</h3>
@@ -728,6 +878,79 @@ export default function Homepage({ darkMode, currentUser }: HomepageProps) {
             </div>
             <h3 className="text-[#f6421f] dark:text-[#ee8724] mb-3">{selectedProject.title}</h3>
             <p className="text-justify whitespace-pre-wrap">{selectedProject.description}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Org Chart Modal */}
+      {orgModalOpen && content.orgChartUrl && (
+        <div className="modal-overlay" onClick={() => setOrgModalOpen(false)}>
+          <div ref={modalContentRef} className="modal-content max-w-4xl" onClick={(e) => e.stopPropagation()}>
+            <button
+              onClick={() => setOrgModalOpen(false)}
+              style={{
+                position: 'absolute',
+                top: '1rem',
+                right: '1rem',
+                padding: '0.5rem',
+                borderRadius: '9999px',
+                backgroundColor: 'transparent',
+                transition: 'all 0.2s',
+                border: 'none',
+                cursor: 'pointer'
+              }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.backgroundColor = darkMode ? '#374151' : '#e5e7eb';
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'transparent';
+              }}
+            >
+              <X size={20} />
+            </button>
+
+            <img
+              src={getDisplayableGoogleDriveUrl(content.orgChartUrl, modalImgWidth)}
+              srcSet={`
+                ${getDisplayableGoogleDriveUrl(content.orgChartUrl, 800)} 800w,
+                ${getDisplayableGoogleDriveUrl(content.orgChartUrl, 1200)} 1200w,
+                ${getDisplayableGoogleDriveUrl(content.orgChartUrl, 1600)} 1600w,
+                ${getDisplayableGoogleDriveUrl(content.orgChartUrl, 2000)} 2000w
+              `}
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 80vw"
+              alt="Organizational Chart"
+              className="w-full rounded-lg mb-4"
+              style={{ maxHeight: '80vh', objectFit: 'contain' }}
+            />
+            <div className="mb-3">
+              <a
+                href={getOriginalGoogleDriveUrl(content.orgChartUrl)}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  backgroundColor: '#2563eb',
+                  color: '#ffffff',
+                  fontWeight: 'bold',
+                  padding: '0.5rem 1rem',
+                  borderRadius: '0.5rem',
+                  boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                  transition: 'all 0.2s',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem',
+                  textDecoration: 'none'
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLAnchorElement).style.backgroundColor = '#1d4ed8';
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLAnchorElement).style.backgroundColor = '#2563eb';
+                }}
+              >
+                View Full Size
+              </a>
+            </div>
           </div>
         </div>
       )}
