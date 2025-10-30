@@ -63,7 +63,18 @@ export default defineConfig({
         target: 'https://script.google.com/macros/s/AKfycbyepq64QJEfXRzACKaXGSevEXdb-TueUaxtnTEQCnnFsECZGq1AWqNqyKZ9GeMmvcao2g/exec',
         changeOrigin: true,
         secure: true,
-        rewrite: path => path.replace(/^\/api\/gas-proxy/, ''),
+        rewrite: (path) => path.replace(/^\/api\/gas-proxy/, ''),
+        configure: (proxy, _options) => {
+          proxy.on('error', (err, _req, _res) => {
+            console.log('[DEV] Proxy error:', err);
+          });
+          proxy.on('proxyReq', (proxyReq, req, _res) => {
+            console.log('[DEV] Sending Request to:', req.method, req.url);
+          });
+          proxy.on('proxyRes', (proxyRes, req, _res) => {
+            console.log('[DEV] Received Response:', proxyRes.statusCode, 'from', req.url);
+          });
+        },
       },
     },
   },
