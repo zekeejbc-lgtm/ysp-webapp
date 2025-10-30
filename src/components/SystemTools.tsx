@@ -13,6 +13,25 @@ export default function SystemTools({ currentUser }: SystemToolsProps) {
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [editedRoles, setEditedRoles] = useState<{ [idCode: string]: string }>({});
   const [saving, setSaving] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  // Detect dark mode
+  useEffect(() => {
+    const checkDarkMode = () => {
+      setIsDarkMode(document.documentElement.classList.contains('dark'));
+    };
+    
+    checkDarkMode();
+    
+    // Watch for dark mode changes
+    const observer = new MutationObserver(checkDarkMode);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class']
+    });
+    
+    return () => observer.disconnect();
+  }, []);
 
   const requireAuditor = () => {
     if (!currentUser || currentUser.role !== 'Auditor') {
@@ -329,35 +348,51 @@ export default function SystemTools({ currentUser }: SystemToolsProps) {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-gray-100 dark:bg-gray-700">
-                <tr className="border-b-2 border-gray-300 dark:border-gray-600">
-                  <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">ID Code</th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">Full Name</th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-900 dark:text-gray-100">Role</th>
+              <thead style={{
+                backgroundColor: isDarkMode ? '#374151' : '#f3f4f6'
+              }}>
+                <tr style={{ borderBottom: `2px solid ${isDarkMode ? '#4b5563' : '#d1d5db'}` }}>
+                  <th className="text-left py-3 px-4 font-semibold" style={{
+                    color: isDarkMode ? '#ffffff' : '#111827'
+                  }}>ID Code</th>
+                  <th className="text-left py-3 px-4 font-semibold" style={{
+                    color: isDarkMode ? '#ffffff' : '#111827'
+                  }}>Full Name</th>
+                  <th className="text-left py-3 px-4 font-semibold" style={{
+                    color: isDarkMode ? '#ffffff' : '#111827'
+                  }}>Role</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody style={{
+                backgroundColor: isDarkMode ? '#1f2937' : '#ffffff'
+              }}>
                 {users.length === 0 ? (
                   <tr>
-                    <td colSpan={3} className="text-center py-8 text-gray-500 dark:text-gray-400">
+                    <td colSpan={3} className="text-center py-8" style={{
+                      color: isDarkMode ? '#9ca3af' : '#6b7280'
+                    }}>
                       No users found
                     </td>
                   </tr>
                 ) : (
-                  users.map((user, idx) => {
+                  users.map((user) => {
                     const currentRole = editedRoles[user.idCode] || user.role;
                     return (
                       <tr 
-                        key={user.idCode} 
-                        className={`border-b border-gray-200 dark:border-gray-600 ${
-                          idx % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-750'
-                        }`}
+                        key={user.idCode}
+                        style={{
+                          borderBottom: `1px solid ${isDarkMode ? '#374151' : '#e5e7eb'}`
+                        }}
                       >
-                        <td className="py-3 px-4 font-mono text-xs" style={{ color: '#374151' }}>
-                          <span className="text-gray-900 dark:text-gray-100">{user.idCode}</span>
+                        <td className="py-3 px-4 font-mono text-xs" style={{
+                          color: isDarkMode ? '#f3f4f6' : '#374151'
+                        }}>
+                          {user.idCode}
                         </td>
-                        <td className="py-3 px-4">
-                          <span className="text-gray-900 dark:text-gray-100 font-medium">{user.fullName}</span>
+                        <td className="py-3 px-4 font-medium" style={{
+                          color: isDarkMode ? '#ffffff' : '#111827'
+                        }}>
+                          {user.fullName}
                         </td>
                         <td className="py-3 px-4">
                           <select
@@ -367,33 +402,53 @@ export default function SystemTools({ currentUser }: SystemToolsProps) {
                               minWidth: '130px',
                               padding: '0.5rem 0.75rem',
                               borderRadius: '0.375rem',
-                              border: '2px solid #d1d5db',
-                              backgroundColor: '#ffffff',
+                              border: isDarkMode ? '2px solid #4b5563' : '2px solid #d1d5db',
+                              backgroundColor: isDarkMode ? '#374151' : '#ffffff',
                               fontSize: '0.875rem',
                               fontWeight: '600',
                               cursor: 'pointer',
                               outline: 'none',
                               color: 
-                                currentRole === 'Banned' ? '#dc2626' :
-                                currentRole === 'Head' ? '#16a34a' :
-                                currentRole === 'Admin' ? '#ea580c' :
-                                currentRole === 'Auditor' ? '#2563eb' :
-                                '#6b7280'
+                                currentRole === 'Banned' ? (isDarkMode ? '#fca5a5' : '#dc2626') :
+                                currentRole === 'Head' ? (isDarkMode ? '#86efac' : '#16a34a') :
+                                currentRole === 'Admin' ? (isDarkMode ? '#fdba74' : '#ea580c') :
+                                currentRole === 'Auditor' ? (isDarkMode ? '#93c5fd' : '#2563eb') :
+                                (isDarkMode ? '#d1d5db' : '#6b7280')
                             }}
                             onFocus={(e) => {
                               e.currentTarget.style.borderColor = '#f6421f';
                               e.currentTarget.style.boxShadow = '0 0 0 3px rgba(246, 66, 31, 0.1)';
                             }}
                             onBlur={(e) => {
-                              e.currentTarget.style.borderColor = '#d1d5db';
+                              e.currentTarget.style.borderColor = isDarkMode ? '#4b5563' : '#d1d5db';
                               e.currentTarget.style.boxShadow = 'none';
                             }}
                           >
-                            <option value="Admin" style={{ color: '#ea580c', fontWeight: '600' }}>🟠 Admin</option>
-                            <option value="Auditor" style={{ color: '#2563eb', fontWeight: '600' }}>🔵 Auditor</option>
-                            <option value="Head" style={{ color: '#16a34a', fontWeight: '600' }}>🟢 Head</option>
-                            <option value="Member" style={{ color: '#6b7280', fontWeight: '600' }}>⚪ Member</option>
-                            <option value="Banned" style={{ color: '#dc2626', fontWeight: '600' }}>🔴 Banned</option>
+                            <option value="Admin" style={{ 
+                              color: isDarkMode ? '#fdba74' : '#ea580c',
+                              backgroundColor: isDarkMode ? '#374151' : '#ffffff',
+                              fontWeight: '600' 
+                            }}>🟠 Admin</option>
+                            <option value="Auditor" style={{ 
+                              color: isDarkMode ? '#93c5fd' : '#2563eb',
+                              backgroundColor: isDarkMode ? '#374151' : '#ffffff',
+                              fontWeight: '600' 
+                            }}>🔵 Auditor</option>
+                            <option value="Head" style={{ 
+                              color: isDarkMode ? '#86efac' : '#16a34a',
+                              backgroundColor: isDarkMode ? '#374151' : '#ffffff',
+                              fontWeight: '600' 
+                            }}>🟢 Head</option>
+                            <option value="Member" style={{ 
+                              color: isDarkMode ? '#d1d5db' : '#6b7280',
+                              backgroundColor: isDarkMode ? '#374151' : '#ffffff',
+                              fontWeight: '600' 
+                            }}>⚪ Member</option>
+                            <option value="Banned" style={{ 
+                              color: isDarkMode ? '#fca5a5' : '#dc2626',
+                              backgroundColor: isDarkMode ? '#374151' : '#ffffff',
+                              fontWeight: '600' 
+                            }}>🔴 Banned</option>
                           </select>
                         </td>
                       </tr>
