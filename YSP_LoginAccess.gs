@@ -2539,4 +2539,97 @@ function handleUpdateProfilePicture(data) {
   }
 }
 
+// ===== DAILY AGE RECALCULATION UTILITIES =====
+/**
+ * Compute age from a given date value using Asia/Manila timezone.
+ * Accepts Date objects or common date strings. Returns a numeric string or ''.
+ */
+function _computeAgeFromDate(value) {
+  if (value === null || value === undefined || value === '') return '';
+  var d = value;
+  if (Object.prototype.toString.call(d) !== '[object Date]' || isNaN(d.getTime())) {
+    d = new Date(String(value).trim());
+  }
+  if (Object.prototype.toString.call(d) !== '[object Date]' || isNaN(d.getTime())) return '';
+  var tz = 'Asia/Manila';
+  var todayStr = Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd');
+  var parts = todayStr.split('-');
+  var ty = parseInt(parts[0], 10);
+  var tm = parseInt(parts[1], 10);
+  var td = parseInt(parts[2], 10);
+  var by = d.getFullYear();
+  var bm = d.getMonth() + 1;
+  var bd = d.getDate();
+  var age = ty - by;
+  if (tm < bm || (tm === bm && td < bd)) age--;
+  if (age < 0) return '';
+  return String(age);
+}
+
+/**
+ * Recalculate all ages (Column F) from Date of Birth (Column E) daily.
+ * Writes changes without sending any emails.
+ */
+function recalcAllAges() {
+  try {
+    var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    var sheet = ss.getSheetByName(SHEETS.USER_PROFILES);
+    if (!sheet) {
+      Logger.log('User Profiles sheet not found');
+      return { success: false, message: 'User Profiles sheet not found' };
+    }
+    var lastRow = sheet.getLastRow();
+    if (lastRow < 2) {
+      Logger.log('No user rows to update');
+      return { success: true, updated: 0 };
+    }
+    var numRows = lastRow - 1;
+    var dobValues = sheet.getRange(2, 5, numRows, 1).getValues(); // Column E
+    var ageRange = sheet.getRange(2, 6, numRows, 1); // Column F
+    var ageValues = ageRange.getValues();
+    var updated = 0;
+    for (var i = 0; i < numRows; i++) {
+      var dob = dobValues[i][0];
+      var newAgeStr = _computeAgeFromDate(dob);
+      var newWrite = newAgeStr === '' ? '' : Number(newAgeStr);
+      var oldVal = ageValues[i][0];
+      var oldStr = (oldVal === '' || oldVal === null || oldVal === undefined) ? '' : String(oldVal);
+      if (String(newWrite) !== oldStr) {
+        ageValues[i][0] = newWrite;
+        updated++;
+      }
+    }
+    if (updated > 0) {
+      ageRange.setValues(ageValues);
+    }
+    Logger.log('recalcAllAges: updated ' + updated + ' of ' + numRows + ' rows');
+    return { success: true, updated: updated };
+  } catch (err) {
+    Logger.log('Error in recalcAllAges: ' + err.toString());
+    return { success: false, message: err.toString() };
+  }
+}
+
+/**
+ * Install a time-driven trigger to run recalcAllAges daily at 00:05 Asia/Manila.
+ * Safe to run multiple times; replaces any existing trigger for this handler.
+ */
+function installDailyAgeRecalcTrigger() {
+  var triggers = ScriptApp.getProjectTriggers();
+  for (var i = 0; i < triggers.length; i++) {
+    if (triggers[i].getHandlerFunction() === 'recalcAllAges') {
+      ScriptApp.deleteTrigger(triggers[i]);
+    }
+  }
+  ScriptApp.newTrigger('recalcAllAges')
+    .timeBased()
+    .atHour(0)
+    .nearMinute(5)
+    .everyDays(1)
+    .inTimezone('Asia/Manila')
+    .create();
+  Logger.log('Installed daily trigger for recalcAllAges at 00:05 Asia/Manila');
+  return { success: true, message: 'Daily age recalc trigger installed at 00:05 Asia/Manila' };
+}
+
 
