@@ -55,7 +55,7 @@ export default function Sidebar({ isOpen, currentPage, setCurrentPage, currentUs
       subItems: [
         { label: 'QR Attendance Scanner', page: 'qr-scanner', icon: QrCode, roles: ['Admin', 'Head', 'Auditor'] },
         { label: 'Manual Attendance', page: 'manual-attendance', icon: ClipboardList, roles: ['Admin', 'Head', 'Auditor'] },
-        { label: 'Manage Events', page: 'manage-events', icon: Calendar, roles: ['Admin', 'Head', 'Auditor'] },
+  { label: 'Manage Events', page: 'manage-events', icon: Calendar, roles: ['Admin', 'Auditor'] },
         { label: 'My QR ID', page: 'my-qr-id', icon: QrCode, roles: ['Admin', 'Head', 'Auditor', 'Member'] },
         { label: 'Attendance Transparency', page: 'attendance-transparency', icon: FileText, roles: ['Admin', 'Head', 'Auditor', 'Member'] }
       ]

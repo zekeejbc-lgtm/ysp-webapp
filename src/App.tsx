@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { toast } from 'sonner';
 import Sidebar from './components/Sidebar';
 import TopBar from './components/TopBar';
 import Homepage from './components/Homepage';
@@ -71,6 +72,38 @@ export default function App() {
     localStorage.removeItem('userData');
   };
 
+  // Centralized role-based access control for pages
+  const canAccess = (page: string, role: string | undefined): boolean => {
+    if (!role) return false;
+    const accessMap: Record<string, string[]> = {
+      homepage: ['Admin', 'Head', 'Auditor', 'Member', 'Guest'],
+      'officer-search': ['Admin', 'Head', 'Auditor'],
+      'attendance-dashboard': ['Admin', 'Head', 'Auditor'],
+      'qr-scanner': ['Admin', 'Head', 'Auditor'],
+      'manual-attendance': ['Admin', 'Head', 'Auditor'],
+      'manage-events': ['Admin', 'Auditor'],
+      'my-qr-id': ['Admin', 'Head', 'Auditor', 'Member'],
+      'attendance-transparency': ['Admin', 'Head', 'Auditor', 'Member'],
+      announcements: ['Admin', 'Head', 'Auditor', 'Member'],
+      feedback: ['Admin', 'Head', 'Auditor', 'Member', 'Guest'],
+      'access-logs': ['Auditor'],
+      'system-tools': ['Auditor'],
+      'my-profile': ['Admin', 'Head', 'Auditor', 'Member'],
+    };
+    // Unknown pages default to no access
+    return accessMap[page]?.includes(role) ?? false;
+  };
+
+  // Navigation helper that enforces access and provides feedback
+  const handleNavigate = (page: string) => {
+    const role = currentUser?.role as string | undefined;
+    if (canAccess(page, role)) {
+      setCurrentPage(page);
+    } else {
+      toast.error('Access denied for your role.');
+    }
+  };
+
   if (!isLoggedIn) {
     return (
       <>
@@ -81,6 +114,11 @@ export default function App() {
   }
 
   const renderPage = () => {
+    // Guard against unauthorized currentPage values
+    const role = currentUser?.role as string | undefined;
+    if (!canAccess(currentPage, role)) {
+      return <Homepage darkMode={darkMode} currentUser={currentUser} />;
+    }
     switch (currentPage) {
       case 'homepage':
         return <Homepage darkMode={darkMode} currentUser={currentUser} />;
@@ -121,7 +159,7 @@ export default function App() {
         <Sidebar 
           isOpen={sidebarOpen} 
           currentPage={currentPage} 
-          setCurrentPage={setCurrentPage}
+          setCurrentPage={handleNavigate}
           currentUser={currentUser}
           onLogout={handleLogout}
         />

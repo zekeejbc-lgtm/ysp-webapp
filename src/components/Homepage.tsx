@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import type React from 'react';
 import { Mail, Facebook, X, Loader2, Plus, Upload, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { homepageAPI, type HomepageContent, type HomepageProject } from '../services/api';
@@ -64,24 +65,29 @@ function getOriginalGoogleDriveUrl(url: string): string {
  * Detects: http/https URLs, www.* URLs, and email addresses.
  * Preserves line breaks and spacing when rendered inside a pre-wrap container.
  */
-function renderLinkifiedText(text: string): Array<string | JSX.Element> {
+function renderLinkifiedText(text: string): React.ReactNode[] {
   if (!text) return [''];
-  const elements: Array<string | JSX.Element> = [];
+  const elements: React.ReactNode[] = [];
   const regex = /(https?:\/\/[^\s]+)|((?:www\.)[^\s]+)|([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})/g;
   let lastIndex = 0;
   let match: RegExpExecArray | null;
 
   while ((match = regex.exec(text)) !== null) {
-    const [full, httpUrl, wwwUrl, email] = match;
     const start = match.index;
+    const full = match[0];
+    const httpUrl = match[1];
+    const wwwUrl = match[2];
+    const email = match[3];
     const end = start + full.length;
     if (lastIndex < start) {
       elements.push(text.slice(lastIndex, start));
     }
 
-    let href = full;
-    if (wwwUrl) href = `http://${wwwUrl}`;
-    if (email) href = `mailto:${email}`;
+    let href = '';
+    if (httpUrl) href = httpUrl;
+    else if (wwwUrl) href = `http://${wwwUrl}`;
+    else if (email) href = `mailto:${email}`;
+    else href = full;
 
     elements.push(
       <a

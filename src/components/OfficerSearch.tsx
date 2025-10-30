@@ -194,7 +194,18 @@ export default function OfficerSearch({ darkMode }: OfficerSearchProps) {
               <Mail size={20} className="text-[#f6421f]" />
               <div>
                 <p className="text-sm text-gray-500">Email</p>
-                <p className="text-sm">{selectedProfile.email}</p>
+                {selectedProfile.email ? (
+                  <a
+                    href={`mailto:${selectedProfile.email}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-[#f6421f] dark:text-[#ee8724] underline hover:opacity-90"
+                  >
+                    {selectedProfile.email}
+                  </a>
+                ) : (
+                  <p className="text-sm">N/A</p>
+                )}
               </div>
             </div>
 
@@ -202,7 +213,16 @@ export default function OfficerSearch({ darkMode }: OfficerSearchProps) {
               <Phone size={20} className="text-[#f6421f]" />
               <div>
                 <p className="text-sm text-gray-500">Contact</p>
-                <p className="text-sm">{selectedProfile.contactNumber}</p>
+                {selectedProfile.contactNumber ? (
+                  <a
+                    href={`tel:${selectedProfile.contactNumber}`}
+                    className="text-sm text-[#f6421f] dark:text-[#ee8724] underline hover:opacity-90"
+                  >
+                    {selectedProfile.contactNumber}
+                  </a>
+                ) : (
+                  <p className="text-sm">N/A</p>
+                )}
               </div>
             </div>
 
