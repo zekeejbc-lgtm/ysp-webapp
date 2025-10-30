@@ -5,6 +5,7 @@ import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { userAPI, type UserProfile } from '../services/api';
 import { toast } from 'sonner';
+import { ListSkeleton } from './ui/skeletons';
 
 interface OfficerSearchProps {
   darkMode: boolean;
@@ -145,8 +146,8 @@ export default function OfficerSearch({ darkMode }: OfficerSearchProps) {
           )}
 
           {showSuggestions && isLoading && (
-            <div className="absolute z-10 w-full mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 text-center border border-gray-200 dark:border-gray-700">
-              <p className="text-gray-500">Searching...</p>
+            <div className="absolute z-10 w-full mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
+              <ListSkeleton items={3} />
             </div>
           )}
 

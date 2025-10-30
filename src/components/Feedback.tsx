@@ -8,6 +8,7 @@ import { Textarea } from './ui/textarea';
 import { toast } from 'sonner';
 import { Badge } from './ui/badge';
 import { feedbackAPI, type Feedback as FeedbackType } from '../services/api';
+import { CardSkeleton } from './ui/skeletons';
 
 interface FeedbackProps {
   darkMode: boolean;
@@ -228,9 +229,11 @@ export default function Feedback({ darkMode, currentUser }: FeedbackProps) {
         </div>
 
         {loading ? (
-          <div className="text-center py-12">
-            <RefreshCw className="animate-spin mx-auto mb-4 text-[#f6421f]" size={32} />
-            <p className="text-gray-500">Loading feedback...</p>
+          <div className="grid md:grid-cols-2 gap-4">
+            <CardSkeleton />
+            <CardSkeleton />
+            <CardSkeleton />
+            <CardSkeleton />
           </div>
         ) : (
           <>

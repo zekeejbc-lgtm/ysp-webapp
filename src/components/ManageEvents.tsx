@@ -7,6 +7,7 @@ import { Label } from './ui/label';
 import { Switch } from './ui/switch';
 import { toast } from 'sonner';
 import { eventsAPI, type Event } from '../services/api';
+import { CardSkeleton } from './ui/skeletons';
 
 export default function ManageEvents() {
   const [events, setEvents] = useState<Event[]>([]);
@@ -123,9 +124,11 @@ export default function ManageEvents() {
 
         <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
           {isLoading && (
-            <div className="text-center py-8">
-              <p className="text-gray-500">Loading events...</p>
-            </div>
+            <>
+              <CardSkeleton />
+              <CardSkeleton />
+              <CardSkeleton />
+            </>
           )}
           
           {!isLoading && filteredEvents.length === 0 && (

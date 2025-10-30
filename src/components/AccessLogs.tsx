@@ -3,6 +3,7 @@ import { Search, Clock } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Input } from './ui/input';
 import { accessLogsAPI } from '../services/api';
+import { CardSkeleton } from './ui/skeletons';
 
 interface AccessLogsProps {
   darkMode: boolean;
@@ -147,7 +148,16 @@ export default function AccessLogs({ darkMode }: AccessLogsProps) {
       )}
 
       <div className="space-y-3 max-h-[700px] overflow-y-auto pr-2">
-        {filteredLogs.map((log, index) => (
+        {isLoading ? (
+          <>
+            <CardSkeleton />
+            <CardSkeleton />
+            <CardSkeleton />
+            <CardSkeleton />
+            <CardSkeleton />
+          </>
+        ) : (
+          filteredLogs.map((log, index) => (
           <motion.div
             key={`${log.timestamp}-${log.idCode}-${index}`}
             initial={{ opacity: 0, x: -20 }}
@@ -181,7 +191,8 @@ export default function AccessLogs({ darkMode }: AccessLogsProps) {
               </div>
             </div>
           </motion.div>
-        ))}
+          ))
+        )}
       </div>
 
       {!isLoading && filteredLogs.length === 0 && (

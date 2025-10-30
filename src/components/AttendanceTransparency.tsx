@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { toast } from 'sonner';
+import { TableSkeleton } from './ui/skeletons';
 
 interface AttendanceTransparencyProps {
   darkMode: boolean;
@@ -136,10 +137,7 @@ export default function AttendanceTransparency({ currentUser }: AttendanceTransp
 
       <div className="ysp-card">
         {isLoading ? (
-          <div className="text-center py-12">
-            <div className="inline-block w-8 h-8 border-4 border-[#f6421f] border-t-transparent rounded-full animate-spin"></div>
-            <p className="mt-4 text-gray-600 dark:text-gray-400">Loading attendance records...</p>
-          </div>
+          <TableSkeleton rows={8} />
         ) : records.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-gray-600 dark:text-gray-400">No attendance records found.</p>
