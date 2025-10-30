@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { systemAPI, roleManagementAPI, UserRoleInfo } from '../services/api';
 import { toast } from 'sonner';
 import { Wrench, RefreshCw, Clock, Users, Save, Loader2 } from 'lucide-react';
+import { TableSkeleton } from './ui/skeletons';
 
 interface SystemToolsProps {
   currentUser: { id: string; role: string; username?: string };
@@ -341,10 +342,7 @@ export default function SystemTools({ currentUser }: SystemToolsProps) {
         </div>
 
         {loadingUsers ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 size={32} className="animate-spin text-[#f6421f]" />
-            <span className="ml-3 text-gray-600 dark:text-gray-400">Loading users...</span>
-          </div>
+          <TableSkeleton rows={10} />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">

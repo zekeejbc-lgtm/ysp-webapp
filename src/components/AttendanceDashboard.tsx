@@ -5,6 +5,7 @@ import { Input } from './ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { eventsAPI, Event, EventAnalytics } from '../services/api';
+import { ChartSkeleton } from './ui/skeletons';
 
 interface AttendanceDashboardProps {
   darkMode: boolean;
@@ -198,16 +199,7 @@ export default function AttendanceDashboard({ }: AttendanceDashboardProps) {
         )}
       </motion.div>
 
-      {loading && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="ysp-card text-center py-12"
-        >
-          <Loader2 className="animate-spin mx-auto mb-4 text-[#f6421f]" size={40} />
-          <p className="text-gray-500 dark:text-gray-400">Loading analytics...</p>
-        </motion.div>
-      )}
+      {loading && <ChartSkeleton />}
 
       {!loading && selectedEvent && analytics && (
         <motion.div

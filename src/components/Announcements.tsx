@@ -8,6 +8,7 @@ import { Textarea } from './ui/textarea';
 import { toast } from 'sonner';
 import { Badge } from './ui/badge';
 import { announcementsAPI, userAPI, type Announcement } from '../services/api';
+import { CardSkeleton } from './ui/skeletons';
 
 interface AnnouncementsProps {
   darkMode: boolean;
@@ -313,8 +314,10 @@ export default function Announcements({ currentUser }: AnnouncementsProps) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="animate-spin text-[#f6421f]" size={32} />
+      <div className="max-w-5xl mx-auto space-y-4">
+        <CardSkeleton />
+        <CardSkeleton />
+        <CardSkeleton />
       </div>
     );
   }

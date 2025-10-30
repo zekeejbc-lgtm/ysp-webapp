@@ -3,6 +3,7 @@ import type React from 'react';
 import { Mail, Facebook, X, Loader2, Plus, Upload, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { homepageAPI, type HomepageContent, type HomepageProject } from '../services/api';
+import { CardSkeleton, TextSkeleton } from './ui/skeletons';
 
 /**
  * Helper function to get a displayable Google Drive image URL
@@ -324,8 +325,30 @@ export default function Homepage({ darkMode, currentUser }: HomepageProps) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="w-8 h-8 animate-spin text-[#f6421f]" />
+      <div className="max-w-6xl mx-auto space-y-6 pb-8">
+        {/* About Section Skeleton */}
+        <div className="ysp-card space-y-3">
+          <div className="h-6 w-64 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+          <TextSkeleton lines={4} />
+        </div>
+
+        {/* Mission & Vision Skeletons */}
+        <div className="grid md:grid-cols-2 gap-6">
+          <div className="ysp-card space-y-3">
+            <div className="h-5 w-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+            <TextSkeleton lines={3} />
+          </div>
+          <div className="ysp-card space-y-3">
+            <div className="h-5 w-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+            <TextSkeleton lines={3} />
+          </div>
+        </div>
+
+        {/* Projects Skeleton */}
+        <div className="ysp-card">
+          <div className="h-6 w-48 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mb-4" />
+          <CardSkeleton count={2} />
+        </div>
       </div>
     );
   }

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { User, Mail, Phone, Calendar, MapPin, Briefcase, IdCard, Users, Eye, EyeOff, Loader2, AlertCircle, Camera, Upload, Edit2, Save, X } from 'lucide-react';
 import { userAPI, UserProfile } from '../services/api';
 import { toast } from 'sonner';
+import { ProfileSkeleton } from './ui/skeletons';
 
 interface MyProfileProps {
   currentUser: any;
@@ -285,14 +286,7 @@ export default function MyProfile({ currentUser }: MyProfileProps) {
   }
 
   if (loading) {
-    return (
-      <div className="max-w-4xl mx-auto">
-        <div className="ysp-card text-center py-12">
-          <Loader2 className="w-12 h-12 text-[#f6421f] animate-spin mx-auto mb-4" />
-          <p className="text-gray-600 dark:text-gray-400">Loading your profile...</p>
-        </div>
-      </div>
-    );
+    return <ProfileSkeleton />;
   }
 
   if (error || !profile) {
