@@ -3,6 +3,8 @@
  * Provides better perceived performance than spinners
  */
 
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './table';
+
 interface SkeletonProps {
   className?: string;
 }
@@ -18,25 +20,32 @@ export function Skeleton({ className = '' }: SkeletonProps) {
   );
 }
 
-// Table Skeleton - for data tables
-export function TableSkeleton({ rows = 5 }: { rows?: number }) {
+// Table Skeleton - for data tables (uses actual Table components)
+export function TableSkeleton({ rows = 5, columns = 5 }: { rows?: number; columns?: number }) {
   return (
-    <div className="w-full space-y-3" role="status" aria-label="Loading table data">
-      {/* Table Header */}
-      <div className="flex gap-4 pb-3 border-b-2 border-gray-200 dark:border-gray-700">
-        <Skeleton className="h-6 w-1/4" />
-        <Skeleton className="h-6 w-1/3" />
-        <Skeleton className="h-6 w-1/4" />
-      </div>
-      
-      {/* Table Rows */}
-      {Array.from({ length: rows }).map((_, i) => (
-        <div key={i} className="flex gap-4 items-center py-3 border-b border-gray-100 dark:border-gray-800">
-          <Skeleton className="h-5 w-1/4" />
-          <Skeleton className="h-5 w-1/3" />
-          <Skeleton className="h-5 w-1/4" />
-        </div>
-      ))}
+    <div className="w-full" role="status" aria-label="Loading table data">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            {Array.from({ length: columns }).map((_, i) => (
+              <TableHead key={i}>
+                <Skeleton className="h-4 w-full" />
+              </TableHead>
+            ))}
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {Array.from({ length: rows }).map((_, rowIndex) => (
+            <TableRow key={rowIndex}>
+              {Array.from({ length: columns }).map((_, colIndex) => (
+                <TableCell key={colIndex}>
+                  <Skeleton className="h-4 w-full" />
+                </TableCell>
+              ))}
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
     </div>
   );
 }

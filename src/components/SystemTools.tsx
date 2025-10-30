@@ -342,7 +342,7 @@ export default function SystemTools({ currentUser }: SystemToolsProps) {
         </div>
 
         {loadingUsers ? (
-          <TableSkeleton rows={10} />
+          <TableSkeleton rows={10} columns={3} />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">

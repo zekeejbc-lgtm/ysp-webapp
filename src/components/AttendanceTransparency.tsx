@@ -137,7 +137,7 @@ export default function AttendanceTransparency({ currentUser }: AttendanceTransp
 
       <div className="ysp-card">
         {isLoading ? (
-          <TableSkeleton rows={8} />
+          <TableSkeleton rows={8} columns={5} />
         ) : records.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-gray-600 dark:text-gray-400">No attendance records found.</p>
