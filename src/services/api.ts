@@ -2,6 +2,8 @@
 // YSP API Service - Centralized Backend Communication
 // ======================================================
 
+import { getCached, invalidateCache, CACHE_DURATION } from './cache';
+
 /**
  * API Configuration
  * Change these values once, and all components will use them
@@ -204,10 +206,16 @@ export const userAPI = {
   },
 
   /**
-   * Search user profiles
+   * Search user profiles (with caching)
    */
   searchProfiles: async (searchTerm: string): Promise<UserProfileResponse> => {
-    return apiRequest('searchProfiles', { search: searchTerm });
+    // Cache searches for faster repeat lookups
+    const cacheKey = `profiles_search_${searchTerm.toLowerCase()}`;
+    return getCached(
+      cacheKey,
+      () => apiRequest('searchProfiles', { search: searchTerm }),
+      CACHE_DURATION.USER_PROFILES
+    );
   },
 
   /**
@@ -328,16 +336,22 @@ export interface EventsResponse {
 
 export const eventsAPI = {
   /**
-   * Get all events
+   * Get all events (with caching)
    */
   getAll: async (): Promise<EventsResponse> => {
-    return apiRequest('getEvents');
+    return getCached(
+      'events_all',
+      () => apiRequest('getEvents'),
+      CACHE_DURATION.EVENTS
+    );
   },
 
   /**
    * Create new event
    */
   create: async (name: string, date: string): Promise<EventsResponse> => {
+    // Invalidate events cache when creating new event
+    invalidateCache('events_all');
     return apiRequest('createEvent', { name, date });
   },
 
@@ -519,11 +533,15 @@ export interface HomepageResponse {
 
 export const homepageAPI = {
   /**
-   * Get homepage content from Google Sheets
+   * Get homepage content from Google Sheets (with caching)
    * Available to everyone
    */
   getContent: async (): Promise<HomepageResponse> => {
-    return apiRequest('getHomepageContent', {});
+    return getCached(
+      'homepage_content',
+      () => apiRequest('getHomepageContent', {}),
+      CACHE_DURATION.HOMEPAGE
+    );
   },
 
   /**
@@ -548,6 +566,8 @@ export const homepageAPI = {
     description: string,
     idCode: string
   ): Promise<{ success: boolean; message?: string; projectNumber?: number; title?: string }> => {
+    // Invalidate homepage cache when adding project
+    invalidateCache('homepage_content');
     return apiRequest('addHomepageProject', { title, imageUrl, description, idCode });
   },
 
@@ -558,6 +578,8 @@ export const homepageAPI = {
     projectNumber: number,
     idCode: string
   ): Promise<{ success: boolean; message?: string; projectNumber?: number }> => {
+    // Invalidate homepage cache when deleting project
+    invalidateCache('homepage_content');
     return apiRequest('deleteHomepageProject', { projectNumber, idCode });
   },
 

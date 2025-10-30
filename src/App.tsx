@@ -27,7 +27,10 @@ export default function App() {
   });
   
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [currentPage, setCurrentPage] = useState('homepage');
+  const [currentPage, setCurrentPage] = useState(() => {
+    // Restore last visited page from localStorage
+    return localStorage.getItem('currentPage') || 'homepage';
+  });
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
@@ -53,6 +56,13 @@ export default function App() {
       }
     }
   }, []);
+
+  // Save current page to localStorage whenever it changes
+  useEffect(() => {
+    if (isLoggedIn) {
+      localStorage.setItem('currentPage', currentPage);
+    }
+  }, [currentPage, isLoggedIn]);
 
   useEffect(() => {
     localStorage.setItem('theme', darkMode ? 'dark' : 'light');
@@ -80,8 +90,9 @@ export default function App() {
     setCurrentUser(null);
     setIsLoggedIn(false);
     setCurrentPage('homepage');
-    // Clear session from localStorage
+    // Clear session and page from localStorage
     localStorage.removeItem('userData');
+    localStorage.removeItem('currentPage');
   };
 
   // Centralized role-based access control for pages

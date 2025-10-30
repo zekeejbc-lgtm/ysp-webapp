@@ -13,6 +13,82 @@ const SHEETS = {
   OFFICER_DIRECTORY: 'Officer Directory'
 };
 
+// ===== CACHE CONFIGURATION =====
+const CACHE_EXPIRATION = {
+  USER_PROFILES: 600,      // 10 minutes - changes infrequently
+  OFFICER_DIRECTORY: 600,  // 10 minutes - changes infrequently
+  HOMEPAGE_CONTENT: 1800,  // 30 minutes - rarely changes
+  EVENTS: 300,             // 5 minutes - moderate changes
+  ANNOUNCEMENTS: 180,      // 3 minutes - frequent updates
+  FEEDBACK: 120            // 2 minutes - frequent updates
+};
+
+// ===== CACHE HELPERS =====
+/**
+ * Get cached data or execute function and cache result
+ * @param {string} key - Cache key
+ * @param {function} fetchFunction - Function to execute if cache miss
+ * @param {number} expirationSeconds - Cache expiration in seconds
+ */
+function getCachedOrFetch(key, fetchFunction, expirationSeconds) {
+  const cache = CacheService.getScriptCache();
+  const cached = cache.get(key);
+  
+  if (cached) {
+    try {
+      return JSON.parse(cached);
+    } catch (e) {
+      Logger.log('Cache parse error for key: ' + key);
+    }
+  }
+  
+  // Cache miss - fetch fresh data
+  const freshData = fetchFunction();
+  
+  try {
+    // CacheService has a 100KB limit per entry
+    const serialized = JSON.stringify(freshData);
+    if (serialized.length < 100000) {
+      cache.put(key, serialized, expirationSeconds);
+    } else {
+      Logger.log('Cache entry too large for key: ' + key + ' (' + serialized.length + ' bytes)');
+    }
+  } catch (e) {
+    Logger.log('Cache put error for key: ' + key + ' - ' + e.toString());
+  }
+  
+  return freshData;
+}
+
+/**
+ * Invalidate cache for a specific key or pattern
+ */
+function invalidateCache(keyPattern) {
+  const cache = CacheService.getScriptCache();
+  if (Array.isArray(keyPattern)) {
+    cache.removeAll(keyPattern);
+  } else {
+    cache.remove(keyPattern);
+  }
+}
+
+/**
+ * Get optimized range instead of entire sheet
+ * @param {Sheet} sheet - Sheet object
+ * @param {number} headerRows - Number of header rows to skip (default 1)
+ */
+function getOptimizedRange(sheet, headerRows = 1) {
+  const lastRow = sheet.getLastRow();
+  const lastCol = sheet.getLastColumn();
+  
+  if (lastRow <= headerRows) {
+    return [];
+  }
+  
+  // Get only the data range, not the entire sheet
+  return sheet.getRange(headerRows + 1, 1, lastRow - headerRows, lastCol).getValues();
+}
+
 // ===== MAIN ENTRY POINT =====
 function doPost(e) {
   try {
@@ -228,15 +304,21 @@ function handleGetAccessLogs(data) {
 // ===== SEARCH PROFILES HANDLER =====
 function handleSearchProfiles(data) {
   try {
-    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-    const sheet = ss.getSheetByName(SHEETS.USER_PROFILES);
-    const dataRange = sheet.getDataRange();
-    const values = dataRange.getValues();
-    
     const searchTerm = (data.search || data.searchTerm || '').toLowerCase();
     
-    // Skip header row
-    const profiles = values.slice(1)
+    // Use cached user profiles data
+    const values = getCachedOrFetch(
+      'user_profiles_all',
+      function() {
+        const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+        const sheet = ss.getSheetByName(SHEETS.USER_PROFILES);
+        return getOptimizedRange(sheet); // Use optimized range instead of getDataRange()
+      },
+      CACHE_EXPIRATION.USER_PROFILES
+    );
+    
+    // Filter profiles based on search term
+    const profiles = values
       .filter(row => {
         const idCode = (row[18] || '').toString().toLowerCase();      // Column S - ID Code
         const username = (row[13] || '').toString().toLowerCase();    // Column N - Username
@@ -292,41 +374,51 @@ function handleSearchProfiles(data) {
 // ===== GET EVENTS HANDLER =====
 function handleGetEvents(data) {
   try {
-    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-    const sheet = ss.getSheetByName(SHEETS.MASTER_ATTENDANCE);
-    const headerRow = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-    
-    const events = [];
-    
-    // Start from column E (index 4) and check every 6 columns
-    for (let col = 4; col < headerRow.length; col += 6) {
-      const eventId = headerRow[col];
-      if (eventId) {
-        // Format the date
-        const rawDate = headerRow[col + 2];
-        let formattedDate = '';
-        if (rawDate) {
-          const dateObj = new Date(rawDate);
-          if (!isNaN(dateObj.getTime())) {
-            // Format as "YYYY-MM-DD"
-            formattedDate = dateObj.getFullYear() + '-' + 
-                           String(dateObj.getMonth() + 1).padStart(2, '0') + '-' + 
-                           String(dateObj.getDate()).padStart(2, '0');
-          } else {
-            formattedDate = rawDate.toString();
+    // Use cached events data
+    const events = getCachedOrFetch(
+      'events_all',
+      function() {
+        const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+        const sheet = ss.getSheetByName(SHEETS.MASTER_ATTENDANCE);
+        const lastCol = sheet.getLastColumn();
+        const headerRow = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+        
+        const eventsList = [];
+        
+        // Start from column E (index 4) and check every 6 columns
+        for (let col = 4; col < headerRow.length; col += 6) {
+          const eventId = headerRow[col];
+          if (eventId) {
+            // Format the date
+            const rawDate = headerRow[col + 2];
+            let formattedDate = '';
+            if (rawDate) {
+              const dateObj = new Date(rawDate);
+              if (!isNaN(dateObj.getTime())) {
+                // Format as "YYYY-MM-DD"
+                formattedDate = dateObj.getFullYear() + '-' + 
+                               String(dateObj.getMonth() + 1).padStart(2, '0') + '-' + 
+                               String(dateObj.getDate()).padStart(2, '0');
+              } else {
+                formattedDate = rawDate.toString();
+              }
+            }
+            
+            eventsList.push({
+              id: eventId.toString(),
+              name: headerRow[col + 1] || '',
+              date: formattedDate,
+              timeIn: headerRow[col + 3] || '',
+              timeOut: headerRow[col + 4] || '',
+              status: headerRow[col + 5] || 'Active'
+            });
           }
         }
         
-        events.push({
-          id: eventId.toString(),
-          name: headerRow[col + 1] || '',
-          date: formattedDate,
-          timeIn: headerRow[col + 3] || '',
-          timeOut: headerRow[col + 4] || '',
-          status: headerRow[col + 5] || 'Active'
-        });
-      }
-    }
+        return eventsList;
+      },
+      CACHE_EXPIRATION.EVENTS
+    );
     
     return { success: true, events: events };
   } catch (error) {
@@ -378,6 +470,9 @@ function handleCreateEvent(data) {
     
     // Log the creation
     Logger.log('Created event: ' + newEventId + ' - ' + eventName + ' at column ' + nextCol);
+    
+    // Invalidate events cache
+    invalidateCache('events_all');
     
     return {
       success: true,
@@ -1848,15 +1943,23 @@ function handleReplyToFeedback(data) {
 // ===== GET HOMEPAGE CONTENT HANDLER =====
 function handleGetHomepageContent(data) {
   try {
-    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-    const homepageSheet = ss.getSheetByName(SHEETS.HOMEPAGE_CONTENT);
-    
-    if (!homepageSheet) {
-      return { success: false, message: 'Homepage Content sheet not found' };
-    }
-    
-    // Get all data from Homepage Content sheet
-    const homepageData = homepageSheet.getDataRange().getValues();
+    // Use cached homepage content
+    const homepageData = getCachedOrFetch(
+      'homepage_content',
+      function() {
+        const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+        const homepageSheet = ss.getSheetByName(SHEETS.HOMEPAGE_CONTENT);
+        
+        if (!homepageSheet) {
+          throw new Error('Homepage Content sheet not found');
+        }
+        
+        const lastRow = homepageSheet.getLastRow();
+        const lastCol = homepageSheet.getLastColumn();
+        return homepageSheet.getRange(1, 1, lastRow, lastCol).getValues();
+      },
+      CACHE_EXPIRATION.HOMEPAGE_CONTENT
+    );
     
     // ===================================================================
     // CRITICAL: NO HEADER ROW IN SHEET!
@@ -2958,6 +3061,9 @@ function handleAddHomepageProject(data) {
     
     Logger.log('Added homepage project: ' + nextN + ' - ' + data.title);
     
+    // Invalidate homepage cache
+    invalidateCache('homepage_content');
+    
     return {
       success: true,
       message: 'Project added successfully',
@@ -3018,6 +3124,9 @@ function handleDeleteHomepageProject(data) {
     }
     
     Logger.log('Deleted homepage project: ' + data.projectNumber);
+    
+    // Invalidate homepage cache
+    invalidateCache('homepage_content');
     
     return {
       success: true,
