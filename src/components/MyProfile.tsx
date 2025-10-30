@@ -42,6 +42,49 @@ function getDisplayableGoogleDriveUrl(url: string): string {
   return url;
 }
 
+// Convert various date strings to YYYY-MM-DD (for input[type=date])
+function formatToISODate(value?: string | null): string {
+  if (!value) return '';
+  const s = String(value).trim();
+  if (!s) return '';
+  // If already ISO-like
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  const d = new Date(s);
+  if (!isNaN(d.getTime())) {
+    const tz = 'Asia/Manila';
+    const y = Number(
+      new Intl.DateTimeFormat('en-CA', { timeZone: tz, year: 'numeric' }).format(d)
+    );
+    const m = new Intl.DateTimeFormat('en-CA', { timeZone: tz, month: '2-digit' }).format(d);
+    const day = new Intl.DateTimeFormat('en-CA', { timeZone: tz, day: '2-digit' }).format(d);
+    return `${y}-${m}-${day}`;
+  }
+  return '';
+}
+
+// Compute age given an ISO date (YYYY-MM-DD); returns number or empty string
+function computeAge(iso?: string | null): number | '' {
+  if (!iso) return '';
+  const m = /^\d{4}-\d{2}-\d{2}$/.exec(iso);
+  if (!m) return '';
+  const [y, mo, d] = iso.split('-').map((x) => parseInt(x, 10));
+  if (!y || !mo || !d) return '';
+  const birth = new Date(y, mo - 1, d);
+  if (isNaN(birth.getTime())) return '';
+  // Get today's date in Manila
+  const tz = 'Asia/Manila';
+  const todayStr = new Intl.DateTimeFormat('en-CA', {
+    timeZone: tz,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date());
+  const [ty, tm, td] = todayStr.split('-').map((x) => parseInt(x, 10));
+  let age = ty - y;
+  if (tm < mo || (tm === mo && td < d)) age--;
+  return age < 0 ? '' : age;
+}
+
 export default function MyProfile({ currentUser }: MyProfileProps) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -197,27 +240,8 @@ export default function MyProfile({ currentUser }: MyProfileProps) {
       setSaving(true);
       setError(null);
 
-      // Only send fields that actually changed
-      const changedFields: Record<string, any> = {};
-      Object.keys(editedProfile).forEach((key) => {
-        const profileKey = key as keyof UserProfile;
-        if (editedProfile[profileKey] !== profile[profileKey]) {
-          changedFields[key] = editedProfile[profileKey];
-        }
-      });
-
-      // If no fields changed, just exit edit mode
-      if (Object.keys(changedFields).length === 0) {
-        setIsEditing(false);
-        toast.info('No changes to save');
-        setSaving(false);
-        return;
-      }
-
-      console.log('Sending only changed fields:', changedFields);
-
-      // Call backend to update profile with only changed fields
-      const response = await userAPI.updateProfile(profile.idCode, changedFields);
+      // Call backend to update profile
+      const response = await userAPI.updateProfile(profile.idCode, editedProfile);
 
       if (response.success) {
         // Update local state
@@ -518,9 +542,8 @@ export default function MyProfile({ currentUser }: MyProfileProps) {
               <p className="text-sm text-gray-500 dark:text-gray-400">Birthday</p>
               {isEditing ? (
                 <input
-                  type="text"
-                  placeholder="e.g., January 15, 1990"
-                  value={editedProfile.birthday ?? profile.birthday}
+                  type="date"
+                  value={formatToISODate(editedProfile.birthday ?? profile.birthday) || ''}
                   onChange={(e) => handleFieldChange('birthday', e.target.value)}
                   className="w-full px-2 py-1 border rounded mt-1 text-sm"
                 />
@@ -538,9 +561,11 @@ export default function MyProfile({ currentUser }: MyProfileProps) {
               {isEditing ? (
                 <input
                   type="number"
-                  value={editedProfile.age ?? profile.age}
-                  onChange={(e) => handleFieldChange('age', e.target.value)}
-                  className="w-full px-2 py-1 border rounded mt-1 text-sm"
+                  disabled
+                  readOnly
+                  value={computeAge(formatToISODate(editedProfile.birthday ?? profile.birthday)) ?? profile.age}
+                  className="w-full px-2 py-1 border rounded mt-1 text-sm bg-gray-100 text-gray-600 cursor-not-allowed"
+                  title="Age is automatically computed from your birthday"
                 />
               ) : (
                 <p className="font-medium">{profile.age} years old</p>

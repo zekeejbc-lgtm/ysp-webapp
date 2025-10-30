@@ -528,3 +528,23 @@ export const homepageAPI = {
 
 // Export API_CONFIG for direct access if needed
 export { API_CONFIG };
+
+// ======================================================
+// SYSTEM / ADMIN API
+// ======================================================
+
+export const systemAPI = {
+  /**
+   * Auditor-only: Manually trigger age recomputation for all users
+   */
+  recalcAgesNow: async (auditorIdCode: string): Promise<{ success: boolean; message?: string; updated?: number; }> => {
+    return apiRequest('recalcAgesNow', { idCode: auditorIdCode });
+  },
+
+  /**
+   * Auditor-only: Install the daily 00:05 (Asia/Manila) trigger
+   */
+  installAgeRecalcTrigger: async (auditorIdCode: string): Promise<{ success: boolean; message?: string; }> => {
+    return apiRequest('installAgeRecalcTrigger', { idCode: auditorIdCode });
+  }
+};

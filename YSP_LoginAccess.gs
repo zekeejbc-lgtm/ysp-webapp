@@ -74,6 +74,10 @@ function handlePostRequest(data) {
       return handleUploadProfilePicture(data);
     case 'updateProfilePicture':
       return handleUpdateProfilePicture(data);
+    case 'recalcAgesNow':
+      return handleRecalcAgesNow(data);
+    case 'installAgeRecalcTrigger':
+      return handleInstallAgeRecalcTrigger(data);
     default:
       return { success: false, message: 'Unknown action: ' + action };
   }
@@ -2587,6 +2591,8 @@ function recalcAllAges() {
     var dobValues = sheet.getRange(2, 5, numRows, 1).getValues(); // Column E
     var ageRange = sheet.getRange(2, 6, numRows, 1); // Column F
     var ageValues = ageRange.getValues();
+    // Ensure Age column shows as a number
+    try { ageRange.setNumberFormat('0'); } catch (e) { Logger.log('setNumberFormat failed (non-fatal): ' + e.toString()); }
     var updated = 0;
     for (var i = 0; i < numRows; i++) {
       var dob = dobValues[i][0];
@@ -2630,6 +2636,104 @@ function installDailyAgeRecalcTrigger() {
     .create();
   Logger.log('Installed daily trigger for recalcAllAges at 00:05 Asia/Manila');
   return { success: true, message: 'Daily age recalc trigger installed at 00:05 Asia/Manila' };
+}
+
+/**
+ * Debug helper to inspect DOB parsing and computed ages for the first ~20 rows.
+ * Writes a summary line to a sheet named "Logging Debug" (creates if missing).
+ */
+function recalcAllAgesDebug() {
+  try {
+    var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    var sheet = ss.getSheetByName(SHEETS.USER_PROFILES);
+    if (!sheet) {
+      Logger.log('User Profiles sheet not found');
+      return { success: false, message: 'User Profiles sheet not found' };
+    }
+    var lastRow = sheet.getLastRow();
+    var numRows = Math.max(0, Math.min(20, lastRow - 1));
+    if (numRows === 0) return { success: true, message: 'No data rows' };
+    var dobValues = sheet.getRange(2, 5, numRows, 1).getValues();
+    var sample = [];
+    for (var i = 0; i < numRows; i++) {
+      var v = dobValues[i][0];
+      var isDate = Object.prototype.toString.call(v) === '[object Date]' && !isNaN(v.getTime());
+      var computed = _computeAgeFromDate(v);
+      sample.push({ row: i + 2, type: isDate ? 'Date' : (v === '' ? 'Empty' : typeof v), value: String(v), computed: computed });
+    }
+    Logger.log('recalcAllAgesDebug sample: ' + JSON.stringify(sample));
+    var logSheet = ss.getSheetByName('Logging Debug');
+    if (!logSheet) logSheet = ss.insertSheet('Logging Debug');
+    logSheet.appendRow([new Date().toISOString(), 'recalcAllAgesDebug', JSON.stringify(sample)]);
+    return { success: true, sample: sample };
+  } catch (e) {
+    Logger.log('Error in recalcAllAgesDebug: ' + e.toString());
+    return { success: false, message: e.toString() };
+  }
+}
+
+// ===== ADMIN/AUDITOR-ONLY API ENDPOINTS FOR AGE RECALC =====
+/**
+ * Internal helper: get role by ID Code from User Profiles
+ */
+function _getUserRoleByIdCode(idCode) {
+  try {
+    var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    var sheet = ss.getSheetByName(SHEETS.USER_PROFILES);
+    if (!sheet) return '';
+    var rows = sheet.getDataRange().getValues();
+    for (var i = 1; i < rows.length; i++) {
+      if (rows[i][18] && rows[i][18].toString() === String(idCode)) {
+        return rows[i][20] || '';
+      }
+    }
+    return '';
+  } catch (e) {
+    Logger.log('Error in _getUserRoleByIdCode: ' + e.toString());
+    return '';
+  }
+}
+
+/**
+ * Manually trigger age recalculation from the client. Auditor-only.
+ * Expects: { action: 'recalcAgesNow', idCode: '...' }
+ */
+function handleRecalcAgesNow(data) {
+  try {
+    if (!data || !data.idCode) {
+      return { success: false, message: 'ID Code is required' };
+    }
+    var role = _getUserRoleByIdCode(data.idCode);
+    if (role !== 'Auditor') {
+      return { success: false, message: 'Forbidden: Only Auditor can run age recalculation' };
+    }
+    var result = recalcAllAges();
+    return { success: result.success, message: result.message || ('Age recalculated for ' + (result.updated || 0) + ' user(s)'), updated: result.updated || 0 };
+  } catch (e) {
+    Logger.log('Error in handleRecalcAgesNow: ' + e.toString());
+    return { success: false, message: 'Error recalculating ages: ' + e.toString() };
+  }
+}
+
+/**
+ * Install the daily trigger from the client. Auditor-only.
+ * Expects: { action: 'installAgeRecalcTrigger', idCode: '...' }
+ */
+function handleInstallAgeRecalcTrigger(data) {
+  try {
+    if (!data || !data.idCode) {
+      return { success: false, message: 'ID Code is required' };
+    }
+    var role = _getUserRoleByIdCode(data.idCode);
+    if (role !== 'Auditor') {
+      return { success: false, message: 'Forbidden: Only Auditor can install the daily trigger' };
+    }
+    var res = installDailyAgeRecalcTrigger();
+    return res;
+  } catch (e) {
+    Logger.log('Error in handleInstallAgeRecalcTrigger: ' + e.toString());
+    return { success: false, message: 'Error installing trigger: ' + e.toString() };
+  }
 }
 
 

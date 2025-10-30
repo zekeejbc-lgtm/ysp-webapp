@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { 
   Home, ChevronDown, ChevronRight, Users, BarChart3, QrCode, 
   ClipboardList, Calendar, MessageSquare, FileText, ScrollText,
-  User, LogOut
+  User, LogOut, Wrench
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -76,7 +76,8 @@ export default function Sidebar({ isOpen, currentPage, setCurrentPage, currentUs
       icon: ScrollText,
       roles: ['Auditor'],
       subItems: [
-        { label: 'Access Logs', page: 'access-logs', icon: ScrollText, roles: ['Auditor'] }
+        { label: 'Access Logs', page: 'access-logs', icon: ScrollText, roles: ['Auditor'] },
+        { label: 'System Tools', page: 'system-tools', icon: Wrench, roles: ['Auditor'] }
       ]
     }
   ];

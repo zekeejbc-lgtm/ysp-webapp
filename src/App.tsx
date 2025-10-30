@@ -14,6 +14,7 @@ import Announcements from './components/Announcements';
 import Feedback from './components/Feedback';
 import AccessLogs from './components/AccessLogs';
 import MyProfile from './components/MyProfile';
+import SystemTools from './components/SystemTools';
 import LoginScreen from './components/LoginScreen';
 import { Toaster } from './components/ui/sonner';
 import './styles/globals.css';
@@ -103,6 +104,8 @@ export default function App() {
         return <Feedback darkMode={darkMode} currentUser={currentUser} />;
       case 'access-logs':
         return <AccessLogs darkMode={darkMode} />;
+      case 'system-tools':
+        return <SystemTools currentUser={currentUser} />;
       case 'my-profile':
         return <MyProfile currentUser={currentUser} />;
       default:
