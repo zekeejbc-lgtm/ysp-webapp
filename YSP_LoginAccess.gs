@@ -2271,6 +2271,7 @@ function handleUpdateProfile(data) {
         }
         
         // Column E (index 4) - Date of Birth (Birthday)
+        var birthdayChanged = false;
         if (data.birthday !== undefined && !datesEqual(data.birthday, oldValues.birthday)) {
           const dateObj = dateFromYYYYMMDD(data.birthday);
           if (dateObj) {
@@ -2279,17 +2280,39 @@ function handleUpdateProfile(data) {
             userProfilesSheet.getRange(i + 1, 5).setValue(data.birthday);
           }
           changes.push({ field: 'Date of Birth', old: normalizeDate(oldValues.birthday), new: normalizeDate(data.birthday) });
+          birthdayChanged = true;
         } else if (data.birthday === undefined || datesEqual(data.birthday, oldValues.birthday)) {
           unchanged.push('Date of Birth');
         }
         
-        // Column F (index 5) - Age
-        if (data.age !== undefined && !numbersEqual(data.age, oldValues.age)) {
-          const numAge = Number(data.age);
-          userProfilesSheet.getRange(i + 1, 6).setValue(isNaN(numAge) ? data.age : numAge);
-          changes.push({ field: 'Age', old: String(oldValues.age || ''), new: String(data.age || '') });
-        } else if (data.age === undefined || numbersEqual(data.age, oldValues.age)) {
-          unchanged.push('Age');
+        // Column F (index 5) - Age (Derived from Date of Birth; not editable)
+        function computeAgeFromDate(dateVal) {
+          const iso = normalizeDate(dateVal);
+          if (!iso) return '';
+          const dt = dateFromYYYYMMDD(iso);
+          if (!dt) return '';
+          const todayStr = Utilities.formatDate(new Date(), DATE_TZ, DATE_FMT);
+          const parts = todayStr.split('-');
+          const ty = parseInt(parts[0], 10);
+          const tm = parseInt(parts[1], 10);
+          const td = parseInt(parts[2], 10);
+          let age = ty - dt.getFullYear();
+          const bm = dt.getMonth() + 1;
+          const bd = dt.getDate();
+          if (tm < bm || (tm === bm && td < bd)) age--;
+          return age < 0 ? '' : String(age);
+        }
+
+        const effectiveBirthday = data.birthday !== undefined ? data.birthday : oldValues.birthday;
+        const newComputedAge = computeAgeFromDate(effectiveBirthday);
+        const oldAgeStr = normalizeNumber(oldValues.age);
+        if (newComputedAge !== '' && newComputedAge !== oldAgeStr) {
+          // Update the sheet silently
+          userProfilesSheet.getRange(i + 1, 6).setValue(Number(newComputedAge));
+          // Only include Age in email changes if the birthday actually changed
+          if (birthdayChanged) {
+            changes.push({ field: 'Age', old: String(oldValues.age || ''), new: newComputedAge });
+          }
         }
         
         // Column G (index 6) - Sex/Gender
