@@ -1,24 +1,37 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { toast } from 'sonner';
 import Sidebar from './components/Sidebar';
 import TopBar from './components/TopBar';
-import Homepage from './components/Homepage';
-import OfficerSearch from './components/OfficerSearch';
-import AttendanceDashboard from './components/AttendanceDashboard';
-
-import QRScanner from './components/QRScanner';
-import ManualAttendance from './components/ManualAttendance';
-import ManageEvents from './components/ManageEvents';
-import MyQRID from './components/MyQRID';
-import AttendanceTransparency from './components/AttendanceTransparency';
-import Announcements from './components/Announcements';
-import Feedback from './components/Feedback';
-import AccessLogs from './components/AccessLogs';
-import MyProfile from './components/MyProfile';
-import SystemTools from './components/SystemTools';
 import LoginScreen from './components/LoginScreen';
 import { Toaster } from './components/ui/sonner';
 import './styles/globals.css';
+
+// Lazy load all page components for better performance
+const Homepage = lazy(() => import('./components/Homepage'));
+const OfficerSearch = lazy(() => import('./components/OfficerSearch'));
+const AttendanceDashboard = lazy(() => import('./components/AttendanceDashboard'));
+const QRScanner = lazy(() => import('./components/QRScanner'));
+const ManualAttendance = lazy(() => import('./components/ManualAttendance'));
+const ManageEvents = lazy(() => import('./components/ManageEvents'));
+const MyQRID = lazy(() => import('./components/MyQRID'));
+const AttendanceTransparency = lazy(() => import('./components/AttendanceTransparency'));
+const Announcements = lazy(() => import('./components/Announcements'));
+const Feedback = lazy(() => import('./components/Feedback'));
+const AccessLogs = lazy(() => import('./components/AccessLogs'));
+const MyProfile = lazy(() => import('./components/MyProfile'));
+const SystemTools = lazy(() => import('./components/SystemTools'));
+
+// Loading fallback component
+function PageLoadingFallback() {
+  return (
+    <div className="flex items-center justify-center h-screen">
+      <div className="text-center">
+        <div className="inline-block w-12 h-12 border-4 border-[#f6421f] border-t-transparent rounded-full animate-spin mb-4"></div>
+        <p className="text-gray-600 dark:text-gray-400">Loading page...</p>
+      </div>
+    </div>
+  );
+}
 
 export default function App() {
   const [darkMode, setDarkMode] = useState(() => {
@@ -198,7 +211,9 @@ export default function App() {
         />
         
         <main className="content-area">
-          {renderPage()}
+          <Suspense fallback={<PageLoadingFallback />}>
+            {renderPage()}
+          </Suspense>
         </main>
       </div>
       
