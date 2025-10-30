@@ -321,11 +321,9 @@ export default function Homepage({ darkMode, currentUser }: HomepageProps) {
                   value={projectDescription}
                   onChange={(e) => setProjectDescription(e.target.value)}
                   placeholder="Enter project description"
-                  maxLength={500}
                   rows={4}
                   className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600"
                 />
-                <p className="text-xs text-gray-500 mt-1">{projectDescription.length}/500 characters</p>
               </div>
 
               <div className="flex gap-3">
