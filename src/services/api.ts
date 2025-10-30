@@ -493,9 +493,10 @@ export const feedbackAPI = {
 // ======================================================
 
 export interface HomepageProject {
+  number: number;
+  title: string;
   image: string;
   description: string;
-  title: string;
 }
 
 export interface HomepageContent {
@@ -523,6 +524,41 @@ export const homepageAPI = {
    */
   getContent: async (): Promise<HomepageResponse> => {
     return apiRequest('getHomepageContent', {});
+  },
+
+  /**
+   * Upload a project image to Google Drive (Admin/Auditor only)
+   */
+  uploadProjectImage: async (
+    base64Image: string,
+    fileName: string,
+    mimeType: string,
+    projectTitle: string,
+    idCode: string
+  ): Promise<{ success: boolean; message?: string; imageUrl?: string; fileName?: string }> => {
+    return apiRequest('uploadProjectImage', { base64Image, fileName, mimeType, projectTitle, idCode });
+  },
+
+  /**
+   * Add a new homepage project (Admin/Auditor only)
+   */
+  addProject: async (
+    title: string,
+    imageUrl: string,
+    description: string,
+    idCode: string
+  ): Promise<{ success: boolean; message?: string; projectNumber?: number; title?: string }> => {
+    return apiRequest('addHomepageProject', { title, imageUrl, description, idCode });
+  },
+
+  /**
+   * Delete a homepage project by number (Admin/Auditor only)
+   */
+  deleteProject: async (
+    projectNumber: number,
+    idCode: string
+  ): Promise<{ success: boolean; message?: string; projectNumber?: number }> => {
+    return apiRequest('deleteHomepageProject', { projectNumber, idCode });
   },
 };
 

@@ -83,7 +83,7 @@ export default function App() {
   const renderPage = () => {
     switch (currentPage) {
       case 'homepage':
-        return <Homepage darkMode={darkMode} />;
+        return <Homepage darkMode={darkMode} currentUser={currentUser} />;
       case 'officer-search':
         return <OfficerSearch darkMode={darkMode} />;
       case 'attendance-dashboard':

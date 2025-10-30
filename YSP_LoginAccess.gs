@@ -1,6 +1,7 @@
 // ===== CONFIGURATION =====
 const SPREADSHEET_ID = '1zTgBQw3ISAtagKOKhMYl6JWL6DnQSpcHt7L3UnBevuU';
 const PROFILE_PICTURES_FOLDER_ID = '192-pVluL93fYKpyJoukfi_H5az_9fqFK'; // Google Drive folder for profile pictures
+const PROJECTS_FOLDER_ID = '1G68-t3Urdc6iBW6Utl7zbvlb4xa6MvSH'; // Google Drive folder for homepage project images
 const SHEETS = {
   ACCESS_LOGS: 'Access Logs',
   USER_PROFILES: 'User Profiles',
@@ -78,6 +79,12 @@ function handlePostRequest(data) {
       return handleRecalcAgesNow(data);
     case 'installAgeRecalcTrigger':
       return handleInstallAgeRecalcTrigger(data);
+    case 'uploadProjectImage':
+      return handleUploadProjectImage(data);
+    case 'addHomepageProject':
+      return handleAddHomepageProject(data);
+    case 'deleteHomepageProject':
+      return handleDeleteHomepageProject(data);
     default:
       return { success: false, message: 'Unknown action: ' + action };
   }
@@ -1864,33 +1871,46 @@ function handleGetHomepageContent(data) {
     const objectivesArray = objectives ? [objectives] : [];
     
     // Extract projects starting from SHEET ROW 9 (array index 8)
-    // SHEET ROW 9  (index 8): projectImageUrl_1
-    // SHEET ROW 10 (index 9): projectDesc_1
-    // SHEET ROW 11 (index 10): projectImageUrl_2
-    // SHEET ROW 12 (index 11): projectDesc_2
+    // NEW SCHEMA (3 rows per project):
+    // SHEET ROW 9  (index 8): projectTitle_1
+    // SHEET ROW 10 (index 9): projectImageUrl_1
+    // SHEET ROW 11 (index 10): projectDesc_1
+    // SHEET ROW 12 (index 11): projectTitle_2
+    // SHEET ROW 13 (index 12): projectImageUrl_2
+    // SHEET ROW 14 (index 13): projectDesc_2
     // etc...
     const projects = [];
-    let projectIndex = 1;
     let rowIndex = 8; // Start from array index 8 (SHEET ROW 9)
     
     while (rowIndex < homepageData.length) {
-      const imageUrl = homepageData[rowIndex][1] || ''; // projectImageUrl_X
-      const description = homepageData[rowIndex + 1] ? (homepageData[rowIndex + 1][1] || '') : ''; // projectDesc_X
+      const titleRow = homepageData[rowIndex];
+      const imageRow = homepageData[rowIndex + 1];
+      const descRow = homepageData[rowIndex + 2];
       
-      if (!imageUrl && !description) {
+      // Check if this is a project block
+      const titleKey = titleRow ? (titleRow[0] || '').toString() : '';
+      if (!titleKey.startsWith('projectTitle_')) {
         break; // No more projects
       }
       
-      if (imageUrl || description) {
+      const title = titleRow[1] || '';
+      const imageUrl = imageRow ? (imageRow[1] || '') : '';
+      const description = descRow ? (descRow[1] || '') : '';
+      
+      if (title || imageUrl || description) {
+        // Extract project number from key for frontend reference
+        const match = titleKey.match(/projectTitle_(\d+)/);
+        const projectNumber = match ? parseInt(match[1], 10) : 0;
+        
         projects.push({
+          number: projectNumber,
+          title: title,
           image: imageUrl,
-          description: description,
-          title: 'Project ' + projectIndex
+          description: description
         });
-        projectIndex++;
       }
       
-      rowIndex += 2; // Move to next project (skip 2 rows)
+      rowIndex += 3; // Move to next project (skip 3 rows)
     }
     
     Logger.log('Retrieved homepage content with ' + projects.length + ' projects');
@@ -2669,6 +2689,184 @@ function recalcAllAgesDebug() {
   } catch (e) {
     Logger.log('Error in recalcAllAgesDebug: ' + e.toString());
     return { success: false, message: e.toString() };
+  }
+}
+
+// ===== HOMEPAGE PROJECTS MANAGEMENT =====
+/**
+ * Upload a project image to Google Drive (Admin/Auditor only)
+ * Expects: { action: 'uploadProjectImage', base64Image, fileName, mimeType, projectTitle, idCode }
+ */
+function handleUploadProjectImage(data) {
+  try {
+    if (!data || !data.idCode) {
+      return { success: false, message: 'ID Code is required' };
+    }
+    var role = _getUserRoleByIdCode(data.idCode);
+    if (role !== 'Admin' && role !== 'Auditor') {
+      return { success: false, message: 'Forbidden: Only Admin and Auditor can upload project images' };
+    }
+    if (!data.base64Image) {
+      return { success: false, message: 'Image data is required' };
+    }
+    
+    var folder = DriveApp.getFolderById(PROJECTS_FOLDER_ID);
+    var base64Data = data.base64Image.split(',')[1] || data.base64Image;
+    
+    // Sanitize project title for filename
+    var sanitized = (data.projectTitle || 'untitled').replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 50);
+    var timestamp = new Date().getTime();
+    var ext = (data.mimeType || 'image/jpeg').split('/')[1] || 'jpg';
+    var finalName = 'project_' + timestamp + '_' + sanitized + '.' + ext;
+    
+    var blob = Utilities.newBlob(
+      Utilities.base64Decode(base64Data),
+      data.mimeType || 'image/jpeg',
+      finalName
+    );
+    
+    // Check for existing file and trash
+    var existingFiles = folder.getFilesByName(finalName);
+    while (existingFiles.hasNext()) {
+      existingFiles.next().setTrashed(true);
+    }
+    
+    var file = folder.createFile(blob);
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    
+    var fileUrl = 'https://drive.google.com/uc?export=view&id=' + file.getId();
+    
+    Logger.log('Uploaded project image: ' + finalName + ' -> ' + fileUrl);
+    
+    return {
+      success: true,
+      message: 'Project image uploaded successfully',
+      imageUrl: fileUrl,
+      fileName: finalName
+    };
+  } catch (e) {
+    Logger.log('Error in handleUploadProjectImage: ' + e.toString());
+    return { success: false, message: 'Error uploading project image: ' + e.toString() };
+  }
+}
+
+/**
+ * Add a new homepage project (Admin/Auditor only)
+ * Expects: { action: 'addHomepageProject', title, imageUrl, description, idCode }
+ * Appends 3 rows: projectTitle_N, projectImageUrl_N, projectDesc_N
+ */
+function handleAddHomepageProject(data) {
+  try {
+    if (!data || !data.idCode) {
+      return { success: false, message: 'ID Code is required' };
+    }
+    var role = _getUserRoleByIdCode(data.idCode);
+    if (role !== 'Admin' && role !== 'Auditor') {
+      return { success: false, message: 'Forbidden: Only Admin and Auditor can add projects' };
+    }
+    if (!data.title || !data.imageUrl || !data.description) {
+      return { success: false, message: 'Title, image URL, and description are required' };
+    }
+    
+    var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    var sheet = ss.getSheetByName(SHEETS.HOMEPAGE_CONTENT);
+    if (!sheet) {
+      return { success: false, message: 'Homepage Content sheet not found' };
+    }
+    
+    // Find highest existing project number
+    var allData = sheet.getDataRange().getValues();
+    var maxN = 0;
+    for (var i = 0; i < allData.length; i++) {
+      var key = allData[i][0] ? allData[i][0].toString() : '';
+      var match = key.match(/^projectTitle_(\d+)$/);
+      if (match) {
+        var num = parseInt(match[1], 10);
+        if (num > maxN) maxN = num;
+      }
+    }
+    var nextN = maxN + 1;
+    
+    // Append 3 rows at the end
+    var lastRow = sheet.getLastRow();
+    sheet.getRange(lastRow + 1, 1).setValue('projectTitle_' + nextN);
+    sheet.getRange(lastRow + 1, 2).setValue(data.title);
+    sheet.getRange(lastRow + 2, 1).setValue('projectImageUrl_' + nextN);
+    sheet.getRange(lastRow + 2, 2).setValue(data.imageUrl);
+    sheet.getRange(lastRow + 3, 1).setValue('projectDesc_' + nextN);
+    sheet.getRange(lastRow + 3, 2).setValue(data.description);
+    
+    Logger.log('Added homepage project: ' + nextN + ' - ' + data.title);
+    
+    return {
+      success: true,
+      message: 'Project added successfully',
+      projectNumber: nextN,
+      title: data.title
+    };
+  } catch (e) {
+    Logger.log('Error in handleAddHomepageProject: ' + e.toString());
+    return { success: false, message: 'Error adding project: ' + e.toString() };
+  }
+}
+
+/**
+ * Delete a homepage project by number (Admin/Auditor only)
+ * Expects: { action: 'deleteHomepageProject', projectNumber, idCode }
+ * Removes 3 rows: projectTitle_N, projectImageUrl_N, projectDesc_N
+ */
+function handleDeleteHomepageProject(data) {
+  try {
+    if (!data || !data.idCode) {
+      return { success: false, message: 'ID Code is required' };
+    }
+    var role = _getUserRoleByIdCode(data.idCode);
+    if (role !== 'Admin' && role !== 'Auditor') {
+      return { success: false, message: 'Forbidden: Only Admin and Auditor can delete projects' };
+    }
+    if (!data.projectNumber) {
+      return { success: false, message: 'Project number is required' };
+    }
+    
+    var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    var sheet = ss.getSheetByName(SHEETS.HOMEPAGE_CONTENT);
+    if (!sheet) {
+      return { success: false, message: 'Homepage Content sheet not found' };
+    }
+    
+    var allData = sheet.getDataRange().getValues();
+    var titleKey = 'projectTitle_' + data.projectNumber;
+    var imageKey = 'projectImageUrl_' + data.projectNumber;
+    var descKey = 'projectDesc_' + data.projectNumber;
+    
+    var rowsToDelete = [];
+    for (var i = 0; i < allData.length; i++) {
+      var key = allData[i][0] ? allData[i][0].toString() : '';
+      if (key === titleKey || key === imageKey || key === descKey) {
+        rowsToDelete.push(i + 1); // 1-indexed
+      }
+    }
+    
+    if (rowsToDelete.length === 0) {
+      return { success: false, message: 'Project not found' };
+    }
+    
+    // Delete rows in reverse order to maintain indices
+    rowsToDelete.sort(function(a, b) { return b - a; });
+    for (var j = 0; j < rowsToDelete.length; j++) {
+      sheet.deleteRow(rowsToDelete[j]);
+    }
+    
+    Logger.log('Deleted homepage project: ' + data.projectNumber);
+    
+    return {
+      success: true,
+      message: 'Project deleted successfully',
+      projectNumber: data.projectNumber
+    };
+  } catch (e) {
+    Logger.log('Error in handleDeleteHomepageProject: ' + e.toString());
+    return { success: false, message: 'Error deleting project: ' + e.toString() };
   }
 }
 
