@@ -2206,98 +2206,146 @@ function handleUpdateProfile(data) {
         // Update allowed fields based on SHEET_COLUMN_MAPPINGS.md
         
         // Column B (index 1) - Email Address
-        if (data.email !== undefined && data.email !== oldValues.email) {
-          userProfilesSheet.getRange(i + 1, 2).setValue(data.email);
-          changes.push({ field: 'Email Address', old: oldValues.email, new: data.email });
-        } else if (data.email === undefined) {
+        if (data.email !== undefined) {
+          const newEmail = String(data.email || '').trim();
+          const oldEmail = String(oldValues.email || '').trim();
+          if (newEmail !== oldEmail) {
+            userProfilesSheet.getRange(i + 1, 2).setValue(data.email);
+            changes.push({ field: 'Email Address', old: oldValues.email, new: data.email });
+          }
+        } else {
           unchanged.push('Email Address');
         }
         
         // Column E (index 4) - Date of Birth (Birthday)
-        if (data.birthday !== undefined && data.birthday !== oldValues.birthday) {
-          userProfilesSheet.getRange(i + 1, 5).setValue(data.birthday);
-          changes.push({ field: 'Date of Birth', old: oldValues.birthday, new: data.birthday });
-        } else if (data.birthday === undefined) {
+        if (data.birthday !== undefined) {
+          const newBirthday = String(data.birthday || '').trim();
+          const oldBirthday = String(oldValues.birthday || '').trim();
+          if (newBirthday !== oldBirthday) {
+            userProfilesSheet.getRange(i + 1, 5).setValue(data.birthday);
+            changes.push({ field: 'Date of Birth', old: oldValues.birthday, new: data.birthday });
+          }
+        } else {
           unchanged.push('Date of Birth');
         }
         
         // Column F (index 5) - Age
-        if (data.age !== undefined && data.age !== oldValues.age) {
-          userProfilesSheet.getRange(i + 1, 6).setValue(data.age);
-          changes.push({ field: 'Age', old: oldValues.age, new: data.age });
-        } else if (data.age === undefined) {
+        if (data.age !== undefined) {
+          const newAge = String(data.age || '').trim();
+          const oldAge = String(oldValues.age || '').trim();
+          if (newAge !== oldAge) {
+            userProfilesSheet.getRange(i + 1, 6).setValue(data.age);
+            changes.push({ field: 'Age', old: oldValues.age, new: data.age });
+          }
+        } else {
           unchanged.push('Age');
         }
         
         // Column G (index 6) - Sex/Gender
-        if (data.gender !== undefined && data.gender !== oldValues.gender) {
-          userProfilesSheet.getRange(i + 1, 7).setValue(data.gender);
-          changes.push({ field: 'Gender', old: oldValues.gender, new: data.gender });
-        } else if (data.gender === undefined) {
+        if (data.gender !== undefined) {
+          const newGender = String(data.gender || '').trim();
+          const oldGender = String(oldValues.gender || '').trim();
+          if (newGender !== oldGender) {
+            userProfilesSheet.getRange(i + 1, 7).setValue(data.gender);
+            changes.push({ field: 'Gender', old: oldValues.gender, new: data.gender });
+          }
+        } else {
           unchanged.push('Gender');
         }
         
         // Column H (index 7) - Pronouns
-        if (data.pronouns !== undefined && data.pronouns !== oldValues.pronouns) {
-          userProfilesSheet.getRange(i + 1, 8).setValue(data.pronouns);
-          changes.push({ field: 'Pronouns', old: oldValues.pronouns, new: data.pronouns });
-        } else if (data.pronouns === undefined) {
+        if (data.pronouns !== undefined) {
+          const newPronouns = String(data.pronouns || '').trim();
+          const oldPronouns = String(oldValues.pronouns || '').trim();
+          if (newPronouns !== oldPronouns) {
+            userProfilesSheet.getRange(i + 1, 8).setValue(data.pronouns);
+            changes.push({ field: 'Pronouns', old: oldValues.pronouns, new: data.pronouns });
+          }
+        } else {
           unchanged.push('Pronouns');
         }
         
         // Column I (index 8) - Civil Status
-        if (data.civilStatus !== undefined && data.civilStatus !== oldValues.civilStatus) {
-          userProfilesSheet.getRange(i + 1, 9).setValue(data.civilStatus);
-          changes.push({ field: 'Civil Status', old: oldValues.civilStatus, new: data.civilStatus });
-        } else if (data.civilStatus === undefined) {
+        if (data.civilStatus !== undefined) {
+          const newCivilStatus = String(data.civilStatus || '').trim();
+          const oldCivilStatus = String(oldValues.civilStatus || '').trim();
+          if (newCivilStatus !== oldCivilStatus) {
+            userProfilesSheet.getRange(i + 1, 9).setValue(data.civilStatus);
+            changes.push({ field: 'Civil Status', old: oldValues.civilStatus, new: data.civilStatus });
+          }
+        } else {
           unchanged.push('Civil Status');
         }
         
         // Column J (index 9) - Contact Number
-        if (data.contactNumber !== undefined && data.contactNumber !== oldValues.contactNumber) {
-          userProfilesSheet.getRange(i + 1, 10).setValue(data.contactNumber);
-          changes.push({ field: 'Contact Number', old: oldValues.contactNumber, new: data.contactNumber });
-        } else if (data.contactNumber === undefined) {
+        if (data.contactNumber !== undefined) {
+          const newContactNumber = String(data.contactNumber || '').trim();
+          const oldContactNumber = String(oldValues.contactNumber || '').trim();
+          if (newContactNumber !== oldContactNumber) {
+            userProfilesSheet.getRange(i + 1, 10).setValue(data.contactNumber);
+            changes.push({ field: 'Contact Number', old: oldValues.contactNumber, new: data.contactNumber });
+          }
+        } else {
           unchanged.push('Contact Number');
         }
         
         // Column K (index 10) - Religion
-        if (data.religion !== undefined && data.religion !== oldValues.religion) {
-          userProfilesSheet.getRange(i + 1, 11).setValue(data.religion);
-          changes.push({ field: 'Religion', old: oldValues.religion, new: data.religion });
-        } else if (data.religion === undefined) {
+        if (data.religion !== undefined) {
+          const newReligion = String(data.religion || '').trim();
+          const oldReligion = String(oldValues.religion || '').trim();
+          if (newReligion !== oldReligion) {
+            userProfilesSheet.getRange(i + 1, 11).setValue(data.religion);
+            changes.push({ field: 'Religion', old: oldValues.religion, new: data.religion });
+          }
+        } else {
           unchanged.push('Religion');
         }
         
         // Column L (index 11) - Nationality
-        if (data.nationality !== undefined && data.nationality !== oldValues.nationality) {
-          userProfilesSheet.getRange(i + 1, 12).setValue(data.nationality);
-          changes.push({ field: 'Nationality', old: oldValues.nationality, new: data.nationality });
-        } else if (data.nationality === undefined) {
+        if (data.nationality !== undefined) {
+          const newNationality = String(data.nationality || '').trim();
+          const oldNationality = String(oldValues.nationality || '').trim();
+          if (newNationality !== oldNationality) {
+            userProfilesSheet.getRange(i + 1, 12).setValue(data.nationality);
+            changes.push({ field: 'Nationality', old: oldValues.nationality, new: data.nationality });
+          }
+        } else {
           unchanged.push('Nationality');
         }
         
         // Column M (index 12) - Personal Email Address
-        if (data.personalEmail !== undefined && data.personalEmail !== oldValues.personalEmail) {
-          userProfilesSheet.getRange(i + 1, 13).setValue(data.personalEmail);
-          changes.push({ field: 'Personal Email', old: oldValues.personalEmail, new: data.personalEmail });
-        } else if (data.personalEmail === undefined) {
+        if (data.personalEmail !== undefined) {
+          const newPersonalEmail = String(data.personalEmail || '').trim();
+          const oldPersonalEmail = String(oldValues.personalEmail || '').trim();
+          if (newPersonalEmail !== oldPersonalEmail) {
+            userProfilesSheet.getRange(i + 1, 13).setValue(data.personalEmail);
+            changes.push({ field: 'Personal Email', old: oldValues.personalEmail, new: data.personalEmail });
+          }
+        } else {
           unchanged.push('Personal Email');
         }
         
         // Column N (index 13) - Username
-        if (data.username !== undefined && data.username !== oldValues.username) {
-          userProfilesSheet.getRange(i + 1, 14).setValue(data.username);
-          changes.push({ field: 'Username', old: oldValues.username, new: data.username });
-        } else if (data.username === undefined) {
+        if (data.username !== undefined) {
+          const newUsername = String(data.username || '').trim();
+          const oldUsername = String(oldValues.username || '').trim();
+          if (newUsername !== oldUsername) {
+            userProfilesSheet.getRange(i + 1, 14).setValue(data.username);
+            changes.push({ field: 'Username', old: oldValues.username, new: data.username });
+          }
+        } else {
           unchanged.push('Username');
         }
         
         // Column O (index 14) - Password (Don't show actual passwords in email)
-        if (data.password !== undefined && data.password !== oldValues.password) {
-          userProfilesSheet.getRange(i + 1, 15).setValue(data.password);
-          changes.push({ field: 'Password', old: '••••••••', new: '••••••••' });
-        } else if (data.password === undefined) {
+        if (data.password !== undefined) {
+          const newPassword = String(data.password || '').trim();
+          const oldPassword = String(oldValues.password || '').trim();
+          if (newPassword !== oldPassword) {
+            userProfilesSheet.getRange(i + 1, 15).setValue(data.password);
+            changes.push({ field: 'Password', old: '••••••••', new: '••••••••' });
+          }
+        } else {
           unchanged.push('Password');
         }
         

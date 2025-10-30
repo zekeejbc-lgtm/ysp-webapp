@@ -197,8 +197,27 @@ export default function MyProfile({ currentUser }: MyProfileProps) {
       setSaving(true);
       setError(null);
 
-      // Call backend to update profile
-      const response = await userAPI.updateProfile(profile.idCode, editedProfile);
+      // Only send fields that actually changed
+      const changedFields: Record<string, any> = {};
+      Object.keys(editedProfile).forEach((key) => {
+        const profileKey = key as keyof UserProfile;
+        if (editedProfile[profileKey] !== profile[profileKey]) {
+          changedFields[key] = editedProfile[profileKey];
+        }
+      });
+
+      // If no fields changed, just exit edit mode
+      if (Object.keys(changedFields).length === 0) {
+        setIsEditing(false);
+        toast.info('No changes to save');
+        setSaving(false);
+        return;
+      }
+
+      console.log('Sending only changed fields:', changedFields);
+
+      // Call backend to update profile with only changed fields
+      const response = await userAPI.updateProfile(profile.idCode, changedFields);
 
       if (response.success) {
         // Update local state
