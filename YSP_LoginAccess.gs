@@ -1199,42 +1199,87 @@ function handleCreateAnnouncement(data) {
       const emailSubject = data.subject;
       const formattedDate = phTime.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
       
-      const emailBody = 
-        '====================================================================\n' +
-        '                 OFFICIAL ANNOUNCEMENT NOTICE\n' +
-        '====================================================================\n\n' +
-        'Title: ' + data.title + '\n' +
-        'Subject: ' + data.subject + '\n' +
-        'Date Released: ' + formattedDate + '\n' +
-        'Author: ' + authorName + '\n' +
-        'Announcement ID: ' + newAnnouncementId + '\n' +
-        'Intended Recipient(s): ' + data.recipientType + '\n\n' +
-        '--------------------------------------------------------------------\n' +
-        'MESSAGE:\n' +
-        '--------------------------------------------------------------------\n' +
-        data.body + '\n\n' +
-        '--------------------------------------------------------------------\n' +
-        'End of Message\n' +
-        '--------------------------------------------------------------------\n\n' +
-        'Youth Service Philippines – Tagum Chapter\n' +
-        'If you wish to see more information or related updates, you may visit our official web application:\n' +
-        '🌐 Web App: https://ysp-webapp.vercel.app\n\n' +
-        '--------------------------------------------------------------------\n' +
-        'OFFICIAL NOTICE AND DISCLAIMER:\n' +
-        '--------------------------------------------------------------------\n' +
-        'This email has been formally issued by the Youth Service Philippines – Tagum Chapter.\n' +
-        'It is intended solely for the individual(s) or organization(s) to whom it is addressed.\n' +
-        'Unauthorized review, dissemination, or duplication of this message is strictly prohibited.\n\n' +
-        'If you believe this email was sent to you in error, please contact:\n' +
-        'Ezequiel John B. Crisostomo\n' +
-        'Membership and Internal Affairs Officer\n' +
-        'Youth Service Philippines – Tagum Chapter\n' +
-        '--------------------------------------------------------------------';
+      const htmlBody = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #f6421f 0%, #ee8724 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+    .content { background-color: #ffffff; padding: 30px; border: 1px solid #ddd; border-top: none; }
+    .footer { background-color: #f8f9fa; padding: 20px; text-align: center; border-radius: 0 0 10px 10px; border: 1px solid #ddd; border-top: none; color: #6c757d; font-size: 14px; }
+    .alert-info { background-color: #d1ecf1; border: 1px solid #bee5eb; padding: 15px; border-radius: 5px; margin: 20px 0; color: #0c5460; }
+    .alert-warning { background-color: #fff3cd; border: 1px solid #ffc107; padding: 15px; border-radius: 5px; margin: 20px 0; color: #856404; }
+    .developer-info { margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd; }
+    .btn { display: inline-block; padding: 12px 30px; background: linear-gradient(135deg, #f6421f 0%, #ee8724 100%); color: white !important; text-decoration: none; border-radius: 5px; font-weight: bold; margin: 20px 0; }
+    .logo { max-width: 80px; height: auto; margin-bottom: 15px; }
+    .announcement-details { background-color: #f8f9fa; border-left: 4px solid #f6421f; padding: 15px; margin: 20px 0; }
+    .message-box { background-color: #ffffff; border: 1px solid #dee2e6; padding: 20px; margin: 20px 0; border-radius: 5px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <img src="https://i.imgur.com/J4wddTW.png" alt="YSP Logo" class="logo">
+      <h1 style="margin: 0; font-size: 28px;">Youth Service Philippines</h1>
+      <p style="margin: 10px 0 0 0; font-size: 14px;">Tagum Chapter</p>
+    </div>
+    
+    <div class="content">
+      <h2 style="color: #f6421f; margin-top: 0;">Official Announcement Notice</h2>
+      
+      <div class="announcement-details">
+        <p style="margin: 5px 0;"><strong>Title:</strong> ${data.title}</p>
+        <p style="margin: 5px 0;"><strong>Subject:</strong> ${data.subject}</p>
+        <p style="margin: 5px 0;"><strong>Date Released:</strong> ${formattedDate}</p>
+        <p style="margin: 5px 0;"><strong>Author:</strong> ${authorName}</p>
+        <p style="margin: 5px 0;"><strong>Announcement ID:</strong> ${newAnnouncementId}</p>
+        <p style="margin: 5px 0;"><strong>Intended Recipient(s):</strong> ${data.recipientType}</p>
+      </div>
+      
+      <div class="message-box">
+        <h3 style="color: #333; margin-top: 0; border-bottom: 2px solid #f6421f; padding-bottom: 10px;">Message:</h3>
+        <div style="white-space: pre-wrap; color: #333;">${data.body}</div>
+      </div>
+      
+      <div class="alert-warning">
+        <strong>⚠️ Official Notice:</strong> This email has been formally issued by the Youth Service Philippines – Tagum Chapter. It is intended solely for the individual(s) or organization(s) to whom it is addressed. Unauthorized review, dissemination, or duplication of this message is strictly prohibited.
+      </div>
+      
+      <p style="text-align: center;">
+        <a href="https://ysp-webapp.vercel.app" class="btn">Access Web App</a>
+      </p>
+      
+      <p style="margin-top: 30px;">For announcements and more information, you may access our web app at:<br>
+      <a href="https://ysp-webapp.vercel.app" style="color: #f6421f;">https://ysp-webapp.vercel.app</a></p>
+      
+    </div>
+    
+    <div class="footer">
+      <p style="margin: 0 0 10px 0;">This is an automated notification from the YSP Management System.</p>
+      
+      <div class="developer-info">
+        <p style="margin: 5px 0; font-weight: bold;">System Developer:</p>
+        <p style="margin: 5px 0;"><strong>Ezequiel John B. Crisostomo</strong></p>
+        <p style="margin: 5px 0;">Membership and Internal Affairs Officer</p>
+        <p style="margin: 5px 0;">Youth Service Philippines - Tagum Chapter</p>
+      </div>
+      
+      <p style="margin-top: 20px; font-size: 12px; color: #999;">
+        © ${new Date().getFullYear()} Youth Service Philippines - Tagum Chapter. All rights reserved.
+      </p>
+    </div>
+  </div>
+</body>
+</html>
+      `;
       
       MailApp.sendEmail({
         to: recipientEmails.join(','),
         subject: emailSubject,
-        body: emailBody
+        htmlBody: htmlBody
       });
       
       Logger.log('Sent announcement emails to ' + recipientEmails.length + ' recipients');
@@ -2024,12 +2069,14 @@ function sendProfileUpdateEmail(fullName, email, changes, unchanged) {
     .footer { background-color: #f8f9fa; padding: 20px; text-align: center; border-radius: 0 0 10px 10px; border: 1px solid #ddd; border-top: none; color: #6c757d; font-size: 14px; }
     .alert-warning { background-color: #fff3cd; border: 1px solid #ffc107; padding: 15px; border-radius: 5px; margin: 20px 0; color: #856404; }
     .developer-info { margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd; }
-    .btn { display: inline-block; padding: 12px 30px; background: linear-gradient(135deg, #f6421f 0%, #ee8724 100%); color: white; text-decoration: none; border-radius: 5px; font-weight: bold; margin: 20px 0; }
+    .btn { display: inline-block; padding: 12px 30px; background: linear-gradient(135deg, #f6421f 0%, #ee8724 100%); color: white !important; text-decoration: none; border-radius: 5px; font-weight: bold; margin: 20px 0; }
+    .logo { max-width: 80px; height: auto; margin-bottom: 15px; }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="header">
+      <img src="https://i.imgur.com/J4wddTW.png" alt="YSP Logo" class="logo">
       <h1 style="margin: 0; font-size: 28px;">Youth Service Philippines</h1>
       <p style="margin: 10px 0 0 0; font-size: 14px;">Tagum Chapter</p>
     </div>
