@@ -274,11 +274,11 @@ export default function MyProfile({ currentUser }: MyProfileProps) {
       {/* Header with Profile Picture */}
       <div className="ysp-card text-center relative">
         {/* Edit/Save/Cancel Buttons */}
-        <div className="absolute top-4 right-4 z-20 flex flex-col sm:flex-row gap-3 justify-end">
+        <div className="mt-4 flex justify-end gap-3">
           {!isEditing ? (
             <button
               onClick={handleEdit}
-              className="flex items-center justify-center gap-2 bg-gradient-to-r from-orange-600 to-orange-400 hover:opacity-90 text-white font-semibold px-4 py-2 rounded-md transition duration-200"
+              className="flex items-center justify-center gap-2 bg-gradient-to-r from-orange-500 to-orange-400 hover:opacity-90 text-white font-semibold px-4 py-2 rounded-md transition duration-200 ease-in-out dark:shadow-[0_0_10px_rgba(255,140,0,0.4)]"
             >
               <Edit2 size={18} className="flex-shrink-0" />
               <span>Edit Profile</span>
@@ -288,7 +288,7 @@ export default function MyProfile({ currentUser }: MyProfileProps) {
               <button
                 onClick={handleSaveEdit}
                 disabled={saving}
-                className="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white font-semibold px-4 py-2 rounded-md transition duration-200 disabled:opacity-50"
+                className="flex items-center justify-center gap-2 bg-green-600 dark:bg-green-500 hover:bg-green-700 dark:hover:bg-green-600 text-white font-semibold px-4 py-2 rounded-md transition duration-200 ease-in-out disabled:opacity-50"
               >
                 {saving ? <Loader2 size={18} className="animate-spin flex-shrink-0" /> : <Save size={18} className="flex-shrink-0" />}
                 <span>Save Changes</span>
@@ -296,7 +296,7 @@ export default function MyProfile({ currentUser }: MyProfileProps) {
               <button
                 onClick={handleCancelEdit}
                 disabled={saving}
-                className="flex items-center justify-center gap-2 bg-gray-500 hover:bg-gray-600 text-white font-semibold px-4 py-2 rounded-md transition duration-200 disabled:opacity-50"
+                className="flex items-center justify-center gap-2 bg-gray-500 dark:bg-gray-600 hover:bg-gray-600 dark:hover:bg-gray-700 text-white font-semibold px-4 py-2 rounded-md transition duration-200 ease-in-out disabled:opacity-50"
               >
                 <X size={18} className="flex-shrink-0" />
                 <span>Cancel</span>
