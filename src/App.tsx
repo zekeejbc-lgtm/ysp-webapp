@@ -37,6 +37,13 @@ export default function App() {
     if (savedUser) {
       try {
         const userData = JSON.parse(savedUser);
+        // Check if user is banned
+        if (userData.role === 'Banned') {
+          console.log('Banned user attempted to restore session:', userData.name);
+          toast.error('Your account has been restricted. Please contact an administrator.');
+          localStorage.removeItem('userData');
+          return;
+        }
         console.log('Restoring session for user:', userData.name);
         setCurrentUser(userData);
         setIsLoggedIn(true);
@@ -57,6 +64,11 @@ export default function App() {
   }, [darkMode]);
 
   const handleLogin = (user: any) => {
+    // Check if user is banned
+    if (user.role === 'Banned') {
+      toast.error('Your account has been restricted. Please contact an administrator.');
+      return;
+    }
     setCurrentUser(user);
     setIsLoggedIn(true);
     setCurrentPage('homepage');
@@ -75,6 +87,8 @@ export default function App() {
   // Centralized role-based access control for pages
   const canAccess = (page: string, role: string | undefined): boolean => {
     if (!role) return false;
+    // Banned users have no access to any pages
+    if (role === 'Banned') return false;
     const accessMap: Record<string, string[]> = {
       homepage: ['Admin', 'Head', 'Auditor', 'Member', 'Guest'],
       'officer-search': ['Admin', 'Head', 'Auditor'],
@@ -103,6 +117,14 @@ export default function App() {
       toast.error('Access denied for your role.');
     }
   };
+
+  // Additional check: if user is banned, force logout
+  useEffect(() => {
+    if (isLoggedIn && currentUser?.role === 'Banned') {
+      toast.error('Your account has been restricted. You have been logged out.');
+      handleLogout();
+    }
+  }, [isLoggedIn, currentUser]);
 
   if (!isLoggedIn) {
     return (

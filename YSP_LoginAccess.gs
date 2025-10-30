@@ -9,7 +9,8 @@ const SHEETS = {
   MASTER_ATTENDANCE: 'Master Attendance Log',
   ANNOUNCEMENTS: 'Announcements',
   FEEDBACK: 'Feedback',
-  HOMEPAGE_CONTENT: 'Homepage Content'
+  HOMEPAGE_CONTENT: 'Homepage Content',
+  OFFICER_DIRECTORY: 'Officer Directory'
 };
 
 // ===== MAIN ENTRY POINT =====
@@ -30,6 +31,24 @@ function doPost(e) {
 // ===== REQUEST ROUTER =====
 function handlePostRequest(data) {
   const action = data.action;
+  
+  // Allow login actions without role check
+  if (action === 'login' || action === 'guestLogin') {
+    if (action === 'login') return handleLogin(data);
+    if (action === 'guestLogin') return handleGuestLogin(data);
+  }
+  
+  // Check for banned users (except for login actions and homepage content)
+  if (data.idCode && action !== 'getHomepageContent') {
+    const userRole = _getUserRoleByIdCode(data.idCode);
+    if (userRole === 'Banned') {
+      return { 
+        success: false, 
+        message: 'Access denied. Your account has been restricted. Please contact an administrator.',
+        banned: true 
+      };
+    }
+  }
   
   switch(action) {
     case 'login':
@@ -92,6 +111,12 @@ function handlePostRequest(data) {
         return handleUpdateOrgChartUrl(data);
       case 'deleteOrgChart':
         return handleDeleteOrgChart(data);
+    case 'assignRoles':
+      return handleAssignRoles(data);
+    case 'getAllUserRoles':
+      return handleGetAllUserRoles(data);
+    case 'updateUserRole':
+      return handleUpdateUserRole(data);
     default:
       return { success: false, message: 'Unknown action: ' + action };
   }
@@ -3066,6 +3091,298 @@ function handleInstallAgeRecalcTrigger(data) {
   } catch (e) {
     Logger.log('Error in handleInstallAgeRecalcTrigger: ' + e.toString());
     return { success: false, message: 'Error installing trigger: ' + e.toString() };
+  }
+}
+
+// ===== ROLE ASSIGNMENT & MANAGEMENT SYSTEM =====
+/**
+ * Determine the role based on ID Code and Position
+ */
+function determineRole(idCode, position) {
+  // Check for Admin role
+  if (idCode === 'YSPTPR-25100') {
+    return 'Admin';
+  }
+  
+  // Check for Auditor role
+  if (idCode === 'YSPTIR-25200') {
+    return 'Auditor';
+  }
+  
+  // Check if ID code ends with 00 (last 2 digits are zeros) -> Head
+  if (idCode && String(idCode).match(/-\d{3}00$/)) {
+    return 'Head';
+  }
+  
+  // Check for Committee Member position
+  if (position && String(position).toLowerCase().indexOf('committee member') !== -1) {
+    return 'Member';
+  }
+  
+  return '';
+}
+
+/**
+ * Bulk update user profiles with automatic role assignment
+ * Syncs User Profiles with Officer Directory data
+ * Updates ID Code (Column S/19), Position (Column T/20), and Role (Column U/21)
+ */
+function updateUserProfiles() {
+  try {
+    var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    var userProfiles = ss.getSheetByName(SHEETS.USER_PROFILES);
+    var officerDirectory = ss.getSheetByName(SHEETS.OFFICER_DIRECTORY);
+
+    if (!userProfiles || !officerDirectory) {
+      Logger.log('❌ Missing required sheet(s).');
+      return { success: false, message: 'Missing required sheets' };
+    }
+
+    var userLastRow = userProfiles.getLastRow();
+    var officerLastRow = officerDirectory.getLastRow();
+
+    if (userLastRow < 2 || officerLastRow < 2) {
+      Logger.log('❌ No data to process.');
+      return { success: false, message: 'No data to process' };
+    }
+
+    // Read data
+    var userData = userProfiles.getRange(2, 1, userLastRow - 1, userProfiles.getLastColumn()).getValues();
+    var officerData = officerDirectory.getRange(2, 1, officerLastRow - 1, 3).getValues();
+
+    // Build lookup maps
+    var nameToID = {};
+    var nameToPosition = {};
+    for (var i = 0; i < officerData.length; i++) {
+      var id = officerData[i][0];
+      var name = officerData[i][1];
+      var position = officerData[i][2];
+      if (name && id) {
+        var key = String(name).replace(/\s+/g, ' ').trim().toLowerCase();
+        nameToID[key] = id;
+        nameToPosition[key] = position;
+      }
+    }
+
+    var updates = 0;
+    for (var j = 0; j < userData.length; j++) {
+      var row = j + 2;
+      var fullName = userData[j][3]; // Column D = Full Name
+
+      if (!fullName) continue;
+
+      var key = String(fullName).replace(/\s+/g, ' ').trim().toLowerCase();
+      var idCode = nameToID[key];
+      var position = nameToPosition[key];
+
+      if (idCode || position) {
+        var role = determineRole(idCode, position);
+        userProfiles.getRange(row, 19).setValue(idCode || '');
+        userProfiles.getRange(row, 20).setValue(position || '');
+        userProfiles.getRange(row, 21).setValue(role || '');
+        updates++;
+      }
+    }
+
+    Logger.log('✅ Updated ' + updates + ' rows.');
+    return { success: true, message: 'Updated ' + updates + ' user profiles', updated: updates };
+  } catch (e) {
+    Logger.log('Error in updateUserProfiles: ' + e.toString());
+    return { success: false, message: 'Error updating profiles: ' + e.toString() };
+  }
+}
+
+/**
+ * Auto-trigger when you edit a Full Name (Column D)
+ * Automatically syncs role data when a name is edited
+ */
+function onEdit(e) {
+  try {
+    var sheet = e.source.getActiveSheet();
+    if (sheet.getName() !== SHEETS.USER_PROFILES) return;
+    var col = e.range.getColumn();
+    var row = e.range.getRow();
+
+    // Only run if Full Name column (D)
+    if (col !== 4 || row < 2) return;
+
+    var name = e.range.getValue();
+    if (!name) return;
+
+    var ss = e.source;
+    var officerDirectory = ss.getSheetByName(SHEETS.OFFICER_DIRECTORY);
+    var officerData = officerDirectory.getRange(2, 1, officerDirectory.getLastRow() - 1, 3).getValues();
+
+    var nameToID = {};
+    var nameToPosition = {};
+    for (var i = 0; i < officerData.length; i++) {
+      var id = officerData[i][0];
+      var fullName = officerData[i][1];
+      var position = officerData[i][2];
+      if (fullName) {
+        var key = String(fullName).replace(/\s+/g, ' ').trim().toLowerCase();
+        nameToID[key] = id;
+        nameToPosition[key] = position;
+      }
+    }
+
+    var key = String(name).replace(/\s+/g, ' ').trim().toLowerCase();
+    var idCode = nameToID[key];
+    var position = nameToPosition[key];
+    var role = determineRole(idCode, position);
+
+    if (idCode || position) {
+      sheet.getRange(row, 19).setValue(idCode || '');
+      sheet.getRange(row, 20).setValue(position || '');
+      sheet.getRange(row, 21).setValue(role || '');
+    }
+
+    Logger.log('✅ Row ' + row + ' updated for ' + name);
+  } catch (err) {
+    Logger.log('Error in onEdit: ' + err.toString());
+  }
+}
+
+/**
+ * Auditor-only: Trigger bulk role assignment
+ * Expects: { action: 'assignRoles', idCode: '...' }
+ */
+function handleAssignRoles(data) {
+  try {
+    if (!data || !data.idCode) {
+      return { success: false, message: 'ID Code is required' };
+    }
+    var role = _getUserRoleByIdCode(data.idCode);
+    if (role !== 'Auditor') {
+      return { success: false, message: 'Forbidden: Only Auditor can assign roles' };
+    }
+    var result = updateUserProfiles();
+    return result;
+  } catch (e) {
+    Logger.log('Error in handleAssignRoles: ' + e.toString());
+    return { success: false, message: 'Error assigning roles: ' + e.toString() };
+  }
+}
+
+/**
+ * Get all users with their ID Code, Name, and Role
+ * Auditor-only endpoint for role management
+ * Expects: { action: 'getAllUserRoles', idCode: '...' }
+ */
+function handleGetAllUserRoles(data) {
+  try {
+    if (!data || !data.idCode) {
+      return { success: false, message: 'ID Code is required' };
+    }
+    var role = _getUserRoleByIdCode(data.idCode);
+    if (role !== 'Auditor') {
+      return { success: false, message: 'Forbidden: Only Auditor can view all user roles' };
+    }
+
+    var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    var sheet = ss.getSheetByName(SHEETS.USER_PROFILES);
+    if (!sheet) {
+      return { success: false, message: 'User Profiles sheet not found' };
+    }
+
+    var lastRow = sheet.getLastRow();
+    if (lastRow < 2) {
+      return { success: true, message: 'No users found', users: [] };
+    }
+
+    // Get Full Name (D/4), ID Code (S/19), and Role (U/21)
+    var data = sheet.getRange(2, 1, lastRow - 1, 21).getValues();
+    var users = [];
+
+    for (var i = 0; i < data.length; i++) {
+      var fullName = data[i][3]; // Column D
+      var idCode = data[i][18]; // Column S
+      var userRole = data[i][20]; // Column U
+
+      if (fullName && idCode) {
+        users.push({
+          fullName: String(fullName),
+          idCode: String(idCode),
+          role: String(userRole || '')
+        });
+      }
+    }
+
+    return {
+      success: true,
+      message: 'Retrieved ' + users.length + ' users',
+      users: users
+    };
+  } catch (e) {
+    Logger.log('Error in handleGetAllUserRoles: ' + e.toString());
+    return { success: false, message: 'Error retrieving user roles: ' + e.toString() };
+  }
+}
+
+/**
+ * Update a user's role manually (overrides automatic assignment)
+ * Auditor-only endpoint
+ * Expects: { action: 'updateUserRole', idCode: '...', targetIdCode: '...', newRole: '...' }
+ */
+function handleUpdateUserRole(data) {
+  try {
+    if (!data || !data.idCode) {
+      return { success: false, message: 'ID Code is required' };
+    }
+    var role = _getUserRoleByIdCode(data.idCode);
+    if (role !== 'Auditor') {
+      return { success: false, message: 'Forbidden: Only Auditor can update user roles' };
+    }
+
+    if (!data.targetIdCode || !data.newRole) {
+      return { success: false, message: 'Target ID Code and new role are required' };
+    }
+
+    // Validate role
+    var validRoles = ['Admin', 'Auditor', 'Head', 'Member', 'Banned'];
+    if (validRoles.indexOf(data.newRole) === -1) {
+      return { success: false, message: 'Invalid role. Must be one of: ' + validRoles.join(', ') };
+    }
+
+    var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    var sheet = ss.getSheetByName(SHEETS.USER_PROFILES);
+    if (!sheet) {
+      return { success: false, message: 'User Profiles sheet not found' };
+    }
+
+    var lastRow = sheet.getLastRow();
+    if (lastRow < 2) {
+      return { success: false, message: 'No users found' };
+    }
+
+    // Find user by ID Code (Column S/19)
+    var idCodes = sheet.getRange(2, 19, lastRow - 1, 1).getValues();
+    var targetRow = -1;
+
+    for (var i = 0; i < idCodes.length; i++) {
+      if (String(idCodes[i][0]) === String(data.targetIdCode)) {
+        targetRow = i + 2;
+        break;
+      }
+    }
+
+    if (targetRow === -1) {
+      return { success: false, message: 'User with ID Code ' + data.targetIdCode + ' not found' };
+    }
+
+    // Update role (Column U/21)
+    sheet.getRange(targetRow, 21).setValue(data.newRole);
+
+    Logger.log('✅ Updated role for ' + data.targetIdCode + ' to ' + data.newRole);
+    return {
+      success: true,
+      message: 'Role updated successfully',
+      idCode: data.targetIdCode,
+      newRole: data.newRole
+    };
+  } catch (e) {
+    Logger.log('Error in handleUpdateUserRole: ' + e.toString());
+    return { success: false, message: 'Error updating role: ' + e.toString() };
   }
 }
 

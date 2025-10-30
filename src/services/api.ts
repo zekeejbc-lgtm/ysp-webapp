@@ -615,3 +615,64 @@ export const systemAPI = {
     return apiRequest('installAgeRecalcTrigger', { idCode: auditorIdCode });
   }
 };
+
+// ======================================================
+// ROLE MANAGEMENT API (Auditor-only)
+// ======================================================
+
+export interface UserRoleInfo {
+  fullName: string;
+  idCode: string;
+  role: string;
+}
+
+export interface AllUserRolesResponse {
+  success: boolean;
+  message: string;
+  users?: UserRoleInfo[];
+}
+
+export interface UpdateRoleResponse {
+  success: boolean;
+  message: string;
+  idCode?: string;
+  newRole?: string;
+}
+
+export interface AssignRolesResponse {
+  success: boolean;
+  message: string;
+  updated?: number;
+}
+
+export const roleManagementAPI = {
+  /**
+   * Auditor-only: Get all users with their ID Code, Name, and Role
+   */
+  getAllUsers: async (auditorIdCode: string): Promise<AllUserRolesResponse> => {
+    return apiRequest('getAllUserRoles', { idCode: auditorIdCode });
+  },
+
+  /**
+   * Auditor-only: Update a specific user's role manually
+   * Valid roles: Admin, Auditor, Head, Member, Banned
+   */
+  updateUserRole: async (
+    auditorIdCode: string,
+    targetIdCode: string,
+    newRole: 'Admin' | 'Auditor' | 'Head' | 'Member' | 'Banned'
+  ): Promise<UpdateRoleResponse> => {
+    return apiRequest('updateUserRole', { 
+      idCode: auditorIdCode, 
+      targetIdCode, 
+      newRole 
+    });
+  },
+
+  /**
+   * Auditor-only: Trigger bulk role assignment (syncs with Officer Directory)
+   */
+  assignRoles: async (auditorIdCode: string): Promise<AssignRolesResponse> => {
+    return apiRequest('assignRoles', { idCode: auditorIdCode });
+  }
+};
