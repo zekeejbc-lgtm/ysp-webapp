@@ -1204,27 +1204,33 @@ function handleCreateAnnouncement(data) {
 <html>
 <head>
   <meta charset="UTF-8">
+  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; }
-    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-    .header { background: linear-gradient(135deg, #f6421f 0%, #ee8724 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-    .content { background-color: #ffffff; padding: 30px; border: 1px solid #ddd; border-top: none; }
-    .footer { background-color: #f8f9fa; padding: 20px; text-align: center; border-radius: 0 0 10px 10px; border: 1px solid #ddd; border-top: none; color: #6c757d; font-size: 14px; }
-    .alert-info { background-color: #d1ecf1; border: 1px solid #bee5eb; padding: 15px; border-radius: 5px; margin: 20px 0; color: #0c5460; }
-    .alert-warning { background-color: #fff3cd; border: 1px solid #ffc107; padding: 15px; border-radius: 5px; margin: 20px 0; color: #856404; }
-    .developer-info { margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd; }
-    .btn { display: inline-block; padding: 12px 30px; background: linear-gradient(135deg, #f6421f 0%, #ee8724 100%); color: white !important; text-decoration: none; border-radius: 5px; font-weight: bold; margin: 20px 0; }
-    .logo { max-width: 80px; height: auto; margin-bottom: 15px; }
-    .announcement-details { background-color: #f8f9fa; border-left: 4px solid #f6421f; padding: 15px; margin: 20px 0; }
-    .message-box { background-color: #ffffff; border: 1px solid #dee2e6; padding: 20px; margin: 20px 0; border-radius: 5px; }
+    body { font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
+    .container { max-width: 600px; margin: 0 auto; padding: 0; background-color: #f5f5f5; }
+    .header { background: linear-gradient(135deg, #f6421f 0%, #ee8724 100%); color: white; padding: 40px 30px; text-align: center; border-radius: 0; }
+    .header h1 { font-family: 'Lexend', sans-serif; margin: 0; font-size: 32px; font-weight: 700; letter-spacing: -0.5px; }
+    .header p { font-family: 'Lexend', sans-serif; margin: 8px 0 0 0; font-size: 15px; font-weight: 400; opacity: 0.95; }
+    .content { background-color: #ffffff; padding: 35px 30px; }
+    .footer { background-color: #f8f9fa; padding: 25px 30px; text-align: center; color: #6c757d; font-size: 14px; }
+    .alert-warning { background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 16px 18px; border-radius: 6px; margin: 25px 0; color: #856404; }
+    .developer-info { margin-top: 25px; padding-top: 25px; border-top: 2px solid #dee2e6; }
+    .btn { display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #f6421f 0%, #ee8724 100%); color: white !important; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 10px 8px; box-shadow: 0 4px 12px rgba(246, 66, 31, 0.3); transition: transform 0.2s; }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(246, 66, 31, 0.4); }
+    .btn-facebook { background: #1877f2; background: linear-gradient(135deg, #1877f2 0%, #0c5bad 100%); box-shadow: 0 4px 12px rgba(24, 119, 242, 0.3); }
+    .btn-facebook:hover { box-shadow: 0 6px 16px rgba(24, 119, 242, 0.4); }
+    .logo { max-width: 90px; height: auto; margin-bottom: 18px; }
+    .button-group { text-align: center; margin: 30px 0; }
+    .announcement-details { background-color: #f8f9fa; border-left: 4px solid #f6421f; padding: 18px 20px; margin: 25px 0; border-radius: 6px; }
+    .message-box { background-color: #ffffff; border: 2px solid #e9ecef; padding: 24px; margin: 25px 0; border-radius: 8px; }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="header">
       <img src="https://i.imgur.com/J4wddTW.png" alt="YSP Logo" class="logo">
-      <h1 style="margin: 0; font-size: 28px;">Youth Service Philippines</h1>
-      <p style="margin: 10px 0 0 0; font-size: 14px;">Tagum Chapter</p>
+      <h1>Youth Service Philippines</h1>
+      <p>Tagum Chapter</p>
     </div>
     
     <div class="content">
@@ -1248,12 +1254,16 @@ function handleCreateAnnouncement(data) {
         <strong>⚠️ Official Notice:</strong> This email has been formally issued by the Youth Service Philippines – Tagum Chapter. It is intended solely for the individual(s) or organization(s) to whom it is addressed. Unauthorized review, dissemination, or duplication of this message is strictly prohibited.
       </div>
       
-      <p style="text-align: center;">
+      <div class="button-group">
         <a href="https://ysp-webapp.vercel.app" class="btn">Access Web App</a>
-      </p>
+        <a href="https://www.facebook.com/YSPTagumChapter" class="btn btn-facebook">Visit Facebook Page</a>
+      </div>
       
-      <p style="margin-top: 30px;">For announcements and more information, you may access our web app at:<br>
-      <a href="https://ysp-webapp.vercel.app" style="color: #f6421f;">https://ysp-webapp.vercel.app</a></p>
+      <p style="margin-top: 25px; text-align: center; color: #666; font-size: 14px;">
+        For announcements and more information, visit our platforms:<br>
+        <a href="https://ysp-webapp.vercel.app" style="color: #f6421f; text-decoration: none; font-weight: 500;">Web App</a> • 
+        <a href="https://www.facebook.com/YSPTagumChapter" style="color: #1877f2; text-decoration: none; font-weight: 500;">Facebook</a>
+      </p>
       
     </div>
     
@@ -2061,24 +2071,31 @@ function sendProfileUpdateEmail(fullName, email, changes, unchanged) {
 <html>
 <head>
   <meta charset="UTF-8">
+  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; }
-    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-    .header { background: linear-gradient(135deg, #f6421f 0%, #ee8724 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-    .content { background-color: #ffffff; padding: 30px; border: 1px solid #ddd; border-top: none; }
-    .footer { background-color: #f8f9fa; padding: 20px; text-align: center; border-radius: 0 0 10px 10px; border: 1px solid #ddd; border-top: none; color: #6c757d; font-size: 14px; }
-    .alert-warning { background-color: #fff3cd; border: 1px solid #ffc107; padding: 15px; border-radius: 5px; margin: 20px 0; color: #856404; }
-    .developer-info { margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd; }
-    .btn { display: inline-block; padding: 12px 30px; background: linear-gradient(135deg, #f6421f 0%, #ee8724 100%); color: white !important; text-decoration: none; border-radius: 5px; font-weight: bold; margin: 20px 0; }
-    .logo { max-width: 80px; height: auto; margin-bottom: 15px; }
+    body { font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
+    .container { max-width: 600px; margin: 0 auto; padding: 0; background-color: #f5f5f5; }
+    .header { background: linear-gradient(135deg, #f6421f 0%, #ee8724 100%); color: white; padding: 40px 30px; text-align: center; border-radius: 0; }
+    .header h1 { font-family: 'Lexend', sans-serif; margin: 0; font-size: 32px; font-weight: 700; letter-spacing: -0.5px; }
+    .header p { font-family: 'Lexend', sans-serif; margin: 8px 0 0 0; font-size: 15px; font-weight: 400; opacity: 0.95; }
+    .content { background-color: #ffffff; padding: 35px 30px; }
+    .footer { background-color: #f8f9fa; padding: 25px 30px; text-align: center; color: #6c757d; font-size: 14px; }
+    .alert-warning { background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 16px 18px; border-radius: 6px; margin: 25px 0; color: #856404; }
+    .developer-info { margin-top: 25px; padding-top: 25px; border-top: 2px solid #dee2e6; }
+    .btn { display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #f6421f 0%, #ee8724 100%); color: white !important; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 10px 8px; box-shadow: 0 4px 12px rgba(246, 66, 31, 0.3); transition: transform 0.2s; }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(246, 66, 31, 0.4); }
+    .btn-facebook { background: #1877f2; background: linear-gradient(135deg, #1877f2 0%, #0c5bad 100%); box-shadow: 0 4px 12px rgba(24, 119, 242, 0.3); }
+    .btn-facebook:hover { box-shadow: 0 6px 16px rgba(24, 119, 242, 0.4); }
+    .logo { max-width: 90px; height: auto; margin-bottom: 18px; }
+    .button-group { text-align: center; margin: 30px 0; }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="header">
       <img src="https://i.imgur.com/J4wddTW.png" alt="YSP Logo" class="logo">
-      <h1 style="margin: 0; font-size: 28px;">Youth Service Philippines</h1>
-      <p style="margin: 10px 0 0 0; font-size: 14px;">Tagum Chapter</p>
+      <h1>Youth Service Philippines</h1>
+      <p>Tagum Chapter</p>
     </div>
     
     <div class="content">
@@ -2096,12 +2113,16 @@ function sendProfileUpdateEmail(fullName, email, changes, unchanged) {
         <strong>⚠️ Security Notice:</strong> If you did not make these changes, please contact the administrator immediately or reply to this email.
       </div>
       
-      <p style="text-align: center;">
+      <div class="button-group">
         <a href="https://ysp-webapp.vercel.app" class="btn">Access Web App</a>
-      </p>
+        <a href="https://www.facebook.com/YSPTagumChapter" class="btn btn-facebook">Visit Facebook Page</a>
+      </div>
       
-      <p style="margin-top: 30px;">For announcements and more information, you may access our web app at:<br>
-      <a href="https://ysp-webapp.vercel.app" style="color: #f6421f;">https://ysp-webapp.vercel.app</a></p>
+      <p style="margin-top: 25px; text-align: center; color: #666; font-size: 14px;">
+        For announcements and more information, visit our platforms:<br>
+        <a href="https://ysp-webapp.vercel.app" style="color: #f6421f; text-decoration: none; font-weight: 500;">Web App</a> • 
+        <a href="https://www.facebook.com/YSPTagumChapter" style="color: #1877f2; text-decoration: none; font-weight: 500;">Facebook</a>
+      </p>
       
     </div>
     
