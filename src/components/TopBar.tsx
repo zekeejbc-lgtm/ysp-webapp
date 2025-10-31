@@ -1,13 +1,14 @@
-import { Menu, X, Sun, Moon } from 'lucide-react';
+import { Menu, X, Sun, Moon, Heart } from 'lucide-react';
 
 interface TopBarProps {
   darkMode: boolean;
   setDarkMode: (value: boolean) => void;
   setSidebarOpen: (value: boolean) => void;
   sidebarOpen: boolean;
+  onDonationsClick?: () => void;
 }
 
-export default function TopBar({ darkMode, setDarkMode, setSidebarOpen, sidebarOpen }: TopBarProps) {
+export default function TopBar({ darkMode, setDarkMode, setSidebarOpen, sidebarOpen, onDonationsClick }: TopBarProps) {
   return (
     <div className="fixed top-0 left-0 right-0 h-16 bg-white dark:bg-gray-900 shadow-md z-50 flex items-center justify-between px-4 transition-colors duration-300">
       <div className="flex items-center gap-4">
@@ -34,12 +35,24 @@ export default function TopBar({ darkMode, setDarkMode, setSidebarOpen, sidebarO
         </div>
       </div>
       
-      <button
-        onClick={() => setDarkMode(!darkMode)}
-        className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-      >
-        {darkMode ? <Sun size={24} className="text-yellow-400" /> : <Moon size={24} className="text-gray-700" />}
-      </button>
+      <div className="flex items-center gap-2">
+        {onDonationsClick && (
+          <button
+            onClick={onDonationsClick}
+            className="hidden sm:flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#f6421f] to-[#ee8724] text-white rounded-lg hover:from-[#ee8724] hover:to-[#fbcb29] transition-all shadow-lg shadow-orange-300/50"
+          >
+            <Heart size={18} />
+            <span className="font-medium">Donations</span>
+          </button>
+        )}
+        
+        <button
+          onClick={() => setDarkMode(!darkMode)}
+          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+        >
+          {darkMode ? <Sun size={24} className="text-yellow-400" /> : <Moon size={24} className="text-gray-700" />}
+        </button>
+      </div>
     </div>
   );
 }

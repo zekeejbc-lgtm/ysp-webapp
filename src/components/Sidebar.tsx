@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { 
   Home, ChevronDown, ChevronRight, Users, BarChart3, QrCode, 
   ClipboardList, Calendar, MessageSquare, FileText, ScrollText,
-  User, LogOut, Wrench
+  User, LogOut, Wrench, Heart
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -35,6 +35,13 @@ export default function Sidebar({ isOpen, currentPage, setCurrentPage, currentUs
       label: 'Homepage',
       icon: Home,
       page: 'homepage',
+      roles: ['Admin', 'Head', 'Auditor', 'Member', 'Guest']
+    },
+    {
+      id: 'donations',
+      label: 'Donations',
+      icon: Heart,
+      page: 'donations',
       roles: ['Admin', 'Head', 'Auditor', 'Member', 'Guest']
     },
     {

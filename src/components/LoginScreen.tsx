@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { KeyboardEvent as ReactKeyboardEvent, ChangeEvent } from 'react';
-import { Sun, Moon, LogIn, Eye, EyeOff, UserPlus, X } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Sun, Moon, LogIn, Eye, EyeOff } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -20,9 +20,6 @@ export default function LoginScreen({ onLogin, darkMode, setDarkMode }: LoginScr
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [showGuestModal, setShowGuestModal] = useState(false);
-  const [guestName, setGuestName] = useState('');
-
   const [isLoading, setIsLoading] = useState(false);
 
   // Mobile debugging - logs viewport info
@@ -83,47 +80,11 @@ export default function LoginScreen({ onLogin, darkMode, setDarkMode }: LoginScr
     }
   };
 
-  const handleGuestLogin = async () => {
-    if (!guestName.trim()) {
-      toast.error('Name required', {
-        description: 'Please enter your name to continue'
-      });
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const data = await authAPI.guestLogin(guestName.trim());
-      
-      if (data.success && data.user) {
-        // Map guest data to frontend format
-        const userData = {
-          name: data.user.firstName,
-          idCode: data.user.id,
-          role: data.user.role
-        };
-        
-        // Save guest data to localStorage
-        localStorage.setItem('userData', JSON.stringify(userData));
-        
-        toast.success('Logged in as guest!', {
-          description: `Welcome, ${userData.name}!`
-        });
-        onLogin(userData as User);
-      } else {
-        toast.error('Guest login failed', {
-          description: data.message || 'Please try again.'
-        });
-      }
-    } catch (error) {
-      toast.error('Guest login failed', {
-        description: 'Unable to connect to server. Please try again later.'
-      });
-      console.error('Guest login error:', error);
-    } finally {
-      setIsLoading(false);
-      setShowGuestModal(false);
-    }
+  const handleForgotPassword = () => {
+    toast.info('Password Reset', {
+      description: 'To reset your password, please contact the developer or reach out via our Facebook page.',
+      duration: 5000,
+    });
   };
 
   return (
@@ -232,120 +193,41 @@ export default function LoginScreen({ onLogin, darkMode, setDarkMode }: LoginScr
           </div>
 
           <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                          <Button
-                onClick={handleLogin}
-                className="w-full bg-gradient-to-r from-[#f6421f] to-[#ee8724] hover:from-[#ee8724] hover:to-[#fbcb29] text-white shadow-lg shadow-orange-300/50"
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <>
-                    <motion.div
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                      className="mr-2"
-                    >
-                      <LogIn size={18} />
-                    </motion.div>
-                    Logging in...
-                  </>
-                ) : (
-                  <>
-                    <LogIn className="mr-2" size={18} />
-                    Login
-                  </>
-                )}
-              </Button>
-          </motion.div>
-
-          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
             <Button
-              onClick={() => setShowGuestModal(true)}
-              variant="outline"
-              className="w-full border-2 border-[#f6421f] text-[#f6421f] hover:bg-orange-50 dark:hover:bg-gray-800"
+              onClick={handleLogin}
+              className="w-full bg-gradient-to-r from-[#f6421f] to-[#ee8724] hover:from-[#ee8724] hover:to-[#fbcb29] text-white shadow-lg shadow-orange-300/50"
+              disabled={isLoading}
             >
-              <UserPlus className="mr-2" size={18} />
-              Log in as Guest
+              {isLoading ? (
+                <>
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    className="mr-2"
+                  >
+                    <LogIn size={18} />
+                  </motion.div>
+                  Logging in...
+                </>
+              ) : (
+                <>
+                  <LogIn className="mr-2" size={18} />
+                  Login
+                </>
+              )}
             </Button>
           </motion.div>
-        </motion.div>
 
-
-      </motion.div>
-
-      {/* Guest Login Modal */}
-      <AnimatePresence>
-        {showGuestModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="modal-overlay"
-            onClick={() => setShowGuestModal(false)}
-          >
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              transition={{ duration: 0.25, ease: "easeOut" }}
-              className="modal-content max-w-md"
-              style={{ willChange: 'transform, opacity' }}
-              onClick={(e: React.MouseEvent) => e.stopPropagation()}
+          <div className="text-center mt-2">
+            <button
+              onClick={handleForgotPassword}
+              className="text-sm text-[#f6421f] dark:text-[#ee8724] hover:underline transition-all"
             >
-              <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
-                <h3 className="text-[#f6421f] dark:text-[#ee8724] flex items-center gap-2">
-                  <UserPlus size={24} />
-                  Guest Login
-                </h3>
-                <motion.button
-                  whileHover={{ scale: 1.1, rotate: 90 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => setShowGuestModal(false)}
-                  className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors"
-                >
-                  <X size={20} />
-                </motion.button>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="guestName">Your Name</Label>
-                  <Input
-                    id="guestName"
-                    type="text"
-                    value={guestName}
-                    onChange={(e: ChangeEvent<HTMLInputElement>) => setGuestName(e.target.value)}
-                    onKeyPress={(e: ReactKeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && handleGuestLogin()}
-                    placeholder="Enter your full name"
-                    className="mt-2"
-                  />
-                  <p className="text-xs text-gray-500 mt-2">
-                    Your access will be recorded in the system logs.
-                  </p>
-                </div>
-
-                <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-                  <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="flex-1">
-                    <Button
-                      onClick={handleGuestLogin}
-                      className="w-full bg-gradient-to-r from-[#f6421f] to-[#ee8724] hover:from-[#ee8724] hover:to-[#fbcb29]"
-                    >
-                      Continue as Guest
-                    </Button>
-                  </motion.div>
-                  <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="flex-1">
-                    <Button
-                      onClick={() => setShowGuestModal(false)}
-                      className="w-full bg-gray-500 hover:bg-gray-600"
-                    >
-                      Cancel
-                    </Button>
-                  </motion.div>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+              Forgot Password?
+            </button>
+          </div>
+        </motion.div>
+      </motion.div>
     </div>
   );
 }

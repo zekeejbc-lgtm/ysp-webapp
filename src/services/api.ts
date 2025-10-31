@@ -646,6 +646,85 @@ export const homepageAPI = {
   },
 };
 
+// ======================================================
+// DONATIONS API (UI-ready; requires backend actions)
+// ======================================================
+
+export interface DonationCampaign {
+  id: string;
+  name: string;
+  description: string;
+  targetAmount: number;
+  currentAmount: number;
+  startDate: string;
+  endDate: string;
+  status: 'Active' | 'Completed' | 'Cancelled';
+  imageUrl?: string;
+}
+
+export interface DonationRecord {
+  id: string;
+  donorName: string;
+  contact: string;
+  amount: number;
+  paymentMethod: string;
+  campaign: string;
+  referenceNumber: string;
+  status: 'Pending' | 'Verified' | 'Completed' | 'Cancelled';
+  timestamp: string;
+  receiptUrl?: string;
+}
+
+export interface DonationSettings {
+  methods: Array<{
+    method: 'GCash' | 'PayMaya' | 'Bank' | 'Cash' | 'Other' | string;
+    accountName?: string;
+    accountNumber?: string;
+    qrImageUrl?: string;
+    active: boolean;
+  }>;
+}
+
+export const donationsAPI = {
+  getCampaigns: async (): Promise<{ success: boolean; campaigns?: DonationCampaign[]; message?: string; }> => {
+    return apiRequest('getDonationCampaigns', {});
+  },
+  getDonations: async (idCode?: string): Promise<{ success: boolean; donations?: DonationRecord[]; message?: string; }> => {
+    return apiRequest('getDonations', { idCode });
+  },
+  submitDonation: async (data: {
+    donorName: string;
+    contact: string;
+    amount: number;
+    paymentMethod: string;
+    campaign: string;
+    referenceNumber: string;
+    notes?: string;
+    // One of: send receipt as base64 for server-side upload OR provide existing URL
+    receiptBase64?: string;
+    receiptFileName?: string;
+    receiptMimeType?: string;
+    receiptUrl?: string;
+  }): Promise<{ success: boolean; message?: string; id?: string; }> => {
+    return apiRequest('submitDonation', data);
+  },
+  getSettings: async (): Promise<{ success: boolean; settings?: DonationSettings; message?: string; }> => {
+    return apiRequest('getDonationSettings', {});
+  },
+  updateSettings: async (settings: DonationSettings, idCode: string): Promise<{ success: boolean; message?: string; }> => {
+    return apiRequest('updateDonationSettings', { settings, idCode });
+  },
+  uploadPaymentQr: async (
+    base64Image: string,
+    fileName: string,
+    mimeType: string,
+    method: string,
+    idCode: string
+  ): Promise<{ success: boolean; message?: string; imageUrl?: string; fileName?: string }> => {
+    return apiRequest('uploadDonationPaymentQr', { base64Image, fileName, mimeType, method, idCode });
+  },
+};
+
 // Export API_CONFIG for direct access if needed
 export { API_CONFIG };
 

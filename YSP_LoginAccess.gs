@@ -193,6 +193,21 @@ function handlePostRequest(data) {
       return handleGetAllUserRoles(data);
     case 'updateUserRole':
       return handleUpdateUserRole(data);
+    
+    // Donations endpoints
+    case 'getDonationCampaigns':
+      return getDonationCampaigns();
+    case 'getDonations':
+      return getDonations(data);
+    case 'submitDonation':
+      return submitDonation(data);
+    case 'getDonationSettings':
+      return getDonationSettings();
+    case 'updateDonationSettings':
+      return updateDonationSettings(data);
+    case 'uploadPaymentQr':
+      return uploadPaymentQr(data);
+    
     default:
       return { success: false, message: 'Unknown action: ' + action };
   }

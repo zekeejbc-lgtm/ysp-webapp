@@ -10,7 +10,9 @@ import { queryClient } from './services/queryClient';
 import './styles/globals.css';
 
 // Lazy load all page components for better performance
+const PublicHomepage = lazy(() => import('./components/PublicHomepage'));
 const Homepage = lazy(() => import('./components/Homepage'));
+const Donations = lazy(() => import('./components/Donations'));
 const OfficerSearch = lazy(() => import('./components/OfficerSearch'));
 const AttendanceDashboard = lazy(() => import('./components/AttendanceDashboard'));
 const QRScanner = lazy(() => import('./components/QRScanner'));
@@ -49,6 +51,8 @@ export default function App() {
   });
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [showPublicDonations, setShowPublicDonations] = useState(false);
+  const [showLoginScreen, setShowLoginScreen] = useState(false);
 
   // Check for existing session on mount (session persistence)
   useEffect(() => {
@@ -106,6 +110,7 @@ export default function App() {
     setCurrentUser(null);
     setIsLoggedIn(false);
     setCurrentPage('homepage');
+    setShowLoginScreen(false); // Reset to show public homepage
     // Clear session and page from localStorage
     localStorage.removeItem('userData');
     localStorage.removeItem('currentPage');
@@ -118,6 +123,7 @@ export default function App() {
     if (role === 'Banned') return false;
     const accessMap: Record<string, string[]> = {
       homepage: ['Admin', 'Head', 'Auditor', 'Member', 'Guest'],
+      donations: ['Admin', 'Head', 'Auditor', 'Member', 'Guest'], // Accessible to all logged-in users
       'officer-search': ['Admin', 'Head', 'Auditor'],
       'attendance-dashboard': ['Admin', 'Head', 'Auditor'],
       'qr-scanner': ['Admin', 'Head', 'Auditor'],
@@ -154,12 +160,71 @@ export default function App() {
   }, [isLoggedIn, currentUser]);
 
   if (!isLoggedIn) {
+    // Show login screen if user clicked login button
+    if (showLoginScreen) {
+      return (
+        <>
+          <LoginScreen onLogin={handleLogin} darkMode={darkMode} setDarkMode={setDarkMode} />
+          {/* Let Toaster component choose best position per device */}
+          <Toaster />
+        </>
+      );
+    }
+
+    // Allow public access to Donations page
+    if (showPublicDonations) {
+      return (
+        <MotionConfig reducedMotion="user" transition={{ type: 'tween', duration: 0.25, ease: 'easeOut' }}>
+          <div className={`app-container ${darkMode ? 'dark' : ''}`}>
+            <TopBar 
+              darkMode={darkMode} 
+              setDarkMode={setDarkMode} 
+              setSidebarOpen={() => {}} 
+              sidebarOpen={false}
+              onDonationsClick={() => setShowPublicDonations(true)}
+            />
+            <main className="content-area" style={{ marginTop: '64px' }}>
+              <Suspense fallback={<PageLoadingFallback />}>
+                <Donations darkMode={darkMode} />
+              </Suspense>
+            </main>
+            <Toaster />
+          </div>
+        </MotionConfig>
+      );
+    }
+
+    // Show public homepage for non-logged-in users
     return (
-      <>
-        <LoginScreen onLogin={handleLogin} darkMode={darkMode} setDarkMode={setDarkMode} />
-        {/* Let Toaster component choose best position per device */}
-        <Toaster />
-      </>
+      <MotionConfig reducedMotion="user" transition={{ type: 'tween', duration: 0.25, ease: 'easeOut' }}>
+        <div className={`app-container ${darkMode ? 'dark' : ''}`}>
+          <TopBar 
+            darkMode={darkMode} 
+            setDarkMode={setDarkMode} 
+            setSidebarOpen={() => {}} 
+            sidebarOpen={false} 
+            onDonationsClick={() => {
+              setShowPublicDonations(true);
+              setShowLoginScreen(false);
+            }}
+          />
+          
+          <main className="content-area" style={{ marginTop: '64px' }}>
+            <Suspense fallback={<PageLoadingFallback />}>
+              <PublicHomepage 
+                darkMode={darkMode} 
+                onLoginClick={() => {
+                  setShowLoginScreen(true);
+                  setShowPublicDonations(false);
+                }} 
+              />
+            </Suspense>
+          </main>
+          
+          {/* Let Toaster component choose best position per device */}
+          <Toaster />
+        </div>
+      </MotionConfig>
     );
   }
   const renderPage = () => {
@@ -171,6 +236,8 @@ export default function App() {
     switch (currentPage) {
       case 'homepage':
         return <Homepage darkMode={darkMode} currentUser={currentUser} />;
+      case 'donations':
+        return <Donations darkMode={darkMode} currentUser={currentUser} />;
       case 'officer-search':
         return <OfficerSearch darkMode={darkMode} />;
       case 'attendance-dashboard':
@@ -204,7 +271,13 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <MotionConfig reducedMotion="user" transition={{ type: 'tween', duration: 0.25, ease: 'easeOut' }}>
         <div className={`app-container ${darkMode ? 'dark' : ''}`}>
-          <TopBar darkMode={darkMode} setDarkMode={setDarkMode} setSidebarOpen={setSidebarOpen} sidebarOpen={sidebarOpen} />
+          <TopBar 
+            darkMode={darkMode} 
+            setDarkMode={setDarkMode} 
+            setSidebarOpen={setSidebarOpen} 
+            sidebarOpen={sidebarOpen}
+            onDonationsClick={() => handleNavigate('donations')}
+          />
           
           <div className="main-layout">
             <Sidebar 
