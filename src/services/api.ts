@@ -39,8 +39,19 @@ async function apiRequest<T = any>(action: string, data: Record<string, any> = {
       action,
       ...data,
     };
-    
-    console.log(`[API] Request [${action}]:`, requestBody);
+  const isDev = (import.meta as any)?.env?.DEV === true;
+
+    // Avoid logging huge payloads (e.g., base64 images) which can freeze the UI thread
+    const hasLargePayload =
+      typeof (requestBody as any).base64Image === 'string' ||
+      action.toLowerCase().includes('upload');
+
+    if (isDev && !hasLargePayload) {
+      console.log(`[API] Request [${action}]:`, requestBody);
+    } else if (isDev && hasLargePayload) {
+      const sizeKb = Math.round(((requestBody as any).base64Image?.length || 0) / 1024);
+      console.log(`[API] Request [${action}]: { base64Image: omitted (${sizeKb}KB) }`);
+    }
     
     const response = await fetch(API_CONFIG.baseURL, {
       method: 'POST',
@@ -53,17 +64,20 @@ async function apiRequest<T = any>(action: string, data: Record<string, any> = {
       body: JSON.stringify(requestBody),
     });
 
-    console.log(`[API] Response status [${action}]:`, response.status);
+  if (isDev) console.log(`[API] Response status [${action}]:`, response.status);
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
     const result = await response.json();
-    console.log(`[API] Response data [${action}]:`, result);
+    if (isDev && !hasLargePayload) {
+      console.log(`[API] Response data [${action}]:`, result?.success ?? result);
+    }
     return result;
   } catch (error) {
-    console.error(`API Request Error [${action}]:`, error);
+    // Always log errors, but keep payload out of console for large requests
+    console.error(`API Request Error [${action}]:`, (error as Error)?.message || error);
     throw error;
   }
 }
