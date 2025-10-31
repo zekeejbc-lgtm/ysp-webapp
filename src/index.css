@@ -3846,6 +3846,22 @@ h6 {
     background-position: 1000px 0;
   }
 }
+
+/* iOS Safari 100vh fix */
+@supports (-webkit-touch-callout: none) {
+  .min-h-screen {
+    min-height: -webkit-fill-available !important;
+  }
+}
+
+/* Mobile viewport height fix */
+@media screen and (max-width: 768px) {
+  .min-h-screen {
+    min-height: 100svh; /* Small viewport height for mobile browsers */
+    min-height: -webkit-fill-available;
+  }
+}
+
 .line-clamp-2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;

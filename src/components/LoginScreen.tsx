@@ -25,6 +25,18 @@ export default function LoginScreen({ onLogin, darkMode, setDarkMode }: LoginScr
 
   const [isLoading, setIsLoading] = useState(false);
 
+  // Mobile debugging - logs viewport info
+  useState(() => {
+    console.log('🔍 LoginScreen Debug Info:');
+    console.log('Window dimensions:', { 
+      width: window.innerWidth, 
+      height: window.innerHeight,
+      devicePixelRatio: window.devicePixelRatio
+    });
+    console.log('User agent:', navigator.userAgent);
+    console.log('Dark mode:', darkMode);
+  });
+
   const handleLogin = async () => {
     if (!username || !password) {
       toast.error('Missing credentials', {
@@ -115,9 +127,15 @@ export default function LoginScreen({ onLogin, darkMode, setDarkMode }: LoginScr
   };
 
   return (
-    <div className={`min-h-screen flex items-center justify-center ${darkMode ? 'dark' : ''}`}>
+    <div 
+      className={`min-h-screen flex items-center justify-center ${darkMode ? 'dark' : ''}`}
+      style={{ 
+        minHeight: '100vh',
+        minHeight: '-webkit-fill-available' // iOS Safari fix
+      }}
+    >
       <motion.div
-        initial={{ opacity: 0 }}
+        initial={{ opacity: 1 }} // Start visible immediately!
         animate={{ opacity: 1 }}
         transition={{ duration: 0.6 }}
         className="absolute inset-0 bg-gradient-to-br from-white via-orange-50 to-orange-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-colors duration-300"
@@ -133,14 +151,14 @@ export default function LoginScreen({ onLogin, darkMode, setDarkMode }: LoginScr
       </motion.button>
 
       <motion.div
-        initial={{ scale: 0.9, opacity: 0, y: 20 }}
+        initial={{ scale: 1, opacity: 1, y: 0 }} // Start visible immediately!
         animate={{ scale: 1, opacity: 1, y: 0 }}
         transition={{ duration: 0.5, type: "spring" }}
         className="relative z-10 ysp-card max-w-md w-full mx-4"
       >
         <div className="text-center mb-6">
           <motion.div
-            initial={{ scale: 0, rotate: -180 }}
+            initial={{ scale: 1, rotate: 0 }} // Start visible immediately!
             animate={{ scale: 1, rotate: 0 }}
             transition={{ duration: 0.6, type: "spring" }}
             className="w-32 h-32 mx-auto mb-4 flex items-center justify-center"
@@ -152,17 +170,17 @@ export default function LoginScreen({ onLogin, darkMode, setDarkMode }: LoginScr
             />
           </motion.div>
           <motion.h1
-            initial={{ opacity: 0, y: -20 }}
+            initial={{ opacity: 1, y: 0 }} // Start visible immediately!
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
+            transition={{ delay: 0 }}
             className="text-[#f6421f] dark:text-[#ee8724] mb-2"
           >
             Youth Service Philippines
           </motion.h1>
           <motion.p
-            initial={{ opacity: 0 }}
+            initial={{ opacity: 1 }} // Start visible immediately!
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.4 }}
+            transition={{ delay: 0 }}
             className="text-gray-600 dark:text-gray-400"
           >
             Tagum Chapter - Login
@@ -170,9 +188,9 @@ export default function LoginScreen({ onLogin, darkMode, setDarkMode }: LoginScr
         </div>
 
         <motion.div
-          initial={{ opacity: 0 }}
+          initial={{ opacity: 1 }} // Start visible immediately!
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
+          transition={{ delay: 0 }}
           className="space-y-4"
         >
           <div>
