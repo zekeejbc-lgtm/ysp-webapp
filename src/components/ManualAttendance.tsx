@@ -7,6 +7,7 @@ import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { toast } from 'sonner';
 import { userAPI, eventsAPI, type UserProfile, type Event } from '../services/api';
+import { ListSkeleton } from './ui/skeletons';
 
 interface ManualAttendanceProps {
   currentUser: any;
@@ -25,6 +26,7 @@ export default function ManualAttendance(_props: ManualAttendanceProps) {
   const [showEventSuggestions, setShowEventSuggestions] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
+  const [loadingEvents, setLoadingEvents] = useState(false);
 
   // Fetch active events on mount
   useEffect(() => {
@@ -33,6 +35,7 @@ export default function ManualAttendance(_props: ManualAttendanceProps) {
 
   const fetchEvents = async () => {
     try {
+      setLoadingEvents(true);
       const response = await eventsAPI.getAll();
       if (response.success && response.events) {
         const activeEvents = response.events.filter(e => e.status === 'Active');
@@ -41,6 +44,8 @@ export default function ManualAttendance(_props: ManualAttendanceProps) {
     } catch (error) {
       console.error('Error fetching events:', error);
       toast.error('Failed to load events');
+    } finally {
+      setLoadingEvents(false);
     }
   };
 
@@ -195,7 +200,9 @@ export default function ManualAttendance(_props: ManualAttendanceProps) {
               </div>
 
               {isSearching && memberSearch.length >= 2 && (
-                <p className="text-sm text-gray-500 mt-2">Searching...</p>
+                <div className="absolute z-10 w-full mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
+                  <ListSkeleton items={3} />
+                </div>
               )}
             </div>
 
@@ -267,6 +274,12 @@ export default function ManualAttendance(_props: ManualAttendanceProps) {
                   >
                     No active events found
                   </motion.div>
+                )}
+
+                {loadingEvents && (
+                  <div className="absolute top-full left-0 right-0 z-10 mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
+                    <ListSkeleton items={3} />
+                  </div>
                 )}
               </div>
             </div>

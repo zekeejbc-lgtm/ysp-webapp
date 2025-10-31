@@ -225,15 +225,22 @@ export default function Announcements({ currentUser }: AnnouncementsProps) {
 
     try {
       setCreating(true);
-      const createPromise = announcementsAPI.create(requestData);
-      await toast.promise(createPromise, {
-        loading: 'Sending announcement…',
-        success: 'Announcement created successfully!',
-        error: 'Failed to create announcement',
+      const controller = new AbortController();
+      const toastId = toast.loading('Sending announcement…', {
+        duration: Infinity,
+        action: {
+          label: 'Cancel',
+          onClick: () => controller.abort(),
+        },
       });
-      const response = await createPromise;
+
+      const response = await announcementsAPI.create(requestData, {
+        signal: controller.signal,
+        timeoutMs: 30000,
+      });
 
       if (response.success) {
+        toast.success('Announcement created successfully!', { id: toastId });
         toast.info('Notified recipients', {
           description: 'Email notifications have been sent to all recipients',
           duration: 3000,
@@ -250,10 +257,16 @@ export default function Announcements({ currentUser }: AnnouncementsProps) {
 
         // Reload announcements
         await loadAnnouncements();
+      } else {
+        toast.error(response.message || 'Failed to create announcement', { id: toastId });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating announcement:', error);
-      // toast.promise already surfaced the error; keep console for debugging
+      if (error?.name === 'AbortError') {
+        toast.info('Canceled', { description: 'Announcement creation was canceled' });
+      } else {
+        toast.error('Failed to create announcement');
+      }
     } finally {
       setCreating(false);
     }

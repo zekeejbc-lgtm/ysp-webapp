@@ -43,7 +43,7 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
       const name = currentUser?.name || currentUser?.firstName || 'Guest';
       const role = currentUser?.role || 'Guest';
       
-      const response = await feedbackAPI.getAll(idCode, name, role);
+  const response = await feedbackAPI.getAll(idCode, name, role);
       
       if (response.success && Array.isArray(response.feedback)) {
         setFeedbackList(response.feedback);
@@ -53,7 +53,9 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
       }
     } catch (error) {
       console.error('Error fetching feedback:', error);
-      toast.error('Failed to load feedback');
+      toast.error('Failed to load feedback', {
+        action: { label: 'Retry', onClick: fetchFeedback },
+      });
     } finally {
       setLoading(false);
     }
@@ -82,30 +84,42 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
 
     try {
       setSubmitting(true);
-      const createPromise = feedbackAPI.create({
+      const controller = new AbortController();
+      const toastId = toast.loading('Submitting feedback…', {
+        duration: Infinity,
+        action: {
+          label: 'Cancel',
+          onClick: () => controller.abort(),
+        },
+      });
+
+      const response = await feedbackAPI.create({
         message: newMessage.trim(),
         authorName: currentUser?.name || currentUser?.firstName || 'Guest',
         authorIdCode: isGuest ? undefined : (currentUser?.id || currentUser?.idCode),
-      });
-      await toast.promise(createPromise, {
-        loading: 'Submitting feedback…',
-        success: 'Feedback submitted successfully',
-        error: 'Failed to submit feedback',
-      });
-      const response = await createPromise;
+      }, { signal: controller.signal, timeoutMs: 30000 });
 
       if (response.success && response.feedback) {
+        toast.success('Feedback submitted successfully', { id: toastId });
         const newFeedback = Array.isArray(response.feedback) ? response.feedback[0] : response.feedback;
         toast.info(`Reference: ${newFeedback.referenceId}`, { duration: 3000 });
 
         setNewMessage('');
         setShowCreateModal(false);
-        // Refresh feedback list
         await fetchFeedback();
+      } else {
+        toast.error(response.message || 'Failed to submit feedback', {
+          id: toastId,
+          action: { label: 'Retry', onClick: handleCreateFeedback },
+        });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating feedback:', error);
-      // Error already surfaced via toast.promise
+      if (error?.name === 'AbortError') {
+        toast.info('Canceled', { description: 'Feedback submission canceled' });
+      } else {
+        toast.error('Failed to submit feedback', { action: { label: 'Retry', onClick: handleCreateFeedback } });
+      }
     } finally {
       setSubmitting(false);
     }
@@ -124,31 +138,39 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
 
     try {
       setSubmitting(true);
-      const replyPromise = feedbackAPI.reply({
+      const controller = new AbortController();
+      const toastId = toast.loading('Sending reply…', {
+        duration: Infinity,
+        action: { label: 'Cancel', onClick: () => controller.abort() },
+      });
+
+      const response = await feedbackAPI.reply({
         referenceId: selectedFeedback.referenceId,
         reply: replyMessage.trim(),
         replierName: currentUser?.name || currentUser?.firstName || 'Admin',
         replierIdCode: currentUser?.id || currentUser?.idCode || '',
         replierRole: currentUser?.role || 'Admin',
-      });
-      await toast.promise(replyPromise, {
-        loading: 'Sending reply…',
-        success: 'Reply sent successfully',
-        error: 'Failed to send reply',
-      });
-      const response = await replyPromise;
+      }, { signal: controller.signal, timeoutMs: 30000 });
 
       if (response.success) {
+        toast.success('Reply sent successfully', { id: toastId });
         setReplyMessage('');
         setShowReplyModal(false);
-        // Refresh feedback list
         await fetchFeedback();
-        // Close the view modal
         setSelectedFeedback(null);
+      } else {
+        toast.error(response.message || 'Failed to send reply', {
+          id: toastId,
+          action: { label: 'Retry', onClick: handleReply },
+        });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error replying to feedback:', error);
-      // Error already surfaced via toast.promise
+      if (error?.name === 'AbortError') {
+        toast.info('Canceled', { description: 'Reply canceled' });
+      } else {
+        toast.error('Failed to send reply', { action: { label: 'Retry', onClick: handleReply } });
+      }
     } finally {
       setSubmitting(false);
     }
@@ -161,7 +183,7 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
         animate={{ opacity: 1, y: 0 }}
         className="ysp-card mb-6"
       >
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-4 mb-6">
+  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-4 mb-6">
           {/* Search - full width on mobile */}
           <div className="w-full md:flex-1 min-w-0">
             <div className="relative">
@@ -175,9 +197,9 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
               />
             </div>
           </div>
-          {/* Filters + Actions - wrap on mobile */}
-          <div className="flex items-center gap-2 justify-between w-full md:w-auto">
-            <div className="flex gap-2 overflow-x-auto md:overflow-visible py-1 -mx-1 px-1">
+          {/* Filters + Actions - stacked on mobile for visibility */}
+          <div className="w-full flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+            <div className="flex gap-2 overflow-x-auto md:overflow-visible py-1 -mx-1 px-1 w-full">
               <Button
                 variant={filterStatus === 'all' ? 'default' : 'outline'}
                 onClick={() => setFilterStatus('all')}
@@ -204,22 +226,23 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
               </Button>
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex gap-2 w-full md:w-auto">
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 <Button
                   onClick={fetchFeedback}
                   variant="outline"
                   disabled={loading}
+                  className="flex-1 md:flex-none"
                 >
                   <RefreshCw className={`mr-2 ${loading ? 'animate-spin' : ''}`} size={18} />
-                  Refresh
+                  <span className="ml-2">Refresh</span>
                 </Button>
               </motion.div>
 
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 <Button
                   onClick={() => setShowCreateModal(true)}
-                  className="bg-gradient-to-r from-[#f6421f] to-[#ee8724] hover:from-[#ee8724] hover:to-[#fbcb29] shadow-lg shadow-orange-300/50"
+                  className="bg-gradient-to-r from-[#f6421f] to-[#ee8724] hover:from-[#ee8724] hover:to-[#fbcb29] shadow-lg shadow-orange-300/50 flex-1 md:flex-none"
                 >
                   <Plus className="mr-2" size={18} />
                   Create

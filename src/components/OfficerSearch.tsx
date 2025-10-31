@@ -5,7 +5,7 @@ import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { userAPI, type UserProfile } from '../services/api';
 import { toast } from 'sonner';
-import { ListSkeleton } from './ui/skeletons';
+import { ListSkeleton, ProfileSkeleton } from './ui/skeletons';
 import { OptimizedImage } from './OptimizedImage';
 import { debounce } from '../utils/performance';
 
@@ -19,6 +19,7 @@ export default function OfficerSearch({ darkMode }: OfficerSearchProps) {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [profiles, setProfiles] = useState<UserProfile[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(false);
 
   // keep darkMode referenced
   void darkMode;
@@ -125,6 +126,7 @@ export default function OfficerSearch({ darkMode }: OfficerSearchProps) {
                   key={profile.idCode}
                   whileHover={{ scale: 1.02 }}
                   onClick={() => {
+                    setProfileLoading(true);
                     setSelectedProfile(profile);
                     setSearchTerm(profile.fullName);
                     setShowSuggestions(false);
@@ -166,7 +168,13 @@ export default function OfficerSearch({ darkMode }: OfficerSearchProps) {
         </div>
       </div>
 
-      {selectedProfile && (
+      {selectedProfile && profileLoading && (
+        <div className="ysp-card">
+          <ProfileSkeleton />
+        </div>
+      )}
+
+      {selectedProfile && !profileLoading && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -180,6 +188,7 @@ export default function OfficerSearch({ darkMode }: OfficerSearchProps) {
                 className="w-32 h-32 rounded-full object-cover mx-auto mb-4 shadow-lg"
                 fallbackSrc={`https://ui-avatars.com/api/?name=${encodeURIComponent(selectedProfile.fullName)}&size=200&background=f6421f&color=fff`}
                 loading="eager"
+                onLoad={() => setProfileLoading(false)}
               />
             ) : (
               <div className="w-32 h-32 rounded-full bg-gradient-to-r from-[#f6421f] to-[#ee8724] flex items-center justify-center mx-auto mb-4 shadow-lg">

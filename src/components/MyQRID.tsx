@@ -3,6 +3,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import { User, IdCard, Briefcase } from 'lucide-react';
 import { userAPI, type UserProfile } from '../services/api';
 import { toast } from 'sonner';
+import { ProfileSkeleton } from './ui/skeletons';
 
 interface MyQRIDProps {
   currentUser: any;
@@ -35,13 +36,17 @@ export default function MyQRID({ currentUser }: MyQRIDProps) {
             email: currentUser.email || '',
             position: 'Member', // Default position
             birthday: currentUser.birthdate || '',
-            contact: currentUser.contactNumber || '',
+            contactNumber: currentUser.contactNumber || '',
             gender: '',
-            age: 0,
+            age: '0',
             civilStatus: '',
             nationality: '',
             religion: '',
-            profilePic: currentUser.profilePicture || '',
+            username: currentUser.username || '',
+            pronouns: '',
+            password: '',
+            role: currentUser.role || 'Member',
+            profilePictureURL: currentUser.profilePicture || '',
           });
         }
       } catch (error) {
@@ -54,12 +59,17 @@ export default function MyQRID({ currentUser }: MyQRIDProps) {
           email: currentUser.email || '',
           position: 'Member',
           birthday: '',
-          contact: '',
+          contactNumber: '',
           gender: '',
-          age: 0,
+          age: '0',
           civilStatus: '',
           nationality: '',
           religion: '',
+          username: currentUser.username || '',
+          pronouns: '',
+          password: '',
+          role: currentUser.role || 'Member',
+          profilePictureURL: currentUser.profilePicture || '',
         });
       } finally {
         setIsLoading(false);
@@ -82,9 +92,7 @@ export default function MyQRID({ currentUser }: MyQRIDProps) {
   if (isLoading) {
     return (
       <div className="max-w-2xl mx-auto">
-        <div className="ysp-card text-center">
-          <p className="text-gray-500">Loading your QR ID...</p>
-        </div>
+        <ProfileSkeleton />
       </div>
     );
   }

@@ -12,13 +12,13 @@ export default defineConfig({
     react(),
     // Brotli compression for production builds
     compression({
-      algorithm: 'brotliCompress' as any,
+      algorithms: ['brotliCompress'],
       exclude: [/\.(br)$/, /\.(gz)$/],
       threshold: 1024, // Only compress files > 1KB
     }),
     // Gzip compression as fallback
     compression({
-      algorithm: 'gzip' as any,
+      algorithms: ['gzip'],
       exclude: [/\.(br)$/, /\.(gz)$/],
       threshold: 1024,
     }),

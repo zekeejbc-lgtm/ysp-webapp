@@ -70,9 +70,22 @@ export default function ManageEvents() {
 
     setIsLoading(true);
     try {
-      const response = await eventsAPI.create(newEventName, newEventDate);
+      const controller = new AbortController();
+      const toastId = toast.loading('Creating event…', {
+        duration: Infinity,
+        action: {
+          label: 'Cancel',
+          onClick: () => controller.abort(),
+        },
+      });
+
+      const response = await eventsAPI.create(newEventName, newEventDate, {
+        signal: controller.signal,
+        timeoutMs: 30000,
+      });
       if (response.success) {
         toast.success('Event created successfully', {
+          id: toastId,
           description: 'Event columns added to Master Attendance Log'
         });
         // Refresh events list
@@ -82,11 +95,16 @@ export default function ManageEvents() {
         setNewEventDate('');
         setShowCreateModal(false);
       } else {
-        toast.error(response.message || 'Failed to create event');
+        toast.error(response.message || 'Failed to create event', { id: toastId });
       }
     } catch (error) {
       console.error('Error creating event:', error);
-      toast.error('Failed to create event');
+      const err = error as any;
+      if (err?.name === 'AbortError') {
+        toast.info('Canceled', { description: 'Event creation was canceled' });
+      } else {
+        toast.error('Failed to create event');
+      }
     } finally {
       setIsLoading(false);
     }

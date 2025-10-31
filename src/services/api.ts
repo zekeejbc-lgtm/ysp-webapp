@@ -33,7 +33,12 @@ const API_CONFIG = {
  * Generic API request handler
  * All requests go through this function
  */
-async function apiRequest<T = any>(action: string, data: Record<string, any> = {}): Promise<T> {
+async function apiRequest<T = any>(
+  action: string,
+  data: Record<string, any> = {},
+  options?: { signal?: AbortSignal; timeoutMs?: number }
+): Promise<T> {
+  let timeoutId: number | undefined;
   try {
     const requestBody = {
       action,
@@ -53,6 +58,15 @@ async function apiRequest<T = any>(action: string, data: Record<string, any> = {
       console.log(`[API] Request [${action}]: { base64Image: omitted (${sizeKb}KB) }`);
     }
     
+    // Setup abort controller and optional timeout
+    let signal: AbortSignal | undefined = options?.signal;
+    let controller: AbortController | undefined;
+    if (!signal && options?.timeoutMs) {
+      controller = new AbortController();
+      signal = controller.signal;
+      timeoutId = window.setTimeout(() => controller?.abort(), options.timeoutMs);
+    }
+
     const response = await fetch(API_CONFIG.baseURL, {
       method: 'POST',
       mode: 'cors',
@@ -62,6 +76,7 @@ async function apiRequest<T = any>(action: string, data: Record<string, any> = {
         'Origin': window.location.origin,
       },
       body: JSON.stringify(requestBody),
+      signal,
     });
 
   if (isDev) console.log(`[API] Response status [${action}]:`, response.status);
@@ -79,6 +94,8 @@ async function apiRequest<T = any>(action: string, data: Record<string, any> = {
     // Always log errors, but keep payload out of console for large requests
     console.error(`API Request Error [${action}]:`, (error as Error)?.message || error);
     throw error;
+  } finally {
+    if (typeof timeoutId !== 'undefined') clearTimeout(timeoutId);
   }
 }
 
@@ -363,10 +380,10 @@ export const eventsAPI = {
   /**
    * Create new event
    */
-  create: async (name: string, date: string): Promise<EventsResponse> => {
+  create: async (name: string, date: string, options?: { signal?: AbortSignal; timeoutMs?: number }): Promise<EventsResponse> => {
     // Invalidate events cache when creating new event
     invalidateCache('events_all');
-    return apiRequest('createEvent', { name, date });
+    return apiRequest('createEvent', { name, date }, options);
   },
 
   /**
@@ -425,8 +442,8 @@ export const announcementsAPI = {
    * Create a new announcement
    * Only available to Heads (role === 'Head' AND ID Number in [25100-25700])
    */
-  create: async (data: CreateAnnouncementRequest): Promise<AnnouncementResponse> => {
-    return apiRequest('createAnnouncement', data);
+  create: async (data: CreateAnnouncementRequest, options?: { signal?: AbortSignal; timeoutMs?: number }): Promise<AnnouncementResponse> => {
+    return apiRequest('createAnnouncement', data, options);
   },
 
   /**
@@ -494,8 +511,8 @@ export const feedbackAPI = {
    * Create a new feedback
    * Available to everyone (including Guests)
    */
-  create: async (data: CreateFeedbackRequest): Promise<FeedbackResponse> => {
-    return apiRequest('createFeedback', data);
+  create: async (data: CreateFeedbackRequest, options?: { signal?: AbortSignal; timeoutMs?: number }): Promise<FeedbackResponse> => {
+    return apiRequest('createFeedback', data, options);
   },
 
   /**
@@ -511,8 +528,8 @@ export const feedbackAPI = {
    * Reply to a feedback
    * Only available to Admin and Auditor
    */
-  reply: async (data: ReplyToFeedbackRequest): Promise<FeedbackResponse> => {
-    return apiRequest('replyToFeedback', data);
+  reply: async (data: ReplyToFeedbackRequest, options?: { signal?: AbortSignal; timeoutMs?: number }): Promise<FeedbackResponse> => {
+    return apiRequest('replyToFeedback', data, options);
   },
 };
 

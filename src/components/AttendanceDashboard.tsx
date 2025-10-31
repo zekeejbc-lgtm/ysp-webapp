@@ -5,7 +5,7 @@ import { Input } from './ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { eventsAPI, Event, EventAnalytics } from '../services/api';
-import { ChartSkeleton } from './ui/skeletons';
+import { ChartSkeleton, ListSkeleton } from './ui/skeletons';
 
 interface AttendanceDashboardProps {
   darkMode: boolean;
@@ -200,6 +200,12 @@ export default function AttendanceDashboard({ }: AttendanceDashboardProps) {
           </div>
         )}
       </motion.div>
+
+      {loadingEvents && (
+        <div className="ysp-card mb-6">
+          <ListSkeleton items={4} />
+        </div>
+      )}
 
       {loading && <ChartSkeleton />}
 

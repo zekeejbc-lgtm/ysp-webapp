@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { eventsAPI } from '../services/api';
 import type { Event } from '../services/api';
 import { Html5Qrcode } from 'html5-qrcode';
+import { ListSkeleton } from './ui/skeletons';
 
 interface QRScannerProps {
   currentUser: any;
@@ -20,6 +21,7 @@ export default function QRScanner(_props: QRScannerProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingEvents, setLoadingEvents] = useState(false);
   const html5QrcodeRef = useRef<Html5Qrcode | null>(null);
 
   // Fetch active events on mount
@@ -38,6 +40,7 @@ export default function QRScanner(_props: QRScannerProps) {
 
   const fetchEvents = async () => {
     try {
+      setLoadingEvents(true);
       const response = await eventsAPI.getAll();
       if (response.success && response.events) {
         // Filter only active events
@@ -47,6 +50,8 @@ export default function QRScanner(_props: QRScannerProps) {
     } catch (error) {
       console.error('Error fetching events:', error);
       toast.error('Failed to load events');
+    } finally {
+      setLoadingEvents(false);
     }
   };
 
@@ -214,6 +219,7 @@ export default function QRScanner(_props: QRScannerProps) {
                 }}
                 onFocus={() => setShowSuggestions(true)}
                 className="pl-10"
+                disabled={loadingEvents}
               />
 
               {showSuggestions && filteredEvents.length > 0 && (
@@ -247,6 +253,12 @@ export default function QRScanner(_props: QRScannerProps) {
                 >
                   No active events found
                 </motion.div>
+              )}
+
+              {loadingEvents && (
+                <div className="absolute z-10 w-full mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
+                  <ListSkeleton items={3} />
+                </div>
               )}
             </div>
           </div>
