@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react-swc';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { compression } from 'vite-plugin-compression2';
+import { copyFileSync, existsSync, mkdirSync } from 'fs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -71,6 +72,19 @@ export default defineConfig({
     outDir: 'dist',
     // Optimize chunks
     rollupOptions: {
+      plugins: [
+        {
+          name: 'copy-sw',
+          writeBundle() {
+            const swSrc = path.resolve(__dirname, 'public/sw.js');
+            const swDest = path.resolve(__dirname, 'dist/sw.js');
+            if (existsSync(swSrc)) {
+              copyFileSync(swSrc, swDest);
+              console.log('✓ Service worker copied to dist/');
+            }
+          }
+        }
+      ],
       output: {
         manualChunks: {
           // Separate vendor chunks for better caching
