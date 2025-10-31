@@ -1,4 +1,5 @@
 import { useState, useEffect, lazy, Suspense } from 'react';
+import { MotionConfig } from 'framer-motion';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import Sidebar from './components/Sidebar';
@@ -201,27 +202,29 @@ export default function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <div className={`app-container ${darkMode ? 'dark' : ''}`}>
-        <TopBar darkMode={darkMode} setDarkMode={setDarkMode} setSidebarOpen={setSidebarOpen} sidebarOpen={sidebarOpen} />
-        
-        <div className="main-layout">
-          <Sidebar 
-            isOpen={sidebarOpen} 
-            currentPage={currentPage} 
-            setCurrentPage={handleNavigate}
-            currentUser={currentUser}
-            onLogout={handleLogout}
-          />
+      <MotionConfig reducedMotion="user" transition={{ type: 'tween', duration: 0.25, ease: 'easeOut' }}>
+        <div className={`app-container ${darkMode ? 'dark' : ''}`}>
+          <TopBar darkMode={darkMode} setDarkMode={setDarkMode} setSidebarOpen={setSidebarOpen} sidebarOpen={sidebarOpen} />
           
-          <main className="content-area">
-            <Suspense fallback={<PageLoadingFallback />}>
-              {renderPage()}
-            </Suspense>
-          </main>
+          <div className="main-layout">
+            <Sidebar 
+              isOpen={sidebarOpen} 
+              currentPage={currentPage} 
+              setCurrentPage={handleNavigate}
+              currentUser={currentUser}
+              onLogout={handleLogout}
+            />
+            
+            <main className="content-area">
+              <Suspense fallback={<PageLoadingFallback />}>
+                {renderPage()}
+              </Suspense>
+            </main>
+          </div>
+          
+          <Toaster position="top-center" />
         </div>
-        
-        <Toaster position="top-center" />
-      </div>
+      </MotionConfig>
     </QueryClientProvider>
   );
 }

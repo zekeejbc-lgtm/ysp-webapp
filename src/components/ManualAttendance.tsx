@@ -172,7 +172,9 @@ export default function ManualAttendance(_props: ManualAttendanceProps) {
                   <motion.div
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.2, ease: 'easeOut' }}
                     className="absolute top-full left-0 right-0 z-10 mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg max-h-60 overflow-y-auto border border-gray-200 dark:border-gray-700"
+                    style={{ willChange: 'transform, opacity' }}
                   >
                     {members.map((member) => (
                       <button
@@ -234,7 +236,9 @@ export default function ManualAttendance(_props: ManualAttendanceProps) {
                   <motion.div
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.2, ease: 'easeOut' }}
                     className="absolute top-full left-0 right-0 z-10 mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg max-h-60 overflow-y-auto border border-gray-200 dark:border-gray-700"
+                    style={{ willChange: 'transform, opacity' }}
                   >
                     {filteredEvents.map((event) => (
                       <button
@@ -257,7 +261,9 @@ export default function ManualAttendance(_props: ManualAttendanceProps) {
                   <motion.div
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.2, ease: 'easeOut' }}
                     className="absolute top-full left-0 right-0 z-10 mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-4 text-center text-gray-500"
+                    style={{ willChange: 'transform, opacity' }}
                   >
                     No active events found
                   </motion.div>

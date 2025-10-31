@@ -152,17 +152,19 @@ export default function LoginScreen({ onLogin, darkMode, setDarkMode }: LoginScr
       </motion.button>
 
       <motion.div
-        initial={{ scale: 1, opacity: 1, y: 0 }} // Start visible immediately!
+        initial={{ scale: 1, opacity: 1, y: 0 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, type: "spring" }}
+        transition={{ duration: 0.25, ease: "easeOut" }}
         className="relative z-10 ysp-card w-full max-w-md"
+        style={{ willChange: 'transform, opacity' }}
       >
         <div className="text-center mb-6">
           <motion.div
-            initial={{ scale: 1, rotate: 0 }} // Start visible immediately!
+            initial={{ scale: 1, rotate: 0 }}
             animate={{ scale: 1, rotate: 0 }}
-            transition={{ duration: 0.6, type: "spring" }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
             className="w-32 h-32 mx-auto mb-4 flex items-center justify-center"
+            style={{ willChange: 'transform, opacity' }}
           >
             <img
               src="https://i.imgur.com/J4wddTW.png" 
@@ -281,11 +283,12 @@ export default function LoginScreen({ onLogin, darkMode, setDarkMode }: LoginScr
             onClick={() => setShowGuestModal(false)}
           >
             <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
+              initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              transition={{ type: "spring", duration: 0.5 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
               className="modal-content max-w-md"
+              style={{ willChange: 'transform, opacity' }}
               onClick={(e: React.MouseEvent) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">

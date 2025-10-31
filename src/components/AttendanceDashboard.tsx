@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Search, ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Input } from './ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
@@ -158,7 +158,9 @@ export default function AttendanceDashboard({ }: AttendanceDashboardProps) {
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.2, ease: 'easeOut' }}
                 className="absolute z-10 w-full mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg max-h-60 overflow-y-auto border border-gray-200 dark:border-gray-700"
+                style={{ willChange: 'transform, opacity' }}
               >
                 {filteredEvents.map((event) => (
                   <button

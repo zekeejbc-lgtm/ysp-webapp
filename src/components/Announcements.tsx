@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Search, Plus, X, Users, Loader2 } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { Label } from './ui/label';
@@ -225,13 +225,19 @@ export default function Announcements({ currentUser }: AnnouncementsProps) {
 
     try {
       setCreating(true);
-      const response = await announcementsAPI.create(requestData);
+      const createPromise = announcementsAPI.create(requestData);
+      await toast.promise(createPromise, {
+        loading: 'Sending announcement…',
+        success: 'Announcement created successfully!',
+        error: 'Failed to create announcement',
+      });
+      const response = await createPromise;
 
       if (response.success) {
-        toast.success('Announcement created successfully!', {
-          description: 'Email notifications have been sent to all recipients'
+        toast.info('Notified recipients', {
+          description: 'Email notifications have been sent to all recipients',
+          duration: 3000,
         });
-        
         // Reset form
         setNewTitle('');
         setNewSubject('');
@@ -241,15 +247,13 @@ export default function Announcements({ currentUser }: AnnouncementsProps) {
         setRecipientSearch('');
         setSelectedUsers([]);
         setShowCreateModal(false);
-        
+
         // Reload announcements
         await loadAnnouncements();
-      } else {
-        toast.error(response.message || 'Failed to create announcement');
       }
     } catch (error) {
       console.error('Error creating announcement:', error);
-      toast.error('Error creating announcement');
+      // toast.promise already surfaced the error; keep console for debugging
     } finally {
       setCreating(false);
     }
@@ -360,7 +364,7 @@ export default function Announcements({ currentUser }: AnnouncementsProps) {
               key={announcement.announcementId}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
+              transition={{ delay: index < 10 ? index * 0.05 : 0, duration: 0.25, ease: 'easeOut' }}
               onClick={() => setSelectedAnnouncement(announcement)}
               className="ysp-card bg-gradient-to-br from-gray-50 to-orange-50/30 dark:from-gray-800 dark:to-gray-700 cursor-pointer hover:shadow-xl transition-all duration-300 border border-orange-100 dark:border-gray-600"
             >
@@ -398,11 +402,12 @@ export default function Announcements({ currentUser }: AnnouncementsProps) {
             onClick={() => setSelectedAnnouncement(null)}
           >
             <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
+              initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              transition={{ type: "spring", duration: 0.5 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
               className="modal-content max-w-2xl"
+              style={{ willChange: 'transform, opacity' }}
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-start justify-between mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
@@ -475,11 +480,12 @@ export default function Announcements({ currentUser }: AnnouncementsProps) {
             onClick={() => setShowCreateModal(false)}
           >
             <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
+              initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              transition={{ type: "spring", duration: 0.5 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
               className="modal-content max-w-2xl"
+              style={{ willChange: 'transform, opacity' }}
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">

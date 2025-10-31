@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Search, Plus, X, MessageCircle, RefreshCw } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { Label } from './ui/label';
@@ -15,7 +15,7 @@ interface FeedbackProps {
   currentUser: any;
 }
 
-export default function Feedback({ darkMode, currentUser }: FeedbackProps) {
+export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackProps) {
   const [feedbackList, setFeedbackList] = useState<FeedbackType[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -82,31 +82,30 @@ export default function Feedback({ darkMode, currentUser }: FeedbackProps) {
 
     try {
       setSubmitting(true);
-      
-      const response = await feedbackAPI.create({
+      const createPromise = feedbackAPI.create({
         message: newMessage.trim(),
         authorName: currentUser?.name || currentUser?.firstName || 'Guest',
         authorIdCode: isGuest ? undefined : (currentUser?.id || currentUser?.idCode),
       });
+      await toast.promise(createPromise, {
+        loading: 'Submitting feedback…',
+        success: 'Feedback submitted successfully',
+        error: 'Failed to submit feedback',
+      });
+      const response = await createPromise;
 
       if (response.success && response.feedback) {
         const newFeedback = Array.isArray(response.feedback) ? response.feedback[0] : response.feedback;
-        
-        toast.success('Feedback submitted successfully', {
-          description: `Reference ID: ${newFeedback.referenceId}`,
-        });
+        toast.info(`Reference: ${newFeedback.referenceId}`, { duration: 3000 });
 
         setNewMessage('');
         setShowCreateModal(false);
-        
         // Refresh feedback list
         await fetchFeedback();
-      } else {
-        toast.error(response.message || 'Failed to submit feedback');
       }
     } catch (error) {
       console.error('Error creating feedback:', error);
-      toast.error('Failed to submit feedback');
+      // Error already surfaced via toast.promise
     } finally {
       setSubmitting(false);
     }
@@ -125,32 +124,31 @@ export default function Feedback({ darkMode, currentUser }: FeedbackProps) {
 
     try {
       setSubmitting(true);
-
-      const response = await feedbackAPI.reply({
+      const replyPromise = feedbackAPI.reply({
         referenceId: selectedFeedback.referenceId,
         reply: replyMessage.trim(),
         replierName: currentUser?.name || currentUser?.firstName || 'Admin',
         replierIdCode: currentUser?.id || currentUser?.idCode || '',
         replierRole: currentUser?.role || 'Admin',
       });
+      await toast.promise(replyPromise, {
+        loading: 'Sending reply…',
+        success: 'Reply sent successfully',
+        error: 'Failed to send reply',
+      });
+      const response = await replyPromise;
 
       if (response.success) {
-        toast.success('Reply sent successfully');
-        
         setReplyMessage('');
         setShowReplyModal(false);
-        
         // Refresh feedback list
         await fetchFeedback();
-        
         // Close the view modal
         setSelectedFeedback(null);
-      } else {
-        toast.error(response.message || 'Failed to send reply');
       }
     } catch (error) {
       console.error('Error replying to feedback:', error);
-      toast.error('Failed to send reply');
+      // Error already surfaced via toast.promise
     } finally {
       setSubmitting(false);
     }
@@ -284,11 +282,12 @@ export default function Feedback({ darkMode, currentUser }: FeedbackProps) {
             onClick={() => setSelectedFeedback(null)}
           >
             <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
+              initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              transition={{ type: "spring", duration: 0.5 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
               className="modal-content max-w-2xl"
+              style={{ willChange: 'transform, opacity' }}
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-start justify-between mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
@@ -385,11 +384,12 @@ export default function Feedback({ darkMode, currentUser }: FeedbackProps) {
             onClick={() => !submitting && setShowCreateModal(false)}
           >
             <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
+              initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              transition={{ type: "spring", duration: 0.5 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
               className="modal-content max-w-2xl"
+              style={{ willChange: 'transform, opacity' }}
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
@@ -458,11 +458,12 @@ export default function Feedback({ darkMode, currentUser }: FeedbackProps) {
             onClick={() => !submitting && setShowReplyModal(false)}
           >
             <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
+              initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              transition={{ type: "spring", duration: 0.5 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
               className="modal-content max-w-2xl"
+              style={{ willChange: 'transform, opacity' }}
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
