@@ -128,7 +128,7 @@ export default function LoginScreen({ onLogin, darkMode, setDarkMode }: LoginScr
 
   return (
     <div 
-      className={`min-h-screen flex items-center justify-center ${darkMode ? 'dark' : ''}`}
+      className={`min-h-screen flex flex-col items-center justify-center p-4 ${darkMode ? 'dark' : ''}`}
       style={{ 
         minHeight: '100vh',
         minHeight: '-webkit-fill-available' // iOS Safari fix
@@ -145,7 +145,8 @@ export default function LoginScreen({ onLogin, darkMode, setDarkMode }: LoginScr
         whileHover={{ scale: 1.1, rotate: 180 }}
         whileTap={{ scale: 0.9 }}
         onClick={() => setDarkMode(!darkMode)}
-        className="absolute top-4 right-4 p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors z-10"
+        className="absolute top-4 right-4 p-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors z-50 shadow-lg"
+        aria-label="Toggle dark mode"
       >
         {darkMode ? <Sun size={24} className="text-yellow-400" /> : <Moon size={24} className="text-gray-700" />}
       </motion.button>
@@ -154,7 +155,7 @@ export default function LoginScreen({ onLogin, darkMode, setDarkMode }: LoginScr
         initial={{ scale: 1, opacity: 1, y: 0 }} // Start visible immediately!
         animate={{ scale: 1, opacity: 1, y: 0 }}
         transition={{ duration: 0.5, type: "spring" }}
-        className="relative z-10 ysp-card max-w-md w-full mx-4"
+        className="relative z-10 ysp-card w-full max-w-md"
       >
         <div className="text-center mb-6">
           <motion.div
