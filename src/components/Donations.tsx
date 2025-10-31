@@ -259,27 +259,28 @@ export default function Donations({ darkMode, currentUser }: DonationsProps) {
   }
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6 pb-8">
-      <div className="ysp-card bg-gradient-to-br from-[#f6421f] to-[#ee8724] text-white">
-      <div className="ysp-card bg-gradient-to-br from-[#f6421f] to-[#ee8724] text-white">
+    <div className="max-w-6xl mx-auto px-4 md:px-6 space-y-8 pb-8">
+      {/* Hero Header */}
+      <div className="ysp-card p-6 md:p-8 bg-gradient-to-br from-[#f6421f] to-[#ee8724] text-white border-none shadow-lg">
+        <div className="flex items-center gap-3 mb-4">
           <Heart size={32} />
-          <h1 className="text-white m-0">Support Our Mission</h1>
+          <h1 className="text-3xl md:text-4xl font-bold text-white m-0 font-['Lexend']">Support Our Mission</h1>
         </div>
-        <p className="text-white/90 text-lg">
+        <p className="text-white/90 text-lg leading-relaxed">
           Your donations help us continue our work in empowering youth and serving our community. 
           Every contribution makes a difference!
         </p>
       </div>
 
       {/* Payment Methods / QR Codes (Visible to everyone) */}
-      <div className="ysp-card">
-        <h2 className="text-[#f6421f] dark:text-[#ee8724] mb-4 flex items-center gap-2">
+      <div className="ysp-card p-6 md:p-8">
+        <h2 className="text-2xl font-bold mb-6 text-[#f6421f] dark:text-[#ee8724] flex items-center gap-2 font-['Lexend']">
           <Heart size={24} />
           Donate via GCash / PayMaya
         </h2>
-        <div className="grid md:grid-cols-2 gap-4">
-          <div className="p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-            <h4 className="font-semibold mb-2">GCash</h4>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50">
+            <h4 className="font-semibold mb-3 text-gray-900 dark:text-white">GCash</h4>
             {settings?.gcash?.qrImageUrl ? (
               <OptimizedImage
                 src={settings.gcash.qrImageUrl}
@@ -296,8 +297,8 @@ export default function Donations({ darkMode, currentUser }: DonationsProps) {
               </p>
             )}
           </div>
-          <div className="p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-            <h4 className="font-semibold mb-2">PayMaya</h4>
+          <div className="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50">
+            <h4 className="font-semibold mb-3 text-gray-900 dark:text-white">PayMaya</h4>
             {settings?.paymaya?.qrImageUrl ? (
               <OptimizedImage
                 src={settings.paymaya.qrImageUrl}
@@ -318,27 +319,27 @@ export default function Donations({ darkMode, currentUser }: DonationsProps) {
       </div>
 
       {/* Active Campaigns */}
-      <div className="ysp-card">
-        <h2 className="text-[#f6421f] dark:text-[#ee8724] mb-4 flex items-center gap-2">
+      <div className="ysp-card p-6 md:p-8">
+        <h2 className="text-2xl font-bold mb-6 text-[#f6421f] dark:text-[#ee8724] flex items-center gap-2 font-['Lexend']">
           <TrendingUp size={24} />
           Active Campaigns
         </h2>
         
-        <div className="grid md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {campaigns.map((campaign) => {
             const progress = (campaign.currentAmount / campaign.targetAmount) * 100;
             
             return (
               <div
                 key={campaign.id}
-                className={`p-4 border-2 rounded-lg transition-all cursor-pointer ${
+                className={`p-5 border-2 rounded-xl transition-all duration-250 cursor-pointer ${
                   selectedCampaign === campaign.name
-                    ? 'border-[#f6421f] bg-orange-50 dark:bg-gray-800'
-                    : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                    ? 'border-[#f6421f] bg-orange-50 dark:bg-gray-800 shadow-md'
+                    : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:shadow-sm'
                 }`}
                 onClick={() => setSelectedCampaign(campaign.name)}
               >
-                <h3 className="text-[#f6421f] dark:text-[#ee8724] text-lg mb-2">{campaign.name}</h3>
+                <h3 className="text-[#f6421f] dark:text-[#ee8724] text-lg font-bold mb-2 font-['Lexend']">{campaign.name}</h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{campaign.description}</p>
                 
                 {/* Progress Bar */}
@@ -373,13 +374,13 @@ export default function Donations({ darkMode, currentUser }: DonationsProps) {
       </div>
 
       {/* Donation Form */}
-      <div className="ysp-card">
-        <h2 className="text-[#f6421f] dark:text-[#ee8724] mb-4 flex items-center gap-2">
+      <div className="ysp-card p-6 md:p-8">
+        <h2 className="text-2xl font-bold mb-6 text-[#f6421f] dark:text-[#ee8724] flex items-center gap-2 font-['Lexend']">
           <DollarSign size={24} />
           Make a Donation
         </h2>
 
-        <div className="grid md:grid-cols-2 gap-4 mb-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <div>
             <Label htmlFor="donorName">Your Name</Label>
             <Input
@@ -497,19 +498,20 @@ export default function Donations({ darkMode, currentUser }: DonationsProps) {
           <p className="text-xs text-gray-500 mt-2">Max size: 10MB. Accepted: JPG/PNG.</p>
         </div>
 
-        <div className="bg-blue-50 dark:bg-gray-800 p-4 rounded-lg mb-4">
-          <p className="text-sm text-gray-700 dark:text-gray-300">
-            <strong>Payment Instructions:</strong><br />
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 p-5 rounded-xl mb-6">
+          <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+            <strong className="text-gray-900 dark:text-white">Payment Instructions:</strong><br />
             • For GCash: Send to 0917-XXX-XXXX (YSP Tagum Chapter)<br />
             • For Bank Transfer: BDO Account #XXXX-XXXX-XXXX<br />
-            • After payment, submit this form with your reference number
+            • After payment, submit this form with your reference number and receipt
           </p>
         </div>
 
         <Button
           onClick={handleSubmitDonation}
           disabled={submitting}
-          className="w-full md:w-auto px-8 py-3 bg-gradient-to-r from-[#f6421f] to-[#ee8724] hover:from-[#ee8724] hover:to-[#fbcb29] text-white"
+          className="w-full md:w-auto px-8 py-3 rounded-lg font-medium text-white transition-all duration-250 hover:-translate-y-0.5 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+          style={{ background: 'linear-gradient(135deg, #f6421f 0%, #ee8724 100%)' }}
         >
           {submitting ? (
             <>
@@ -529,24 +531,24 @@ export default function Donations({ darkMode, currentUser }: DonationsProps) {
       {isAdminOrAuditor && (
         <>
           {/* Admin: Payment Method Settings */}
-          <div className="ysp-card">
-            <h2 className="text-[#f6421f] dark:text-[#ee8724] mb-4">Payment Method Settings</h2>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">Upload or update QR codes for GCash and PayMaya.</p>
-            <div className="grid md:grid-cols-2 gap-4">
+          <div className="ysp-card p-6 md:p-8">
+            <h2 className="text-2xl font-bold mb-2 text-[#f6421f] dark:text-[#ee8724] font-['Lexend']">Payment Method Settings</h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">Upload or update QR codes for GCash and PayMaya.</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {['GCash','PayMaya'].map((method) => (
                 <QrUploadCard key={method} method={method} currentUser={currentUser} settings={settings} setSettings={setSettings} />
               ))}
             </div>
           </div>
 
-          <div className="ysp-card">
-            <h2 className="text-[#f6421f] dark:text-[#ee8724] mb-4 flex items-center gap-2">
+          <div className="ysp-card p-6 md:p-8">
+            <h2 className="text-2xl font-bold mb-6 text-[#f6421f] dark:text-[#ee8724] flex items-center gap-2 font-['Lexend']">
               <Users size={24} />
               Donation Management (Admin/Auditor Only)
             </h2>
 
             {/* Statistics */}
-            <div className="grid md:grid-cols-3 gap-4 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
               <div className="p-4 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-lg">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm text-gray-600 dark:text-gray-400">Total Donations</span>
@@ -579,10 +581,10 @@ export default function Donations({ darkMode, currentUser }: DonationsProps) {
             </div>
 
             {/* Recent Donations Table */}
-            <h3 className="text-lg font-semibold mb-3">Recent Donations</h3>
-            <div className="overflow-x-auto">
+            <h3 className="text-lg font-bold mb-4 text-gray-900 dark:text-white font-['Lexend']">Recent Donations</h3>
+            <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
               <table className="w-full">
-                <thead className="bg-gray-50 dark:bg-gray-800">
+                <thead className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
                   <tr>
                     <th className="px-4 py-2 text-left text-sm font-semibold">ID</th>
                     <th className="px-4 py-2 text-left text-sm font-semibold">Donor</th>
@@ -622,10 +624,10 @@ export default function Donations({ darkMode, currentUser }: DonationsProps) {
       )}
 
       {/* Thank You Message */}
-      <div className="ysp-card bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-800 dark:to-gray-700 border-2 border-blue-200 dark:border-blue-800 text-center">
+      <div className="ysp-card p-8 md:p-10 bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-800 dark:to-gray-700 border-2 border-blue-200 dark:border-blue-800 text-center">
         <Heart size={48} className="mx-auto mb-4 text-[#f6421f]" />
-        <h3 className="text-[#f6421f] dark:text-[#ee8724] mb-3">Thank You for Your Support!</h3>
-        <p className="text-gray-700 dark:text-gray-300 max-w-2xl mx-auto">
+        <h3 className="text-2xl font-bold text-[#f6421f] dark:text-[#ee8724] mb-4 font-['Lexend']">Thank You for Your Support!</h3>
+        <p className="text-gray-700 dark:text-gray-300 max-w-2xl mx-auto leading-relaxed">
           Your generous donations enable us to continue our mission of empowering youth and serving our community. 
           Every contribution, no matter the size, makes a significant impact on the lives we touch.
         </p>
@@ -697,18 +699,23 @@ function QrUploadCard({ method, currentUser, settings, setSettings }: { method: 
 
   const current = settings?.[method.toLowerCase()];
   return (
-    <div className="p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-      <div className="flex items-center justify-between mb-3">
-        <h4 className="font-semibold">{method} QR</h4>
+    <div className="p-5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50">
+      <div className="flex items-center justify-between mb-4">
+        <h4 className="font-semibold text-gray-900 dark:text-white">{method} QR</h4>
         <input ref={inputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleSelect} />
-        <Button onClick={() => inputRef.current?.click()} disabled={uploading} className="flex items-center gap-2">
+        <Button 
+          onClick={() => inputRef.current?.click()} 
+          disabled={uploading} 
+          className="flex items-center gap-2 h-9 px-4 rounded-lg font-medium text-sm text-white transition-all duration-250 hover:shadow-md disabled:opacity-50"
+          style={{ background: uploading ? '#6b7280' : 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)' }}
+        >
           <Upload size={16} /> {uploading ? 'Uploading...' : 'Upload QR'}
         </Button>
       </div>
       {current?.qrImageUrl ? (
-        <OptimizedImage src={current.qrImageUrl} alt={`${method} QR`} className="w-full max-w-xs rounded-lg" />
+        <OptimizedImage src={current.qrImageUrl} alt={`${method} QR`} className="w-full max-w-xs rounded-lg shadow-sm" />
       ) : (
-        <p className="text-sm text-gray-500">No QR uploaded yet.</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">No QR uploaded yet.</p>
       )}
     </div>
   );
