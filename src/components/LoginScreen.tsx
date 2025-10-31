@@ -130,8 +130,8 @@ export default function LoginScreen({ onLogin, darkMode, setDarkMode }: LoginScr
     <div 
       className={`min-h-screen flex flex-col items-center justify-center p-4 ${darkMode ? 'dark' : ''}`}
       style={{ 
-        minHeight: '100vh',
-        minHeight: '-webkit-fill-available' // iOS Safari fix
+        // iOS Safari fix: use fill-available; min-h-screen class provides 100vh fallback
+        minHeight: '-webkit-fill-available'
       }}
     >
       <motion.div

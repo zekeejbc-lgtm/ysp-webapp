@@ -9,14 +9,28 @@ interface SkeletonProps {
   className?: string;
 }
 
-// Base Skeleton component with pulse animation
+// Base Skeleton component with shimmer animation (respects dark mode)
 export function Skeleton({ className = '' }: SkeletonProps) {
   return (
     <div
-      className={`animate-pulse bg-gray-200 dark:bg-gray-700 rounded ${className}`}
+      className={`relative overflow-hidden bg-gray-200 dark:bg-gray-700 rounded ${className}`}
       aria-label="Loading..."
       role="status"
-    />
+    >
+      {/* Shimmer overlay */}
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          backgroundImage:
+            'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.45) 50%, rgba(255,255,255,0) 100%)',
+          // Use darker shimmer in dark mode via CSS variable fallback
+          mixBlendMode: 'overlay',
+          backgroundSize: '1000px 100%',
+          backgroundRepeat: 'no-repeat',
+          animation: 'shimmer 2s infinite',
+        }}
+      />
+    </div>
   );
 }
 
