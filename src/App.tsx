@@ -157,11 +157,11 @@ export default function App() {
     return (
       <>
         <LoginScreen onLogin={handleLogin} darkMode={darkMode} setDarkMode={setDarkMode} />
-        <Toaster position="top-center" />
+        {/* Let Toaster component choose best position per device */}
+        <Toaster />
       </>
     );
   }
-
   const renderPage = () => {
     // Guard against unauthorized currentPage values
     const role = currentUser?.role as string | undefined;
@@ -222,7 +222,8 @@ export default function App() {
             </main>
           </div>
           
-          <Toaster position="top-center" />
+          {/* Let Toaster component choose best position per device */}
+          <Toaster />
         </div>
       </MotionConfig>
     </QueryClientProvider>

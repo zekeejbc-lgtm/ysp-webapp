@@ -161,8 +161,9 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
         animate={{ opacity: 1, y: 0 }}
         className="ysp-card mb-6"
       >
-        <div className="flex items-center justify-between gap-4 mb-6 flex-wrap">
-          <div className="flex-1 min-w-[200px]">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-4 mb-6">
+          {/* Search - full width on mobile */}
+          <div className="w-full md:flex-1 min-w-0">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
               <Input
@@ -174,55 +175,57 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
               />
             </div>
           </div>
-          
-          <div className="flex gap-2 flex-wrap">
-            <Button
-              variant={filterStatus === 'all' ? 'default' : 'outline'}
-              onClick={() => setFilterStatus('all')}
-              size="sm"
-              className={filterStatus === 'all' ? 'bg-[#f6421f]' : ''}
-            >
-              All
-            </Button>
-            <Button
-              variant={filterStatus === 'replied' ? 'default' : 'outline'}
-              onClick={() => setFilterStatus('replied')}
-              size="sm"
-              className={filterStatus === 'replied' ? 'bg-green-500' : ''}
-            >
-              Replied
-            </Button>
-            <Button
-              variant={filterStatus === 'not-replied' ? 'default' : 'outline'}
-              onClick={() => setFilterStatus('not-replied')}
-              size="sm"
-              className={filterStatus === 'not-replied' ? 'bg-gray-500' : ''}
-            >
-              Not Replied
-            </Button>
-          </div>
-
-          <div className="flex gap-2">
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+          {/* Filters + Actions - wrap on mobile */}
+          <div className="flex items-center gap-2 justify-between w-full md:w-auto">
+            <div className="flex gap-2 overflow-x-auto md:overflow-visible py-1 -mx-1 px-1">
               <Button
-                onClick={fetchFeedback}
-                variant="outline"
-                disabled={loading}
+                variant={filterStatus === 'all' ? 'default' : 'outline'}
+                onClick={() => setFilterStatus('all')}
+                size="sm"
+                className={filterStatus === 'all' ? 'bg-[#f6421f]' : ''}
               >
-                <RefreshCw className={`mr-2 ${loading ? 'animate-spin' : ''}`} size={18} />
-                Refresh
+                All
               </Button>
-            </motion.div>
-
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Button
-                onClick={() => setShowCreateModal(true)}
-                className="bg-gradient-to-r from-[#f6421f] to-[#ee8724] hover:from-[#ee8724] hover:to-[#fbcb29] shadow-lg shadow-orange-300/50"
+                variant={filterStatus === 'replied' ? 'default' : 'outline'}
+                onClick={() => setFilterStatus('replied')}
+                size="sm"
+                className={filterStatus === 'replied' ? 'bg-green-500' : ''}
               >
-                <Plus className="mr-2" size={18} />
-                Create
+                Replied
               </Button>
-            </motion.div>
+              <Button
+                variant={filterStatus === 'not-replied' ? 'default' : 'outline'}
+                onClick={() => setFilterStatus('not-replied')}
+                size="sm"
+                className={filterStatus === 'not-replied' ? 'bg-gray-500' : ''}
+              >
+                Not Replied
+              </Button>
+            </div>
+
+            <div className="flex gap-2">
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Button
+                  onClick={fetchFeedback}
+                  variant="outline"
+                  disabled={loading}
+                >
+                  <RefreshCw className={`mr-2 ${loading ? 'animate-spin' : ''}`} size={18} />
+                  Refresh
+                </Button>
+              </motion.div>
+
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Button
+                  onClick={() => setShowCreateModal(true)}
+                  className="bg-gradient-to-r from-[#f6421f] to-[#ee8724] hover:from-[#ee8724] hover:to-[#fbcb29] shadow-lg shadow-orange-300/50"
+                >
+                  <Plus className="mr-2" size={18} />
+                  Create
+                </Button>
+              </motion.div>
+            </div>
           </div>
         </div>
 
