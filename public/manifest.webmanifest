@@ -10,14 +10,50 @@
   "theme_color": "#f6421f",
   "icons": [
     {
+      "src": "/icons/ysp-72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/ysp-96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/ysp-128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/ysp-144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/ysp-152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
       "src": "/icons/ysp-192.png",
-      "sizes": "1059x1149",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/ysp-384.png",
+      "sizes": "384x384",
       "type": "image/png",
       "purpose": "any"
     },
     {
       "src": "/icons/ysp-512.png",
-      "sizes": "1059x1149",
+      "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     }
@@ -28,37 +64,28 @@
       "short_name": "Scanner",
       "description": "Scan QR codes for attendance",
       "url": "/scanner",
-      "icons": [{ "src": "/icons/ysp-192.png", "sizes": "192x192" }]
+      "icons": [{ "src": "/icons/ysp-96.png", "sizes": "96x96", "type": "image/png" }]
     },
     {
       "name": "My Profile",
       "short_name": "Profile",
       "description": "View and edit your profile",
       "url": "/profile",
-      "icons": [{ "src": "/icons/ysp-192.png", "sizes": "192x192" }]
+      "icons": [{ "src": "/icons/ysp-96.png", "sizes": "96x96", "type": "image/png" }]
     },
     {
       "name": "Announcements",
       "short_name": "News",
       "description": "View latest announcements",
       "url": "/announcements",
-      "icons": [{ "src": "/icons/ysp-192.png", "sizes": "192x192" }]
+      "icons": [{ "src": "/icons/ysp-96.png", "sizes": "96x96", "type": "image/png" }]
     },
     {
       "name": "Events",
       "short_name": "Events",
       "description": "Manage attendance events",
       "url": "/events",
-      "icons": [{ "src": "/icons/ysp-192.png", "sizes": "192x192" }]
-    }
-  ],
-  "screenshots": [
-    {
-      "src": "/icons/ysp-512.png",
-      "sizes": "1059x1149",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Youth Service Philippines - Tagum Chapter"
+      "icons": [{ "src": "/icons/ysp-96.png", "sizes": "96x96", "type": "image/png" }]
     }
   ]
 }

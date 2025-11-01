@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { KeyboardEvent as ReactKeyboardEvent, ChangeEvent } from 'react';
-import { Sun, Moon, LogIn, Eye, EyeOff, UserPlus, X } from 'lucide-react';
+import { Sun, Moon, LogIn, Eye, EyeOff, UserPlus, X, Download } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { Button } from './ui/button';
@@ -24,6 +24,8 @@ export default function LoginScreen({ onLogin, darkMode, setDarkMode }: LoginScr
   const [guestName, setGuestName] = useState('');
 
   const [isLoading, setIsLoading] = useState(false);
+    const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+    const [showInstallButton, setShowInstallButton] = useState(false);
 
   // Mobile debugging - logs viewport info
   useState(() => {
@@ -36,6 +38,40 @@ export default function LoginScreen({ onLogin, darkMode, setDarkMode }: LoginScr
     console.log('User agent:', navigator.userAgent);
     console.log('Dark mode:', darkMode);
   });
+
+    // Listen for PWA install prompt
+    useEffect(() => {
+      const handler = (e: Event) => {
+        e.preventDefault();
+        setDeferredPrompt(e);
+        setShowInstallButton(true);
+      };
+
+      window.addEventListener('beforeinstallprompt', handler);
+
+      // Check if already installed
+      if (window.matchMedia('(display-mode: standalone)').matches) {
+        setShowInstallButton(false);
+      }
+
+      return () => window.removeEventListener('beforeinstallprompt', handler);
+    }, []);
+
+    const handleInstallClick = async () => {
+      if (!deferredPrompt) return;
+
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+
+      if (outcome === 'accepted') {
+        toast.success('App installed!', {
+          description: 'Youth Service Philippines has been added to your home screen'
+        });
+      }
+
+      setDeferredPrompt(null);
+      setShowInstallButton(false);
+    };
 
   const handleLogin = async () => {
     if (!username || !password) {
@@ -150,6 +186,22 @@ export default function LoginScreen({ onLogin, darkMode, setDarkMode }: LoginScr
       >
         {darkMode ? <Sun size={24} className="text-yellow-400" /> : <Moon size={24} className="text-gray-700" />}
       </motion.button>
+
+        {/* PWA Install Button */}
+        {showInstallButton && (
+          <motion.button
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={handleInstallClick}
+            className="absolute top-4 right-20 p-3 bg-gradient-to-r from-[#f6421f] to-[#ee8724] hover:from-[#ee8724] hover:to-[#fbcb29] text-white rounded-lg transition-all z-50 shadow-lg"
+            aria-label="Install app"
+          >
+            <Download size={24} />
+          </motion.button>
+        )}
 
       <motion.div
         initial={{ scale: 1, opacity: 1, y: 0 }}
