@@ -34,37 +34,69 @@ const API_CONFIG = {
  * All requests go through this function
  */
 async function apiRequest<T = any>(action: string, data: Record<string, any> = {}): Promise<T> {
-  try {
-    const requestBody = {
-      action,
-      ...data,
-    };
-    
-    console.log(`[API] Request [${action}]:`, requestBody);
-    
-    const response = await fetch(API_CONFIG.baseURL, {
-      method: 'POST',
-      mode: 'cors',
-      credentials: 'omit',
-      headers: {
-        'Content-Type': 'application/json',
-        'Origin': window.location.origin,
-      },
-      body: JSON.stringify(requestBody),
-    });
+  const requestBody = { action, ...data };
 
-    console.log(`[API] Response status [${action}]:`, response.status);
+  // Small helper: fetch with timeout + retry + better error messages
+  const fetchWithRetry = async (attempt = 1): Promise<Response> => {
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), Math.min(API_CONFIG.timeout || 30000, 30000));
+
+    try {
+      const res = await fetch(API_CONFIG.baseURL, {
+        method: 'POST',
+        mode: 'cors',
+        credentials: 'omit',
+        headers: {
+          'Content-Type': 'application/json',
+          'Origin': window.location.origin,
+        },
+        body: JSON.stringify(requestBody),
+        signal: controller.signal,
+      });
+      window.clearTimeout(timeout);
+
+      // Retry on transient statuses
+      if ([429, 502, 503, 504].includes(res.status) && attempt < 3) {
+        const backoff = 500 * Math.pow(2, attempt - 1);
+        await new Promise((r) => setTimeout(r, backoff));
+        return fetchWithRetry(attempt + 1);
+      }
+      return res;
+    } catch (err: any) {
+      window.clearTimeout(timeout);
+      // Retry on abort/network errors
+      if (attempt < 3 && (err?.name === 'AbortError' || String(err).includes('TypeError'))) {
+        const backoff = 500 * Math.pow(2, attempt - 1);
+        await new Promise((r) => setTimeout(r, backoff));
+        return fetchWithRetry(attempt + 1);
+      }
+      throw err;
+    }
+  };
+
+  try {
+    const response = await fetchWithRetry();
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const text = await response.text().catch(() => '');
+      const lower = text.toLowerCase();
+      let friendly = `Request failed (HTTP ${response.status})`;
+      if (lower.includes('service invoked too many times') || response.status === 429) {
+        friendly = 'Server is busy (quota/rate limit). Please try again shortly.';
+      } else if (lower.includes('exceeded maximum execution time')) {
+        friendly = 'Server timed out processing your request. Please try again.';
+      } else if (response.status >= 500) {
+        friendly = 'Server error while processing your request. Please try again.';
+      }
+      throw new Error(friendly);
     }
 
     const result = await response.json();
-    console.log(`[API] Response data [${action}]:`, result);
     return result;
   } catch (error) {
-    console.error(`API Request Error [${action}]:`, error);
-    throw error;
+    // Surface clearer message to UI
+    const msg = error instanceof Error ? error.message : 'Network error. Please check your internet connection.';
+    throw new Error(msg);
   }
 }
 

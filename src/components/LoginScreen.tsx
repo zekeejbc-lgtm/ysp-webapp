@@ -110,8 +110,9 @@ export default function LoginScreen({ onLogin, darkMode, setDarkMode }: LoginScr
         });
       }
     } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unable to connect to server. Please try again later.';
       toast.error('Login failed', {
-        description: 'Unable to connect to server. Please try again later.'
+        description: message
       });
       console.error('Login error:', error);
     } finally {

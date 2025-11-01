@@ -5,7 +5,8 @@ const CORE_ASSETS = [
   '/',
   '/index.html',
   '/manifest.webmanifest',
-  '/icons/icon.svg',
+  '/icons/ysp-72.png',
+  '/icons/ysp-96.png',
   '/icons/ysp-192.png',
   '/icons/ysp-512.png',
   '/offline.html'
