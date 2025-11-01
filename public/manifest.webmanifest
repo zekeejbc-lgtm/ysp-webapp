@@ -27,5 +27,44 @@
       "type": "image/svg+xml",
       "purpose": "any maskable"
     }
+  ],
+  "shortcuts": [
+    {
+      "name": "QR Scanner",
+      "short_name": "Scanner",
+      "description": "Scan QR codes for attendance",
+      "url": "/scanner",
+      "icons": [{ "src": "/icons/ysp-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "My Profile",
+      "short_name": "Profile",
+      "description": "View and edit your profile",
+      "url": "/profile",
+      "icons": [{ "src": "/icons/ysp-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Announcements",
+      "short_name": "News",
+      "description": "View latest announcements",
+      "url": "/announcements",
+      "icons": [{ "src": "/icons/ysp-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Events",
+      "short_name": "Events",
+      "description": "Manage attendance events",
+      "url": "/events",
+      "icons": [{ "src": "/icons/ysp-192.png", "sizes": "192x192" }]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/icons/ysp-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Youth Service Philippines - Tagum Chapter"
+    }
   ]
 }

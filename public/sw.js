@@ -95,3 +95,120 @@ self.addEventListener('message', (event) => {
     self.skipWaiting();
   }
 });
+
+// Push notification handler
+self.addEventListener('push', (event) => {
+  if (!event.data) return;
+  
+  try {
+    const data = event.data.json();
+    const options = {
+      body: data.body || 'You have a new notification',
+      icon: '/icons/ysp-192.png',
+      badge: '/icons/ysp-192.png',
+      vibrate: [200, 100, 200],
+      data: {
+        url: data.url || '/',
+        dateOfArrival: Date.now()
+      },
+      actions: [
+        { action: 'open', title: 'Open App' },
+        { action: 'close', title: 'Close' }
+      ],
+      tag: data.tag || 'ysp-notification',
+      requireInteraction: false
+    };
+    
+    event.waitUntil(
+      self.registration.showNotification(data.title || 'YSP Notification', options)
+    );
+  } catch (error) {
+    console.error('Push notification error:', error);
+  }
+});
+
+// Notification click handler
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  
+  if (event.action === 'close') return;
+  
+  const urlToOpen = event.notification.data?.url || '/';
+  
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      // Check if there's already a window open
+      for (const client of clientList) {
+        if (client.url === urlToOpen && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      // Open a new window if none exists
+      if (clients.openWindow) {
+        return clients.openWindow(urlToOpen);
+      }
+    })
+  );
+});
+
+// Background sync for offline form submissions
+self.addEventListener('sync', (event) => {
+  if (event.tag === 'sync-attendance') {
+    event.waitUntil(syncAttendance());
+  } else if (event.tag === 'sync-feedback') {
+    event.waitUntil(syncFeedback());
+  } else if (event.tag === 'sync-forms') {
+    event.waitUntil(syncAllForms());
+  }
+});
+
+async function syncAttendance() {
+  try {
+    const cache = await caches.open('ysp-pending-sync');
+    const requests = await cache.keys();
+    const attendanceRequests = requests.filter(req => req.url.includes('attendance'));
+    
+    for (const request of attendanceRequests) {
+      try {
+        const response = await fetch(request.clone());
+        if (response.ok) {
+          await cache.delete(request);
+        }
+      } catch (error) {
+        console.error('Sync attendance failed:', error);
+      }
+    }
+  } catch (error) {
+    console.error('Background sync error:', error);
+    throw error; // Retry sync
+  }
+}
+
+async function syncFeedback() {
+  try {
+    const cache = await caches.open('ysp-pending-sync');
+    const requests = await cache.keys();
+    const feedbackRequests = requests.filter(req => req.url.includes('feedback'));
+    
+    for (const request of feedbackRequests) {
+      try {
+        const response = await fetch(request.clone());
+        if (response.ok) {
+          await cache.delete(request);
+        }
+      } catch (error) {
+        console.error('Sync feedback failed:', error);
+      }
+    }
+  } catch (error) {
+    console.error('Background sync error:', error);
+    throw error;
+  }
+}
+
+async function syncAllForms() {
+  await Promise.allSettled([
+    syncAttendance(),
+    syncFeedback()
+  ]);
+}

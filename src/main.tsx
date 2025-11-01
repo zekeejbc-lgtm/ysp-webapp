@@ -14,7 +14,7 @@ window.addEventListener('unhandledrejection', (event) => {
   console.error('Unhandled promise rejection:', event.reason);
 });
 
-// Register service worker for better cache management
+// Register service worker for better cache management and PWA features
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker
@@ -40,6 +40,20 @@ if ('serviceWorker' in navigator) {
               }
             });
           }
+        });
+
+        // Initialize PWA features after service worker is ready
+        navigator.serviceWorker.ready.then(() => {
+          // Push notifications are available
+          console.log('PWA features ready: Push notifications and background sync available');
+          
+          // You can access push notifications via:
+          // import { pushNotifications } from './utils/pushNotifications';
+          // pushNotifications.requestPermission();
+          
+          // And background sync via:
+          // import { backgroundSync } from './utils/backgroundSync';
+          // backgroundSync.queueAttendance(data);
         });
       })
       .catch((err) => {
