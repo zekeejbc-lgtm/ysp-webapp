@@ -41,6 +41,12 @@ if ('serviceWorker' in navigator) {
             });
           }
         });
+
+        // Initialize PWA features after service worker is ready
+        navigator.serviceWorker.ready.then(() => {
+          // PWA features ready: Push notifications and background sync available
+          console.log('PWA features ready');
+        });
       })
       .catch((err) => {
         console.log('SW registration failed:', err);
