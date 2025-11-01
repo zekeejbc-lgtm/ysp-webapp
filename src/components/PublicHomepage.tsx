@@ -237,53 +237,51 @@ export default function PublicHomepage({ darkMode, onLoginClick }: PublicHomepag
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white via-orange-50 to-orange-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-4 md:p-8">
-      <div className="max-w-6xl mx-auto space-y-6 pb-8">
-        
-        {/* Hero Section with CTA Buttons */}
+    <div className={`min-h-screen bg-gradient-to-br from-white via-orange-50 to-orange-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-4 md:p-8 font-['Lexend']`}>
+      <div className="max-w-6xl mx-auto space-y-8 pb-8">
+        {/* Hero Section with CTA Buttons - Figma/Imgur reference */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="ysp-card text-center"
+          className="ysp-card text-center p-8 md:p-12 shadow-xl rounded-xl bg-gradient-to-br from-[#fff7f0] via-[#fff] to-[#ffe5d0] dark:from-gray-900 dark:via-gray-800 dark:to-gray-900"
         >
           <div className="flex justify-center mb-6">
             <img 
               src="https://i.imgur.com/J4wddTW.png" 
               alt="YSP Logo" 
-              className="w-32 h-32 object-contain"
+              className="w-32 h-32 object-contain rounded-full border-4 border-white shadow-lg"
+              style={{ boxShadow: '0 0 0 8px rgba(246,66,31,0.10)' }}
             />
           </div>
-          <h1 className="text-[#f6421f] dark:text-[#ee8724] mb-4">
-            Youth Service Philippines
+          <h1 className="text-4xl md:text-5xl font-bold text-[#f6421f] dark:text-[#ee8724] mb-2 font-['Lexend']" style={{letterSpacing: '-1px'}}>
+            Welcome to Youth Service Philippines
           </h1>
-          <p className="text-xl text-gray-700 dark:text-gray-300 mb-6">
+          <h2 className="text-2xl md:text-3xl font-semibold text-[#ee8724] dark:text-[#fbcb29] mb-4 font-['Lexend']">
             Tagum Chapter
+          </h2>
+          <p className="text-lg md:text-xl text-gray-700 dark:text-gray-300 mb-8 max-w-2xl mx-auto font-['Roboto']">
+            Empowering youth to serve communities and build a better future for all Filipinos
           </p>
-          <p className="text-gray-600 dark:text-gray-400 mb-8 max-w-2xl mx-auto">
-            Empowering youth through service, leadership, and community engagement
-          </p>
-          
           {/* Call to Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Button
                 onClick={onLoginClick}
-                className="w-full sm:w-auto px-8 py-6 text-lg bg-gradient-to-r from-[#f6421f] to-[#ee8724] hover:from-[#ee8724] hover:to-[#fbcb29] text-white shadow-lg shadow-orange-300/50"
+                className="w-full sm:w-auto px-8 py-4 text-lg font-semibold rounded-lg bg-gradient-to-r from-[#f6421f] to-[#ee8724] hover:from-[#ee8724] hover:to-[#fbcb29] text-white shadow-lg shadow-orange-300/50 transition-all duration-200"
               >
                 <LogIn className="mr-2" size={20} />
-                Login
+                Log In
               </Button>
             </motion.div>
-            
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Button
                 onClick={() => window.open(MEMBERSHIP_FORM_URL, '_blank')}
                 variant="outline"
-                className="w-full sm:w-auto px-8 py-6 text-lg border-2 border-[#f6421f] text-[#f6421f] hover:bg-orange-50 dark:hover:bg-gray-800"
+                className="w-full sm:w-auto px-8 py-4 text-lg font-semibold rounded-lg border-2 border-[#f6421f] text-[#f6421f] hover:bg-orange-50 dark:hover:bg-gray-800 transition-all duration-200"
               >
                 <UserPlus className="mr-2" size={20} />
-                Be a Member
+                Be a Member!
               </Button>
             </motion.div>
           </div>
@@ -294,10 +292,10 @@ export default function PublicHomepage({ darkMode, onLoginClick }: PublicHomepag
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.1 }}
-          className="ysp-card"
+          className="ysp-card p-8 md:p-10 rounded-xl shadow-lg bg-white dark:bg-gray-900"
         >
-          <h2 className="text-[#f6421f] dark:text-[#ee8724] mb-4">About Youth Service Philippines</h2>
-          <p className="text-justify mb-4">{content.about}</p>
+          <h2 className="text-2xl md:text-3xl font-bold text-[#f6421f] dark:text-[#ee8724] mb-4 font-['Lexend']">About Youth Service Philippines</h2>
+          <p className="text-lg text-gray-700 dark:text-gray-300 text-justify mb-4 font-['Roboto']">{content.about}</p>
         </motion.div>
 
         {/* Mission & Vision */}
@@ -307,14 +305,14 @@ export default function PublicHomepage({ darkMode, onLoginClick }: PublicHomepag
           transition={{ duration: 0.6, delay: 0.2 }}
           className="grid md:grid-cols-2 gap-6"
         >
-          <div className="ysp-card">
-            <h3 className="text-[#f6421f] dark:text-[#ee8724] mb-3">Mission</h3>
-            <p className="text-justify">{content.mission}</p>
+          <div className="ysp-card p-8 rounded-xl shadow-lg bg-white dark:bg-gray-900">
+            <h3 className="text-xl md:text-2xl font-bold text-[#f6421f] dark:text-[#ee8724] mb-3 font-['Lexend']">Mission</h3>
+            <p className="text-lg text-gray-700 dark:text-gray-300 text-justify font-['Roboto']">{content.mission}</p>
           </div>
 
-          <div className="ysp-card">
-            <h3 className="text-[#f6421f] dark:text-[#ee8724] mb-3">Vision</h3>
-            <p className="text-justify">{content.vision}</p>
+          <div className="ysp-card p-8 rounded-xl shadow-lg bg-white dark:bg-gray-900">
+            <h3 className="text-xl md:text-2xl font-bold text-[#f6421f] dark:text-[#ee8724] mb-3 font-['Lexend']">Vision</h3>
+            <p className="text-lg text-gray-700 dark:text-gray-300 text-justify font-['Roboto']">{content.vision}</p>
           </div>
         </motion.div>
 
@@ -323,10 +321,10 @@ export default function PublicHomepage({ darkMode, onLoginClick }: PublicHomepag
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.3 }}
-          className="ysp-card"
+          className="ysp-card p-8 rounded-xl shadow-lg bg-white dark:bg-gray-900"
         >
-          <h3 className="text-[#f6421f] dark:text-[#ee8724] mb-3">Section 3. YSP shall be guided by the following advocacy pillars:</h3>
-          <div className="text-justify whitespace-pre-wrap leading-relaxed">
+          <h3 className="text-xl md:text-2xl font-bold text-[#f6421f] dark:text-[#ee8724] mb-3 font-['Lexend']">Section 3. YSP shall be guided by the following advocacy pillars:</h3>
+          <div className="text-lg text-gray-700 dark:text-gray-300 text-justify whitespace-pre-wrap leading-relaxed font-['Roboto']">
             {content.objectives.map((objective, index) => (
               <p key={index}>{objective}</p>
             ))}
@@ -338,9 +336,9 @@ export default function PublicHomepage({ darkMode, onLoginClick }: PublicHomepag
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.4 }}
-          className="ysp-card"
+          className="ysp-card p-8 rounded-xl shadow-lg bg-white dark:bg-gray-900"
         >
-          <h3 className="text-[#f6421f] dark:text-[#ee8724] mb-3">Organizational Chart</h3>
+          <h3 className="text-xl md:text-2xl font-bold text-[#f6421f] dark:text-[#ee8724] mb-3 font-['Lexend']">Organizational Chart</h3>
           <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
             {content.orgChartUrl ? (
               <OptimizedImage
@@ -363,17 +361,17 @@ export default function PublicHomepage({ darkMode, onLoginClick }: PublicHomepag
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.5 }}
-          className="ysp-card"
+          className="ysp-card p-8 rounded-xl shadow-lg bg-white dark:bg-gray-900"
         >
-          <h3 className="text-[#f6421f] dark:text-[#ee8724] mb-3">Founder</h3>
-          <p className="mb-3">{content.founderName}</p>
+          <h3 className="text-xl md:text-2xl font-bold text-[#f6421f] dark:text-[#ee8724] mb-3 font-['Lexend']">Founder</h3>
+          <p className="mb-3 text-lg text-gray-700 dark:text-gray-300 font-['Roboto']">{content.founderName}</p>
           <div className="flex gap-3">
             {content.email && (
               <a
                 href={`https://mail.google.com/mail/?view=cm&fs=1&to=${content.email}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#f6421f] to-[#ee8724] text-white rounded-lg hover:from-[#ee8724] hover:to-[#fbcb29] transition-all shadow-lg shadow-orange-300/50"
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#f6421f] to-[#ee8724] text-white rounded-lg hover:from-[#ee8724] hover:to-[#fbcb29] transition-all shadow-lg shadow-orange-300/50 text-base font-semibold"
               >
                 <Mail size={18} />
                 Email
@@ -384,7 +382,7 @@ export default function PublicHomepage({ darkMode, onLoginClick }: PublicHomepag
                 href={content.facebookUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-lg"
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-lg text-base font-semibold"
               >
                 <Facebook size={18} />
                 Facebook
@@ -398,16 +396,16 @@ export default function PublicHomepage({ darkMode, onLoginClick }: PublicHomepag
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.6 }}
-          className="ysp-card"
+          className="ysp-card p-8 rounded-xl shadow-lg bg-white dark:bg-gray-900"
         >
-          <h3 className="text-[#f6421f] dark:text-[#ee8724] mb-4">Projects Implemented</h3>
+          <h3 className="text-xl md:text-2xl font-bold text-[#f6421f] dark:text-[#ee8724] mb-4 font-['Lexend']">Projects Implemented</h3>
 
           {content.projects.length > 0 ? (
-            <div ref={gridRef} className="grid md:grid-cols-2 gap-4">
+            <div ref={gridRef} className="grid md:grid-cols-2 gap-6">
               {content.projects.map((project, index) => (
                 <div
                   key={index}
-                  className="rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer"
+                  className="rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer bg-white dark:bg-gray-800"
                   onClick={() => setSelectedProject(project)}
                 >
                   <OptimizedImage
@@ -417,9 +415,9 @@ export default function PublicHomepage({ darkMode, onLoginClick }: PublicHomepag
                     fallbackSrc="https://via.placeholder.com/400x300?text=Project+Image"
                     loading="lazy"
                   />
-                  <div className="p-4 bg-white dark:bg-gray-800">
-                    <h4 className="text-[#f6421f] dark:text-[#ee8724] mb-2">{project.title}</h4>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 whitespace-pre-wrap">{project.description}</p>
+                  <div className="p-4">
+                    <h4 className="text-lg font-bold text-[#f6421f] dark:text-[#ee8724] mb-2 font-['Lexend']">{project.title}</h4>
+                    <p className="text-base text-gray-600 dark:text-gray-400 line-clamp-2 whitespace-pre-wrap font-['Roboto']">{project.description}</p>
                   </div>
                 </div>
               ))}
@@ -434,15 +432,15 @@ export default function PublicHomepage({ darkMode, onLoginClick }: PublicHomepag
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.7 }}
-          className="ysp-card bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-800 dark:to-gray-700 border-2 border-blue-200 dark:border-blue-800"
+          className="ysp-card p-8 rounded-xl shadow-lg bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-800 dark:to-gray-700 border-2 border-blue-200 dark:border-blue-800"
         >
-          <h3 className="text-[#f6421f] dark:text-[#ee8724] mb-4">Developer Info</h3>
+          <h3 className="text-xl md:text-2xl font-bold text-[#f6421f] dark:text-[#ee8724] mb-4 font-['Lexend']">Developer Info</h3>
           <div className="space-y-2">
-            <p className="font-semibold text-lg">Ezequiel John B. Crisostomo</p>
-            <p className="text-gray-700 dark:text-gray-300">Membership and Internal Affairs Officer</p>
-            <p className="text-gray-700 dark:text-gray-300">Youth Service Philippines - Tagum Chapter</p>
+            <p className="font-semibold text-lg font-['Lexend']">Ezequiel John B. Crisostomo</p>
+            <p className="text-gray-700 dark:text-gray-300 font-['Roboto']">Membership and Internal Affairs Officer</p>
+            <p className="text-gray-700 dark:text-gray-300 font-['Roboto']">Youth Service Philippines - Tagum Chapter</p>
             <div className="mt-4 pt-4 border-t border-gray-300 dark:border-gray-600">
-              <p className="text-sm text-gray-600 dark:text-gray-400 text-justify leading-relaxed">
+              <p className="text-sm text-gray-600 dark:text-gray-400 text-justify leading-relaxed font-['Roboto']">
                 Should you encounter any issues, errors, or technical difficulties while using this Web App, please do not hesitate to reach out to us. You may contact our support team through our official{' '}
                 <a 
                   href={content.facebookUrl || 'https://www.facebook.com/YSPTagumChapter'}

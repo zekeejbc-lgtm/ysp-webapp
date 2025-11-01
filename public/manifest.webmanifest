@@ -1,0 +1,19 @@
+{
+  "name": "Youth Service Philippines",
+  "short_name": "YSP",
+  "description": "Youth Service Philippines - Tagum Chapter Web App",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#ffffff",
+  "theme_color": "#f6421f",
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
