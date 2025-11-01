@@ -11,15 +11,15 @@
   "icons": [
     {
       "src": "/icons/ysp-192.png",
-      "sizes": "1059x1149",
+      "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
       "src": "/icons/ysp-512.png",
-      "sizes": "1059x1149",
+      "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     }
   ],
   "shortcuts": [
@@ -55,7 +55,7 @@
   "screenshots": [
     {
       "src": "/icons/ysp-512.png",
-      "sizes": "1059x1149",
+      "sizes": "512x512",
       "type": "image/png",
       "form_factor": "narrow",
       "label": "Youth Service Philippines - Tagum Chapter"
