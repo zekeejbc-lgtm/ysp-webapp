@@ -187,22 +187,6 @@ export default function LoginScreen({ onLogin, darkMode, setDarkMode }: LoginScr
         {darkMode ? <Sun size={24} className="text-yellow-400" /> : <Moon size={24} className="text-gray-700" />}
       </motion.button>
 
-        {/* PWA Install Button */}
-        {showInstallButton && (
-          <motion.button
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            onClick={handleInstallClick}
-            className="absolute top-4 right-20 p-3 bg-gradient-to-r from-[#f6421f] to-[#ee8724] hover:from-[#ee8724] hover:to-[#fbcb29] text-white rounded-lg transition-all z-50 shadow-lg"
-            aria-label="Install app"
-          >
-            <Download size={24} />
-          </motion.button>
-        )}
-
       <motion.div
         initial={{ scale: 1, opacity: 1, y: 0 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
@@ -319,6 +303,28 @@ export default function LoginScreen({ onLogin, darkMode, setDarkMode }: LoginScr
               Log in as Guest
             </Button>
           </motion.div>
+
+          {/* PWA Install Button */}
+          <AnimatePresence>
+            {showInstallButton && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.3 }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <Button
+                  onClick={handleInstallClick}
+                  className="w-full bg-gradient-to-r from-[#4CAF50] to-[#45a049] hover:from-[#45a049] hover:to-[#3d8b40] text-white shadow-lg shadow-green-300/50"
+                >
+                  <Download className="mr-2" size={18} />
+                  Install YSP App
+                </Button>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
 
 
