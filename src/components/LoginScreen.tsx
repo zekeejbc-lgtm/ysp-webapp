@@ -317,7 +317,7 @@ export default function LoginScreen({ onLogin, darkMode, setDarkMode }: LoginScr
               >
                 <Button
                   onClick={handleInstallClick}
-                  className="w-full bg-gradient-to-r from-[#4CAF50] to-[#45a049] hover:from-[#45a049] hover:to-[#3d8b40] text-white shadow-lg shadow-green-300/50"
+                    className="w-full bg-gradient-to-r from-[#2196F3] to-[#1976D2] hover:from-[#1976D2] hover:to-[#0D47A1] text-white font-semibold shadow-lg shadow-blue-500/50 dark:shadow-blue-400/30 border-2 border-blue-600 dark:border-blue-400"
                 >
                   <Download className="mr-2" size={18} />
                   Install YSP App

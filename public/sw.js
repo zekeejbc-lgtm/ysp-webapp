@@ -36,6 +36,22 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
   
+  // Handle share target
+  if (url.pathname === '/share' && event.request.method === 'POST') {
+    event.respondWith(
+      (async () => {
+        const formData = await event.request.formData();
+        const title = formData.get('title') || '';
+        const text = formData.get('text') || '';
+        const shareUrl = formData.get('url') || '';
+        
+        // Redirect to app with shared data
+        return Response.redirect(`/?share=${encodeURIComponent(JSON.stringify({ title, text, url: shareUrl }))}`, 303);
+      })()
+    );
+    return;
+  }
+  
   // For HTML files, always fetch from network
   if (event.request.destination === 'document' || url.pathname.endsWith('.html')) {
     event.respondWith(
@@ -212,3 +228,11 @@ async function syncAllForms() {
     syncFeedback()
   ]);
 }
+
+// Periodic Background Sync
+self.addEventListener('periodicsync', (event) => {
+  if (event.tag === 'sync-data') {
+    event.waitUntil(syncAllForms());
+  }
+});
+

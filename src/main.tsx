@@ -3,6 +3,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import { pushNotifications } from "./utils/pushNotifications";
 import "./index.css";
 
 // Add error handler for unhandled errors
@@ -46,6 +47,22 @@ if ('serviceWorker' in navigator) {
         navigator.serviceWorker.ready.then(() => {
           // PWA features ready: Push notifications and background sync available
           console.log('PWA features ready');
+          
+          // Register periodic background sync (if supported)
+          if ('periodicSync' in registration) {
+            registration.periodicSync.register('sync-data', {
+              minInterval: 24 * 60 * 60 * 1000, // 24 hours
+            }).then(() => {
+              console.log('Periodic background sync registered');
+            }).catch((err: Error) => {
+              console.log('Periodic sync registration failed:', err);
+            });
+          }
+          
+          // Initialize push notifications (don't auto-subscribe, let user decide)
+          if (pushNotifications.isSupported()) {
+            console.log('Push notifications supported');
+          }
         });
       })
       .catch((err) => {

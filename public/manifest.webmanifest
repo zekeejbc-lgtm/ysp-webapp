@@ -1,13 +1,19 @@
 {
   "name": "Youth Service Philippines",
   "short_name": "YSP",
+  "id": "/",
   "description": "Youth Service Philippines - Tagum Chapter Web App",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
   "orientation": "portrait-primary",
   "background_color": "#ffffff",
   "theme_color": "#f6421f",
+  "categories": ["productivity", "social", "education"],
+  "iarc_rating_id": "e84b072d-71b3-4d3e-86ae-31a8ce4e53b7",
+  "lang": "en-US",
+  "dir": "ltr",
   "icons": [
     {
       "src": "/icons/ysp-72.png",
@@ -87,5 +93,33 @@
       "url": "/events",
       "icons": [{ "src": "/icons/ysp-96.png", "sizes": "96x96", "type": "image/png" }]
     }
-  ]
+    ],
+    "screenshots": [
+      {
+        "src": "/icons/ysp-512.png",
+        "sizes": "512x512",
+        "type": "image/png",
+        "form_factor": "wide",
+        "label": "YSP App Dashboard"
+      }
+    ],
+    "launch_handler": {
+      "client_mode": "navigate-existing"
+    },
+    "share_target": {
+      "action": "/share",
+      "method": "POST",
+      "enctype": "multipart/form-data",
+      "params": {
+        "title": "title",
+        "text": "text",
+        "url": "url"
+      }
+    },
+    "protocol_handlers": [
+      {
+        "protocol": "web+ysp",
+        "url": "/?action=%s"
+      }
+    ]
 }
