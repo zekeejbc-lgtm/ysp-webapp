@@ -1,11 +1,14 @@
 // Service Worker for cache management
-const CACHE_VERSION = 'v1.1.0';
+const CACHE_VERSION = 'v1.2.0';
 const CACHE_NAME = `ysp-webapp-${CACHE_VERSION}`;
 const CORE_ASSETS = [
   '/',
   '/index.html',
   '/manifest.webmanifest',
-  '/icons/icon.svg'
+  '/icons/icon.svg',
+  '/icons/ysp-192.png',
+  '/icons/ysp-512.png',
+  '/offline.html'
 ];
 
 // Clean up old caches on activation
@@ -41,8 +44,10 @@ self.addEventListener('fetch', (event) => {
           return response;
         })
         .catch(() => {
-          // Fallback to cache if offline
-          return caches.match(event.request);
+          // Fallback to cache if offline, or show offline page
+          return caches.match(event.request).then((cached) => {
+            return cached || caches.match('/offline.html');
+          });
         })
     );
     return;
