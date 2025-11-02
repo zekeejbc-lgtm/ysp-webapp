@@ -11,7 +11,6 @@ import { feedbackAPI, type Feedback as FeedbackType } from '../services/api';
 import { CardSkeleton } from './ui/skeletons';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Switch } from './ui/switch';
-import { Checkbox } from './ui/checkbox';
 
 interface FeedbackProps {
   darkMode: boolean;
@@ -481,50 +480,78 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
                   />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label>Category</Label>
-                    <Select value={newCategory} onValueChange={(v: string) => setNewCategory(v)} disabled={submitting}>
-                      <SelectTrigger className="mt-2"><SelectValue placeholder="Select category" /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Complaint">Complaint</SelectItem>
-                        <SelectItem value="Suggestion">Suggestion</SelectItem>
-                        <SelectItem value="Bug">Bug</SelectItem>
-                        <SelectItem value="Compliment">Compliment</SelectItem>
-                        <SelectItem value="Inquiry">Inquiry</SelectItem>
-                        <SelectItem value="Other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  {canReply && (
-                    <div className="flex items-end gap-3">
-                      <div className="flex items-center gap-2">
-                        <Switch id="visibility" checked={newVisibility === 'Public'} onCheckedChange={(c)=> setNewVisibility(c ? 'Public' : 'Private')} disabled={submitting} />
-                        <Label htmlFor="visibility" className="cursor-pointer flex items-center gap-2">{newVisibility === 'Public' ? <Eye size={16}/> : <EyeOff size={16}/>} {newVisibility}</Label>
-                      </div>
-                    </div>
-                  )}
+                <div>
+                  <Label>Category</Label>
+                  <Select value={newCategory} onValueChange={(v: string) => setNewCategory(v)} disabled={submitting}>
+                    <SelectTrigger className="mt-2 w-full">
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent className="z-[100]">
+                      <SelectItem value="Complaint">Complaint</SelectItem>
+                      <SelectItem value="Suggestion">Suggestion</SelectItem>
+                      <SelectItem value="Bug">Bug</SelectItem>
+                      <SelectItem value="Compliment">Compliment</SelectItem>
+                      <SelectItem value="Inquiry">Inquiry</SelectItem>
+                      <SelectItem value="Other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
-                <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                  <Checkbox 
-                    id="anonymous" 
-                    checked={newAnonymous} 
-                    onCheckedChange={(c: boolean | string) => setNewAnonymous(!!c)} 
-                    disabled={submitting}
-                    className="border-2"
-                  />
-                  <Label htmlFor="anonymous" className="cursor-pointer font-medium">Submit as Anonymous</Label>
+                {canReply && (
+                  <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="visibility" className="font-medium">Visibility</Label>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">{newVisibility === 'Public' ? <Eye size={16} className="inline" /> : <EyeOff size={16} className="inline" />} {newVisibility}</span>
+                        <Switch 
+                          id="visibility" 
+                          checked={newVisibility === 'Public'} 
+                          onCheckedChange={(c)=> setNewVisibility(c ? 'Public' : 'Private')} 
+                          disabled={submitting} 
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="anonymous" className="font-medium cursor-pointer">Submit as Anonymous</Label>
+                    <Switch 
+                      id="anonymous" 
+                      checked={newAnonymous} 
+                      onCheckedChange={(c: boolean) => setNewAnonymous(c)} 
+                      disabled={submitting}
+                    />
+                  </div>
                 </div>
 
                 <div>
                   <Label>Optional Images (Max 3)</Label>
-                  <div className="mt-2 flex items-center gap-3">
+                  <div className="mt-2">
+                    <label 
+                      htmlFor="image-upload"
+                      className={`
+                        flex items-center justify-center gap-3 p-4 border-2 border-dashed rounded-lg
+                        transition-all cursor-pointer
+                        ${submitting || newImageFiles.length >= 3 
+                          ? 'border-gray-300 bg-gray-100 cursor-not-allowed' 
+                          : 'border-[#f6421f] hover:border-[#ee8724] hover:bg-orange-50 dark:hover:bg-orange-900/10'
+                        }
+                      `}
+                    >
+                      <ImageIcon size={20} className={submitting || newImageFiles.length >= 3 ? 'text-gray-400' : 'text-[#f6421f]'} />
+                      <span className={submitting || newImageFiles.length >= 3 ? 'text-gray-400' : 'text-gray-700 dark:text-gray-300'}>
+                        {newImageFiles.length >= 3 ? 'Maximum images reached' : `Click to add images (${newImageFiles.length}/3)`}
+                      </span>
+                    </label>
                     <Input 
+                      id="image-upload"
                       type="file" 
                       accept="image/*" 
                       multiple
-                      disabled={submitting || newImageFiles.length >= 3} 
+                      disabled={submitting || newImageFiles.length >= 3}
+                      className="hidden"
                       onChange={(e)=>{
                         const files = Array.from(e.target.files || []);
                         if (files.length + newImageFiles.length > 3) {
@@ -538,28 +565,50 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
                         setNewImageFiles([...newImageFiles, ...validFiles]);
                         const previews = validFiles.map(f => URL.createObjectURL(f));
                         setNewImagePreviews([...newImagePreviews, ...previews]);
+                        // Reset input
+                        e.target.value = '';
                       }} 
                     />
-                    <ImageIcon size={18} className="text-gray-500" />
                   </div>
                   {newImagePreviews.length > 0 && (
-                    <div className="mt-3 grid grid-cols-3 gap-2">
+                    <div className="mt-4 grid grid-cols-3 gap-3">
                       {newImagePreviews.map((preview, idx) => (
-                        <div key={idx} className="relative group">
-                          <img src={preview} alt={`preview ${idx + 1}`} className="w-full h-24 object-cover rounded-md border" />
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const newFiles = newImageFiles.filter((_, i) => i !== idx);
-                              const newPreviews = newImagePreviews.filter((_, i) => i !== idx);
-                              setNewImageFiles(newFiles);
-                              setNewImagePreviews(newPreviews);
-                            }}
-                            className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            <X size={14} />
-                          </button>
-                        </div>
+                        <motion.div 
+                          key={idx} 
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.8 }}
+                          className="relative group cursor-pointer"
+                        >
+                          <div className="relative overflow-hidden rounded-lg border-2 border-gray-200 hover:border-[#f6421f] transition-all">
+                            <img 
+                              src={preview} 
+                              alt={`preview ${idx + 1}`} 
+                              className="w-full h-24 object-cover transition-transform group-hover:scale-110"
+                              onClick={() => window.open(preview, '_blank')}
+                            />
+                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const newFiles = newImageFiles.filter((_, i) => i !== idx);
+                                  const newPreviews = newImagePreviews.filter((_, i) => i !== idx);
+                                  URL.revokeObjectURL(preview); // Clean up memory
+                                  setNewImageFiles(newFiles);
+                                  setNewImagePreviews(newPreviews);
+                                  toast.success('Image removed');
+                                }}
+                                className="opacity-0 group-hover:opacity-100 transition-opacity bg-red-500 hover:bg-red-600 text-white rounded-full p-2 shadow-lg transform hover:scale-110"
+                              >
+                                <X size={18} />
+                              </button>
+                            </div>
+                          </div>
+                          <div className="mt-1 text-xs text-center text-gray-500 truncate">
+                            {newImageFiles[idx]?.name}
+                          </div>
+                        </motion.div>
                       ))}
                     </div>
                   )}
