@@ -1,6 +1,6 @@
 {
   "spreadsheetId": "1zTgBQw3ISAtagKOKhMYl6JWL6DnQSpcHt7L3UnBevuU",
-  "createdAt": "2025-11-02T11:44:01.524Z",
+  "createdAt": "2025-11-02T11:50:03.404Z",
   "tabs": {
     "User Profiles": {
       "header": [
@@ -597,44 +597,46 @@
         "Author",
         "Author ID Code",
         "Feedback",
-        "Reference ID",
         "Reply Timestamp",
         "Replier",
         "Replier ID",
-        "Reply"
+        "Reply",
+        "Feedback ID",
+        "Anonymous",
+        "Category",
+        "Image URL",
+        "Status",
+        "Visibility",
+        "Notes"
       ],
       "sample": [
         [
           "2025-10-30T19:42:28.995Z",
           "Test",
           "Guest",
-          "Test feedback",
-          "FBC-2025-001"
+          "Test feedback"
         ],
         [
           "2025-10-31T12:39:58.307Z",
           "Crisostomo, Ezequiel John B. ",
           "YSPTIR-25200",
-          "test",
-          "FBC-2025-002"
+          "test"
         ],
         [
           "2025-10-31T13:10:36.701Z",
           "Crisostomo, Ezequiel John B. ",
           "YSPTIR-25200",
-          "Test",
-          "FBC-2025-003"
+          "Test"
         ],
         [
           "2025-10-31T13:22:10.010Z",
           "Crisostomo, Ezequiel John B. ",
           "YSPTIR-25200",
-          "test",
-          "FBC-2025-004"
+          "test"
         ]
       ],
       "rows": 985,
-      "cols": 26
+      "cols": 25
     },
     "Master Attendance Log": {
       "header": [
