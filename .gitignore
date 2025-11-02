@@ -1,5 +1,6 @@
 node_modules
 dist
+build
 .vite
 /.env
 .env.local
@@ -22,3 +23,17 @@ APPWRITE_BACKUP/
 
 # Scripts (may contain sensitive data)
 scripts/
+
+# Test and diagnostic files
+test-*.ps1
+verify-*.ps1
+*Diagnostic*.gs
+
+# Redundant documentation (fix summaries)
+*_SUMMARY.md
+*_FIX*.md
+*_FIXES.md
+*_DIAGNOSTIC.md
+*_TROUBLESHOOTING.md
+DEPLOYMENT_STATUS.md
+ISSUES_RESOLVED.md
