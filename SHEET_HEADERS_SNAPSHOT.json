@@ -1,0 +1,961 @@
+{
+  "spreadsheetId": "1zTgBQw3ISAtagKOKhMYl6JWL6DnQSpcHt7L3UnBevuU",
+  "createdAt": "2025-11-02T11:44:01.524Z",
+  "tabs": {
+    "User Profiles": {
+      "header": [
+        "Timestamp",
+        "Email Address",
+        "DATA PRIVACY AGREEMENT",
+        "Full name",
+        "Date of Birth",
+        "Age",
+        "Sex/Gender",
+        "Pronouns",
+        "Civil Status",
+        "Contact Number",
+        "Religion",
+        "Nationality",
+        "Personal Email Address",
+        "Username",
+        "Password",
+        "Data Privacy Acknowledgment",
+        "Declaration of Truthfulness and Responsibility  ",
+        "Do you understand that by prohibiting the collection of your personal information, your application will not be processed?  ",
+        "ID Code",
+        "Position",
+        "Role",
+        "ProfilePictureURL"
+      ],
+      "sample": [
+        [
+          "10/15/2025 0:33:29",
+          "ezequieljohncrisostomo20@gmail.com",
+          "I consent to the collection of my Personal Information.",
+          "Crisostomo, Ezequiel John B.",
+          "5/20/2007",
+          "18",
+          "Male",
+          "He/Him",
+          "Single",
+          "09622328290 -Smart",
+          "Roman Catholic",
+          "Filipino",
+          "ezequieljohncrisostomo20@gmail.com",
+          "ZekeYSP",
+          "Zeke#25200",
+          "I understand",
+          "Yes, I agree.",
+          "",
+          "YSPTIR-25200",
+          "Membership and Internal Affairs Officer",
+          "Auditor",
+          "https://drive.google.com/uc?export=view&id=1klKLJn1TIbatTcFrWBIRvtv7l9AY0Rer"
+        ],
+        [
+          "10/15/2025 0:40:24",
+          "ruerussel@gmail.com",
+          "I consent to the collection of my Personal Information.",
+          "Obreque, Russel T.",
+          "3/27/2007",
+          "18",
+          "Male",
+          "She/Her/They/Them",
+          "Single",
+          "09928211623 - DITO",
+          "Catholic",
+          "Filipino ",
+          "r.obreque.152644.tc@umindanao.edu.ph",
+          "Russel Obreque",
+          "RUSS123123",
+          "I understand",
+          "Yes, I agree.",
+          "",
+          "YSPTCM-25700",
+          "Communications and Marketing Officer",
+          "Head"
+        ],
+        [
+          "10/15/2025 0:55:12",
+          "jadraquermj@gmail.com",
+          "I consent to the collection of my Personal Information.",
+          "Jadraque, Richa Margarette T",
+          "2/12/2005",
+          "20",
+          "Female",
+          "She/Her",
+          "Single",
+          "09559500642 - TM",
+          "Roman Catholic",
+          "Filipino",
+          "jadraquermj@gmail.com",
+          "margszn",
+          "Aquarian@2005",
+          "I understand",
+          "Yes, I agree.",
+          "",
+          "YSPTCM-25702",
+          "Committee Member: Communications and Marketing",
+          "Member"
+        ],
+        [
+          "10/15/2025 0:48:10",
+          "krishavcanales1@gmail.com",
+          "I consent to the collection of my Personal Information.",
+          "Canales, Krisha Veronica ",
+          "6/14/2008",
+          "17",
+          "Female",
+          "Her/She",
+          "Single",
+          "09641429114 - TNT",
+          "Catholic ",
+          "Filipino ",
+          "krishavcanales1@gmail.com",
+          "Krishaveronica",
+          "Krisha09351512!",
+          "I understand",
+          "Yes, I agree.",
+          "",
+          "YSPTIR-25204",
+          "Committee Member: Membership and Internal Affairs",
+          "Member",
+          "https://drive.google.com/uc?export=view&id=1nJrqIpgtNO3w-Uxt7I4oW2uKi1cRWHKI"
+        ]
+      ],
+      "rows": 128,
+      "cols": 24
+    },
+    "Donations": {
+      "header": [
+        "Donation ID",
+        "Timestamp",
+        "Donor Name",
+        "Contact",
+        "Amount",
+        "Payment Method",
+        "Campaign",
+        "Reference Number",
+        "Receipt URL",
+        "Status",
+        "Notes",
+        "Verified By"
+      ],
+      "sample": [],
+      "rows": 1000,
+      "cols": 26
+    },
+    "Donation_Campaigns": {
+      "header": [
+        "Campaign ID",
+        "Name",
+        "Description",
+        "Target Amount",
+        "Current Amount",
+        "Start Date",
+        "End Date",
+        "Status"
+      ],
+      "sample": [
+        [
+          "CAMP-001",
+          "General Fund",
+          "Support our ongoing programs and operational costs",
+          "50000",
+          "0",
+          "2025-01-01",
+          "2025-12-31",
+          "Active"
+        ],
+        [
+          "CAMP-002",
+          "Youth Leadership Training",
+          "Fund leadership training workshops for youth members",
+          "25000",
+          "0",
+          "2025-10-01",
+          "2025-12-31",
+          "Active"
+        ],
+        [
+          "CAMP-003",
+          "Community Outreach",
+          "Support community outreach programs",
+          "15000",
+          "0",
+          "2025-06-01",
+          "2025-11-30",
+          "Active"
+        ]
+      ],
+      "rows": 1000,
+      "cols": 26
+    },
+    "Donation_Settings": {
+      "header": [
+        "Setting Key",
+        "Method",
+        "QR Image URL",
+        "Account Name",
+        "Active"
+      ],
+      "sample": [
+        [
+          "gcash_qr",
+          "GCash",
+          "",
+          "YSP Tagum Chapter",
+          "TRUE"
+        ],
+        [
+          "paymaya_qr",
+          "PayMaya",
+          "",
+          "YSP Tagum Chapter",
+          "TRUE"
+        ]
+      ],
+      "rows": 1000,
+      "cols": 26
+    },
+    "Logging Debug": {
+      "header": [
+        "RecordedAt (PH)",
+        "Status",
+        "idCode",
+        "userRowIndex",
+        "userRow (json)",
+        "toAppend (json)"
+      ],
+      "sample": [
+        [
+          "2025-10-25 4:13 PM",
+          "FOUND",
+          "YSPTIR-25200",
+          "2",
+          "[\"2025-10-15T08:33:29.322Z\",\"ezequieljohncrisostomo20@gmail.com\",\"I consent to the collection of my Personal Information.\",\"Crisostomo, Ezequiel John B.\",\"2007-05-20T08:00:00.000Z\",18,\"Male\",\"He/Him\",\"Single\",\"09622328290 -Smart\",\"Roman Catholic\",\"Filipino\",\"ezequieljohncrisostomo20@gmail.com\",\"ZekeYSP\",\"Zeke#25200\",\"I understand\",\"Yes, I agree.\",\"\",\"YSPTIR-25200\",\"Membership and Internal Affairs Officer\",\"Auditor\",\"https://i.imgur.com/J4wddTW.png\"]",
+          "[\"2025-10-25 04:13 PM\",\"2025-10-15T08:33:29.322Z\",\"ezequieljohncrisostomo20@gmail.com\",\"YSPTIR-25200\",\"Crisostomo, Ezequiel John B.\",\"Auditor\"]"
+        ],
+        [
+          "2025-10-25 4:14 PM",
+          "NOT_FOUND",
+          "GUEST-9940",
+          "",
+          "[]",
+          "[\"2025-10-25 04:14 PM\",\"N/A\",\"N/A\",\"GUEST-9940\",\"test\",\"Guest\"]"
+        ],
+        [
+          "2025-10-25 4:15 PM",
+          "NOT_FOUND",
+          "GUEST-1041",
+          "",
+          "[]",
+          "[\"2025-10-25 04:15 PM\",\"N/A\",\"N/A\",\"GUEST-1041\",\"test\",\"Guest\"]"
+        ],
+        [
+          "2025-10-25 4:15 PM",
+          "FOUND",
+          "YSPTIR-25200",
+          "2",
+          "[\"2025-10-15T08:33:29.322Z\",\"ezequieljohncrisostomo20@gmail.com\",\"I consent to the collection of my Personal Information.\",\"Crisostomo, Ezequiel John B.\",\"2007-05-20T08:00:00.000Z\",18,\"Male\",\"He/Him\",\"Single\",\"09622328290 -Smart\",\"Roman Catholic\",\"Filipino\",\"ezequieljohncrisostomo20@gmail.com\",\"ZekeYSP\",\"Zeke#25200\",\"I understand\",\"Yes, I agree.\",\"\",\"YSPTIR-25200\",\"Membership and Internal Affairs Officer\",\"Auditor\",\"https://i.imgur.com/J4wddTW.png\"]",
+          "[\"2025-10-25 04:15 PM\",\"2025-10-15T08:33:29.322Z\",\"ezequieljohncrisostomo20@gmail.com\",\"YSPTIR-25200\",\"Crisostomo, Ezequiel John B.\",\"Auditor\"]"
+        ]
+      ],
+      "rows": 1000,
+      "cols": 26
+    },
+    "WeakPasswords": {
+      "header": [
+        "10/15/2025 0:25:36",
+        "ezequieljohncrisostomo20@gmail.com",
+        "ZekeYSP",
+        "Zeke25200",
+        "75",
+        "Strong"
+      ],
+      "sample": [
+        [
+          "10/15/2025 0:36:02",
+          "ezequieljohncrisostomo20@gmail.com",
+          "ZekeYSP",
+          "Zeke-25200",
+          "75",
+          "Strong"
+        ],
+        [
+          "10/15/2025 0:40:27",
+          "ruerussel@gmail.com",
+          "Russel Obreque ",
+          "RUSS123123",
+          "75",
+          "Strong"
+        ],
+        [
+          "10/15/2025 0:43:25",
+          "jadraquermj@gmail.com",
+          "margszn",
+          "aquarian2005",
+          "50",
+          "Medium"
+        ],
+        [
+          "10/15/2025 0:46:51",
+          "krishavcanales1@gmail.com",
+          "Krishaveronica",
+          "Krisha09351512",
+          "75",
+          "Strong"
+        ]
+      ],
+      "rows": 1000,
+      "cols": 26
+    },
+    "Main": {
+      "header": [
+        "Timestamp",
+        "Email Address",
+        "DATA PRIVACY AGREEMENT",
+        "Full name",
+        "Date of Birth",
+        "Age",
+        "Sex",
+        "Pronouns",
+        "Civil Status",
+        "Contact Number",
+        "Religion",
+        "Nationality",
+        "School and Year Level",
+        "Personal Email Address",
+        "Complete Permanent Address",
+        "Complete Current Address",
+        "Available Device/s",
+        "Do you have any existing medical conditions, allergies, or health concerns that the committee should be aware of?  ",
+        "Emergency Contact Person",
+        "Relationship to Emergency Contact",
+        "Emergency Contact Number",
+        "Youth Service Organization Designation",
+        "Upload a recent digital 1x1 Formal ID Picture",
+        "Facebook and Messenger Account",
+        "Data Privacy Acknowledgment",
+        "Declaration of Truthfulness and Responsibility  ",
+        "ID Code",
+        "ID Number",
+        "",
+        "Do you understand that by prohibiting the collection of your personal information, your application will not be processed?  "
+      ],
+      "sample": [
+        [
+          "7/31/2025 21:36:57",
+          "ezequieljohncrisostomo20@gmail.com",
+          "I consent to the collection of my Personal Information.",
+          "Crisostomo, Ezequiel John B.",
+          "5/20/2007",
+          "18",
+          "Male",
+          "He/Him",
+          "Single",
+          "09622328290",
+          "Roman Catholic",
+          "Filipino",
+          "USeP-Tagum 1st year",
+          "ezequieljohncrisostomo20@gmail.com",
+          "Country Homes Subd. Blk. 11 Lot. 6, Mankilam, Tagum City, Davao Del Norte",
+          "Country Homes Subd. Blk. 11 Lot. 6, Mankilam, Tagum City, Davao Del Norte",
+          "Cellphone",
+          "NO",
+          "Marygrace B. Crisostomo",
+          "Mother",
+          "09683608063",
+          "Membership and Internal Affairs Officer",
+          "https://drive.google.com/open?id=1ZnFNlFrrRcmnIloDegkBJokH6INx81v4",
+          "https://www.facebook.com/ezequieljohn.bengilcrisostomo",
+          "I understand",
+          "Yes, I agree.",
+          "YSPTIR-25200",
+          "25200"
+        ],
+        [
+          "8/1/2025 6:27:08",
+          "inayssabelle@gmail.com",
+          "I consent to the collection of my Personal Information.",
+          "Tano, Crystal Nice, P.",
+          "6/19/2007",
+          "18",
+          "Female",
+          "she/her/they",
+          "Single",
+          "09164541962",
+          "Catholic",
+          "Filipino",
+          "USEP - 1st year ",
+          "inayssabelle@gmail.com",
+          "Prk. Bayanihan, Brgy. Magugpo West, Tagum City",
+          "Prk. Bayanihan, Brgy. Magugpo West, Tagum City",
+          "Laptop, Cellphone",
+          "Yes, I am allergic to antibiotics, and I should also be examined by an OB-GYN this year because the school registrar noticed my irregular menstruation and monthly dysmenorrhea.",
+          "Rose Tano",
+          "Mother",
+          "09538450766",
+          "Finance and Treasury Officer",
+          "https://drive.google.com/open?id=10XX3MfWNtZfx7ymJP7arS8r9HFwlhtmB",
+          "https://www.facebook.com/share/1NEEvbJT6k/?mibextid=wwXIfr",
+          "I understand",
+          "Yes, I agree.",
+          "YSPTFR-25500",
+          "25500"
+        ],
+        [
+          "8/13/2025 4:07:06",
+          "denissacrisostomo@gmail.com",
+          "I consent to the collection of my Personal Information.",
+          "Crisostomo, Janah Denissa T.",
+          "11/13/2006",
+          "18",
+          "Female",
+          "Her",
+          "Single",
+          "09758790583 - TM",
+          "Non-catholic - Independent Baptist Church",
+          "Filipino",
+          "SMCTI - First year ",
+          "denissacrisostomo@gmail.com",
+          "Purok Pag-ibig, Mankilam, Tagum City",
+          "Purok Pag-ibig, Mankilam, Tagum City",
+          "Laptop, Cellphone, Printer",
+          "No",
+          "Dennis M. Crisostomo ",
+          "Father",
+          "09269056323",
+          "Tagum Chapter President",
+          "https://drive.google.com/open?id=1-JpRM7K2ysTuJVjfiYbE20E36FAQVtTO",
+          "JayDee Crisostomo - https://www.facebook.com/share/1Cavy1GLrb/",
+          "I understand",
+          "Yes, I agree.",
+          "YSPTPR-25100",
+          "25100"
+        ],
+        [
+          "8/13/2025 4:45:54",
+          "ianghabrielluzorata@gmail.com",
+          "I consent to the collection of my Personal Information.",
+          "Navarro, Ian Ghabriel L.",
+          "6/4/2007",
+          "18",
+          "Male",
+          "Ian ",
+          "Single",
+          "09537441661 - TM",
+          "Roman Catholic ",
+          "Filipinos ",
+          "Grade 12 2025-2026",
+          "ianghabrielluzorata@gmail.com",
+          "Prk Liwa liwa, Cuambogan, Tagum City, DDN",
+          "Prk Liwa liwa, Cuambogan, Tagum City, DDN",
+          "Laptop, Cellphone, Printer, DSLR, Projector",
+          "No",
+          "Jonard Ryan Navarro",
+          "Brother ",
+          "09926138160",
+          "External Relations Officer",
+          "https://drive.google.com/open?id=1s0ryQaFP9ziCbbZnhUlk5Ig1VKnv35Kr",
+          "Ian Ghabriel ",
+          "I understand",
+          "Yes, I agree.",
+          "YSPTER-25300",
+          "25300"
+        ]
+      ],
+      "rows": 137,
+      "cols": 33
+    },
+    "Officer Directory": {
+      "header": [
+        "ID Code",
+        "Name",
+        "Position",
+        "ID Number",
+        "Sort ID"
+      ],
+      "sample": [
+        [
+          "YSPTPR-25100",
+          "Crisostomo, Janah Denissa T.",
+          "Tagum Chapter President",
+          "25100",
+          "25100"
+        ],
+        [
+          "YSPTIR-25200",
+          "Crisostomo, Ezequiel John B.",
+          "Membership and Internal Affairs Officer",
+          "25200",
+          "25200"
+        ],
+        [
+          "YSPTIR-25203",
+          "Gonzaga, Kara Alzea M.",
+          "Committee Member: Membership and Internal Affairs",
+          "25203",
+          "25203"
+        ],
+        [
+          "YSPTIR-25204",
+          "Canales, Krisha Veronica ",
+          "Committee Member: Membership and Internal Affairs",
+          "25204",
+          "25204"
+        ]
+      ],
+      "rows": 1000,
+      "cols": 26
+    },
+    "Homepage Content": {
+      "header": [
+        "vision",
+        "YSP actively fosters civic engagement, collaboration, and capacity building to drive contextualized, community-led development initiatives through bridging leadership, co-creation, and the values of 'pakikipag-kapwa' and 'damayan' for sustainable growth."
+      ],
+      "sample": [
+        [
+          "mission",
+          "YSP empowers young leaders to drive sustainable community development, forging inclusive partnerships for positive transformative change."
+        ],
+        [
+          "Section 3. YSP shall be guided by the following advocacy pillars:",
+          "1.) Global Citizenship and Governance. To promote leadership skills and democratic values, encouraging active civic participation and informed decision-making in the community;\n2.) Ecological and Livelihood Sustainability: This advocacy aims to foster sustainable practices that protect the environment while supporting the economic well-being of communities. Efforts focus on promoting sustainable agriculture, reducing environmental footprints, and encouraging the development of sustainable local economies that provide stable livelihoods;\n3.) Learning and Development: This area focuses on enhancing educational opportunities and personal growth. It aims to provide diverse learning environments and experiences that empower individuals of all ages to develop skills, knowledge, and attitudes that are essential for personal success and lifelong learning; and\n4.) Humanitarian Service: Dedicated to providing aid and support to those in need, this advocacy involves organizing relief efforts, supporting health and wellness programs, and assisting in disaster recovery. Its goal is to alleviate suffering, provide essential services, and promote human dignity in times of crisis.\n"
+        ],
+        [
+          "orgChartUrl",
+          "https://drive.google.com/uc?export=view&id=1LVowONIrtJoAg1b2cdKWmMzPZgoLHNI8"
+        ],
+        [
+          "facebookUrl",
+          "https://www.facebook.com/YSPTagumChapter"
+        ]
+      ],
+      "rows": 994,
+      "cols": 26
+    },
+    "Access Logs": {
+      "header": [
+        "Timestamp",
+        "Account Created",
+        "Email",
+        "ID Code",
+        "Name",
+        "Role",
+        "Admin Logins",
+        "Head Logins",
+        "Auditor Logins",
+        "Member Logins",
+        "Guest Logins"
+      ],
+      "sample": [
+        [
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "0",
+          "3",
+          "55",
+          "3",
+          "20"
+        ],
+        [
+          "2025-10-30T05:50:39.940Z",
+          "10/15/2025 0:33:29",
+          "ezequieljohncrisostomo20@gmail.com",
+          "YSPTIR-25200",
+          "Crisostomo, Ezequiel John B.",
+          "Auditor"
+        ],
+        [
+          "2025-10-30T06:20:06.866Z",
+          "N/A",
+          "N/A",
+          "N/A",
+          "Crystal Nice Tano",
+          "Guest"
+        ],
+        [
+          "2025-10-30T06:20:07.316Z",
+          "N/A",
+          "N/A",
+          "N/A",
+          "Crystal Nice Tano",
+          "Guest"
+        ]
+      ],
+      "rows": 755,
+      "cols": 27
+    },
+    "Feedback": {
+      "header": [
+        "Timestamp",
+        "Author",
+        "Author ID Code",
+        "Feedback",
+        "Reference ID",
+        "Reply Timestamp",
+        "Replier",
+        "Replier ID",
+        "Reply"
+      ],
+      "sample": [
+        [
+          "2025-10-30T19:42:28.995Z",
+          "Test",
+          "Guest",
+          "Test feedback",
+          "FBC-2025-001"
+        ],
+        [
+          "2025-10-31T12:39:58.307Z",
+          "Crisostomo, Ezequiel John B. ",
+          "YSPTIR-25200",
+          "test",
+          "FBC-2025-002"
+        ],
+        [
+          "2025-10-31T13:10:36.701Z",
+          "Crisostomo, Ezequiel John B. ",
+          "YSPTIR-25200",
+          "Test",
+          "FBC-2025-003"
+        ],
+        [
+          "2025-10-31T13:22:10.010Z",
+          "Crisostomo, Ezequiel John B. ",
+          "YSPTIR-25200",
+          "test",
+          "FBC-2025-004"
+        ]
+      ],
+      "rows": 985,
+      "cols": 26
+    },
+    "Master Attendance Log": {
+      "header": [
+        "ID Code",
+        "Name",
+        "Position",
+        "ID Number",
+        "1",
+        "Test 123",
+        "2025-10-28",
+        "Time IN",
+        "Time OUT",
+        "Active",
+        "2",
+        "YSP",
+        "2025-10-28",
+        "Time IN",
+        "Time OUT",
+        "Active"
+      ],
+      "sample": [
+        [
+          "YSPTPR-25100",
+          "Crisostomo, Janah Denissa T.",
+          "Tagum Chapter President",
+          "25100"
+        ],
+        [
+          "YSPTIR-25200",
+          "Crisostomo, Ezequiel John B.",
+          "Membership and Internal Affairs Officer",
+          "25200",
+          "",
+          "",
+          "",
+          "Present - 01:52 AM",
+          "Present - 01:52 AM",
+          "",
+          "",
+          "",
+          "",
+          "Absent - 05:02 PM",
+          "Present - 01:19 AM"
+        ],
+        [
+          "YSPTIR-25203",
+          "Gonzaga, Kara Alzea M.",
+          "Committee Member: Membership and Internal Affairs",
+          "25203"
+        ],
+        [
+          "YSPTIR-25204",
+          "Canales, Krisha Veronica ",
+          "Committee Member: Membership and Internal Affairs",
+          "25204"
+        ]
+      ],
+      "rows": 1000,
+      "cols": 16
+    },
+    "Polls": {
+      "header": [
+        "Poll ID",
+        "Timestamp Created",
+        "Creator ID Code",
+        "Creator Name",
+        "Title",
+        "Description",
+        "Questions JSON",
+        "Target Audience Type",
+        "Target Value",
+        "Start Date",
+        "End Date",
+        "Status",
+        "Anonymous",
+        "Show Results After Vote",
+        "Show Results After Close",
+        "Template Used",
+        "Total Votes",
+        "Voters List JSON",
+        "Email Sent"
+      ],
+      "sample": [],
+      "rows": 1000,
+      "cols": 26
+    },
+    "Poll Responses": {
+      "header": [
+        "Response ID",
+        "Poll ID",
+        "Respondent ID Code",
+        "Respondent Name",
+        "Respondent Position",
+        "Respondent Committee",
+        "Timestamp Submitted",
+        "Responses JSON"
+      ],
+      "sample": [],
+      "rows": 1000,
+      "cols": 26
+    },
+    "Poll Templates": {
+      "header": [
+        "Template ID",
+        "Template Name",
+        "Template Description",
+        "Default Questions JSON",
+        "Recommended Settings JSON"
+      ],
+      "sample": [
+        [
+          "TMPL-001",
+          "Event Feedback",
+          "Collect feedback after events",
+          "[{\"id\":1,\"question\":\"How would you rate this event?\",\"type\":\"single\",\"options\":[\"Excellent\",\"Good\",\"Fair\",\"Poor\"],\"required\":true},{\"id\":2,\"question\":\"What did you enjoy most?\",\"type\":\"text\",\"required\":false},{\"id\":3,\"question\":\"What can we improve?\",\"type\":\"text\",\"required\":false}]",
+          "{\"anonymous\":true,\"showResultsAfterVote\":true,\"duration\":7}"
+        ],
+        [
+          "TMPL-002",
+          "Training Topics Survey",
+          "Survey members on training preferences",
+          "[{\"id\":1,\"question\":\"Which training topics interest you? (Select all)\",\"type\":\"multiple\",\"options\":[\"Leadership\",\"Project Management\",\"Public Speaking\",\"Fundraising\",\"Community Organizing\"],\"required\":true},{\"id\":2,\"question\":\"Preferred training format?\",\"type\":\"single\",\"options\":[\"In-person workshop\",\"Online webinar\",\"Hybrid\",\"Self-paced materials\"],\"required\":true},{\"id\":3,\"question\":\"Additional suggestions?\",\"type\":\"text\",\"required\":false}]",
+          "{\"anonymous\":false,\"showResultsAfterVote\":false,\"duration\":14}"
+        ],
+        [
+          "TMPL-003",
+          "Project Ideas Voting",
+          "Vote on project priorities",
+          "[{\"id\":1,\"question\":\"Which project should we prioritize?\",\"type\":\"single\",\"options\":[\"Community Clean-up\",\"Youth Leadership Camp\",\"Medical Mission\",\"Tree Planting\",\"Skills Workshop\"],\"required\":true},{\"id\":2,\"question\":\"Why is this important to you?\",\"type\":\"text\",\"required\":false}]",
+          "{\"anonymous\":false,\"showResultsAfterVote\":true,\"duration\":5}"
+        ],
+        [
+          "TMPL-004",
+          "Committee Nomination",
+          "Nominate committee leaders",
+          "[{\"id\":1,\"question\":\"Who do you nominate for Committee Head?\",\"type\":\"text\",\"required\":true},{\"id\":2,\"question\":\"Why are they qualified?\",\"type\":\"text\",\"required\":false}]",
+          "{\"anonymous\":true,\"showResultsAfterVote\":false,\"duration\":7}"
+        ]
+      ],
+      "rows": 1000,
+      "cols": 26
+    },
+    "Announcements": {
+      "header": [
+        "Timestamp",
+        "Announcement ID",
+        "Author ID Code",
+        "Author Name",
+        "Title",
+        "Subject",
+        "Body",
+        "Recipient Type",
+        "Recipeint Value ",
+        "Email Status",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "ID Code",
+        "Name",
+        "Position",
+        "Role",
+        "ANN-2025-001",
+        "Testing the Announcement",
+        "ANN-2025-002",
+        "TEsting",
+        "ANN-2025-003",
+        "Test",
+        "ANN-2025-004",
+        "Testest",
+        "ANN-2025-005",
+        "Zek"
+      ],
+      "sample": [
+        [
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "YSPTIR-25200",
+          "Crisostomo, Ezequiel John B.",
+          "Membership and Internal Affairs Officer",
+          "Auditor",
+          "Unread",
+          "",
+          "Unread",
+          "",
+          "Unread",
+          "",
+          "Unread",
+          "",
+          "Unread"
+        ],
+        [
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "YSPTCM-25700",
+          "Obreque, Russel T.",
+          "Communications and Marketing Officer",
+          "Head",
+          "N/A",
+          "",
+          "N/A",
+          "",
+          "Unread",
+          "",
+          "Unread",
+          "",
+          "N/A"
+        ],
+        [
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "YSPTCM-25702",
+          "Jadraque, Richa Margarette T",
+          "Committee Member: Communications and Marketing",
+          "Member",
+          "N/A",
+          "",
+          "N/A",
+          "",
+          "N/A",
+          "",
+          "N/A",
+          "",
+          "N/A"
+        ],
+        [
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "YSPTIR-25204",
+          "Canales, Krisha Veronica ",
+          "Committee Member: Membership and Internal Affairs",
+          "Member",
+          "N/A",
+          "",
+          "N/A",
+          "",
+          "N/A",
+          "",
+          "N/A",
+          "",
+          "N/A"
+        ]
+      ],
+      "rows": 991,
+      "cols": 46
+    },
+    "Form Responses 5": {
+      "header": [
+        "Timestamp",
+        "Email Address",
+        "DATA PRIVACY AGREEMENT",
+        "Full name",
+        "Youth Service Organization Designation",
+        "Enter your assigned YSPT ID Code",
+        "Event",
+        "Status",
+        "Time Attended",
+        "Time Exited",
+        "Upload a picture taken during the Event/Activity"
+      ],
+      "sample": [],
+      "rows": 105,
+      "cols": 17
+    }
+  }
+}

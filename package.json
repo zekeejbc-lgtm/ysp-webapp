@@ -65,7 +65,8 @@
     "typescript": "^5.9.3",
     "vite": "^5.3.4",
     "tsx": "^4.19.2",
-    "@google/clasp": "^2.4.2"
+    "@google/clasp": "^2.4.2",
+    "dotenv": "^16.4.5"
   },
   "engines": {
     "node": "20.x"
