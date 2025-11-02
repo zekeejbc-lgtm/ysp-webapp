@@ -1,5 +1,5 @@
 # Test script for initFeedbackSheet action
-$url = "https://script.google.com/macros/s/AKfycbyepq64QJEfXRzACKaXGSevEXdb-TueUaxtnTEQCnnFsECZGq1AWqNqyKZ9GeMmvcao2g/exec"
+$url = "https://script.google.com/macros/s/AKfycbwJ5DdUuS5k__U6z2fle19wBNRgDO2gVG9KmKt7csuq3nzHxldpwvtl0Vcs54en_vRrVw/exec"
 
 $body = @{
     action = "initFeedbackSheet"

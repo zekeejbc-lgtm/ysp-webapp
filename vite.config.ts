@@ -129,7 +129,7 @@ export default defineConfig({
     open: true,
     proxy: {
       '/api/gas-proxy': {
-        target: 'https://script.google.com/macros/s/AKfycbyepq64QJEfXRzACKaXGSevEXdb-TueUaxtnTEQCnnFsECZGq1AWqNqyKZ9GeMmvcao2g/exec',
+  target: 'https://script.google.com/macros/s/AKfycbwJ5DdUuS5k__U6z2fle19wBNRgDO2gVG9KmKt7csuq3nzHxldpwvtl0Vcs54en_vRrVw/exec',
         changeOrigin: true,
         secure: true,
         rewrite: (path) => path.replace(/^\/api\/gas-proxy/, ''),

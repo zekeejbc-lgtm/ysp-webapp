@@ -168,7 +168,7 @@ server: {
 **Verify Backend:**
 Open this URL directly in browser:
 ```
-https://script.google.com/macros/s/AKfycbyepq64QJEfXRzACKaXGSevEXdb-TueUaxtnTEQCnnFsECZGq1AWqNqyKZ9GeMmvcao2g/exec
+https://script.google.com/macros/s/AKfycbwJ5DdUuS5k__U6z2fle19wBNRgDO2gVG9KmKt7csuq3nzHxldpwvtl0Vcs54en_vRrVw/exec
 ```
 
 Should return an error (expected), but confirms it's accessible.

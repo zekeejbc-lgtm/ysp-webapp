@@ -364,6 +364,12 @@ export default function Homepage({ darkMode, currentUser }: HomepageProps) {
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 pb-8">
+      {content.motto && (
+        <div className="ysp-card text-center">
+          <h2 className="text-[#f6421f] dark:text-[#ee8724] mb-2">Official Motto</h2>
+          <p className="text-xl md:text-2xl font-semibold italic">{content.motto}</p>
+        </div>
+      )}
       <div className="ysp-card">
         <h2 className="text-[#f6421f] dark:text-[#ee8724] mb-4">About Youth Service Philippines</h2>
         <p className="text-justify mb-4">{content.about}</p>

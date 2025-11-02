@@ -1721,10 +1721,12 @@ function handleCreateFeedback(data) {
     // Determine author ID code (Guest if not provided)
     const authorIdCode = data.authorIdCode || 'Guest';
 
-    // Normalize fields
+  // Normalize fields
     const category = (data.category || 'Other').toString();
     const status = (data.status || 'Pending').toString();
     const visibility = (data.visibility || 'Private').toString();
+  const rating = (typeof data.rating === 'number' ? Math.max(1, Math.min(5, data.rating)) : (parseInt(data.rating, 10) || ''));
+  const email = (data.email || '').toString();
 
     // Handle image: use provided URL or upload base64 to Drive
     let imageUrl = (data.imageUrl || '').toString();
@@ -1749,9 +1751,11 @@ function handleCreateFeedback(data) {
     row[idx['Author ID Code']] = authorIdCode;
     row[idx.Category] = category;
     row[idx.Feedback] = data.message;
-    if (idx['Image URL'] !== undefined) row[idx['Image URL']] = imageUrl;
+  if (idx['Image URL'] !== undefined) row[idx['Image URL']] = imageUrl;
     row[idx.Status] = status;
     row[idx.Visibility] = visibility;
+  if (idx.Rating !== undefined) row[idx.Rating] = rating;
+  if (idx.Email !== undefined) row[idx.Email] = email;
     // Reply fields empty by default
 
     feedbackSheet.appendRow(row);
@@ -1770,7 +1774,9 @@ function handleCreateFeedback(data) {
         category: category,
         status: status,
         visibility: visibility,
-        imageUrl: imageUrl
+        imageUrl: imageUrl,
+        rating: typeof rating === 'number' ? rating : undefined,
+        email: email || undefined
       }
     };
   } catch (error) {
@@ -1819,7 +1825,9 @@ function handleGetFeedback(data) {
       const category = row[idx.Category] || 'Other';
       const status = row[idx.Status] || 'Pending';
       const visibility = row[idx.Visibility] || 'Private';
-      const imageUrl = row[idx['Image URL']] || '';
+  const imageUrl = idx['Image URL'] >= 0 ? (row[idx['Image URL']] || '') : '';
+  const rating = idx.Rating >= 0 ? row[idx.Rating] : '';
+  const email = idx.Email >= 0 ? (row[idx.Email] || '') : '';
       
       // Check if user should see this feedback
       let shouldInclude = false;
@@ -1872,6 +1880,12 @@ function handleGetFeedback(data) {
         visibility: visibility,
         imageUrl: imageUrl
       };
+      if (rating !== '' && !isNaN(Number(rating))) {
+        feedbackObj.rating = Number(rating);
+      }
+      if (email) {
+        feedbackObj.email = email;
+      }
       
       // Show author ID only to Admin/Auditor
       if (userRole === 'Admin' || userRole === 'Auditor') {
@@ -2006,10 +2020,18 @@ function handleGetFeedbackByRef(data) {
           category: row[idx.Category] || 'Other',
           status: row[idx.Status] || 'Pending',
           visibility: row[idx.Visibility] || 'Private',
-          imageUrl: row[idx['Image URL']] || '',
+          imageUrl: idx['Image URL'] >= 0 ? (row[idx['Image URL']] || '') : '',
           authorName: row[idx.Author] || '',
           message: row[idx.Feedback] || '',
         };
+        if (idx.Rating >= 0) {
+          const r = row[idx.Rating];
+          if (r !== '' && !isNaN(Number(r))) obj.rating = Number(r);
+        }
+        if (idx.Email >= 0) {
+          const em = row[idx.Email] || '';
+          if (em) obj.email = em;
+        }
         const reply = row[idx.Reply];
         if (reply && reply.toString().trim() !== '') {
           obj.replyMessage = reply;
@@ -2065,8 +2087,10 @@ function ensureFeedbackSchema(sheet) {
     'Author',
     'Anonymous',
     'Author ID Code',
+    'Email',
     'Category',
     'Feedback',
+    'Rating',
     'Image URL',
     'Status',
     'Visibility',
@@ -2106,8 +2130,10 @@ function getFeedbackColumnIndexMap(headers) {
     Author: map['Author'] ?? 1,
     Anonymous: map['Anonymous'] ?? -1,
     'Author ID Code': map['Author ID Code'] ?? 2,
+    Email: map['Email'] ?? -1,
     Category: map['Category'] ?? -1,
     Feedback: map['Feedback'] ?? 3,
+    Rating: map['Rating'] ?? -1,
     'Image URL': map['Image URL'] ?? -1,
     Status: map['Status'] ?? -1,
     Visibility: map['Visibility'] ?? -1,
@@ -2152,7 +2178,8 @@ function checkFeedbackThrottle(idCode, name) {
   }
   obj.count += 1;
   cache.put(key, JSON.stringify(obj), 5 * 60);
-  return obj.count > 3;
+  // Allow more submissions during testing; adjust threshold as needed
+  return obj.count > 10;
 }
 
 function toIso(val) {
@@ -2212,12 +2239,13 @@ function handleGetHomepageContent(data) {
     
     let vision = '';
     let mission = '';
-    let objectives = '';
+  let objectives = '';
     let orgChartUrl = '';
     let facebookUrl = '';
     let email = '';
     let founderName = '';
     let aboutYSP = '';
+  let motto = '';
     
     // Read from index 0 onwards (NO header row offset!)
     if (homepageData.length > 0) vision = homepageData[0][1] || ''; // SHEET ROW 1, Column B
@@ -2228,8 +2256,15 @@ function handleGetHomepageContent(data) {
     if (homepageData.length > 5) email = homepageData[5][1] || ''; // SHEET ROW 6, Column B
     if (homepageData.length > 6) founderName = homepageData[6][1] || ''; // SHEET ROW 7, Column B
     if (homepageData.length > 7) aboutYSP = homepageData[7][1] || ''; // SHEET ROW 8, Column B
-    
-    if (homepageData.length > 7) aboutYSP = homepageData[7][1] || ''; // SHEET ROW 8, Column B
+
+    // Optional Motto row handling (backward-compatible):
+    // If SHEET ROW 9 (index 8) first cell is not 'projectTitle_1', treat it as motto
+    if (homepageData.length > 8) {
+      const row9colA = (homepageData[8][0] || '').toString();
+      if (!row9colA.startsWith('projectTitle_')) {
+        motto = homepageData[8][1] || '';
+      }
+    }
     
     // Keep objectives as-is, don't split
     const objectivesArray = objectives ? [objectives] : [];
@@ -2244,7 +2279,15 @@ function handleGetHomepageContent(data) {
     // SHEET ROW 14 (index 13): projectDesc_2
     // etc...
     const projects = [];
-    let rowIndex = 8; // Start from array index 8 (SHEET ROW 9)
+    // Projects start at SHEET ROW 9 (index 8) by default;
+    // if a Motto row occupies SHEET ROW 9, start at SHEET ROW 10 (index 9)
+    let rowIndex = 8;
+    if (homepageData.length > 8) {
+      const row9colA = (homepageData[8][0] || '').toString();
+      if (!row9colA.startsWith('projectTitle_')) {
+        rowIndex = 9; // Skip motto row
+      }
+    }
     
     while (rowIndex < homepageData.length) {
       const titleRow = homepageData[rowIndex];
@@ -2290,7 +2333,8 @@ function handleGetHomepageContent(data) {
         founderName: founderName,
         email: email,
         facebookUrl: facebookUrl,
-        projects: projects
+        projects: projects,
+        motto: motto
       }
     };
   } catch (error) {

@@ -16,8 +16,8 @@ const API_CONFIG = {
   // Google Apps Script Backend Details (for reference)
   backend: {
     scriptId: '1CEx53zlJZHarkYESoUzbuV3Jj04rA6YKVSpsh1n-sClm_PHjXJyeuSXf',
-    deploymentId: 'AKfycbyepq64QJEfXRzACKaXGSevEXdb-TueUaxtnTEQCnnFsECZGq1AWqNqyKZ9GeMmvcao2g',
-    webAppUrl: 'https://script.google.com/macros/s/AKfycbyepq64QJEfXRzACKaXGSevEXdb-TueUaxtnTEQCnnFsECZGq1AWqNqyKZ9GeMmvcao2g/exec',
+    deploymentId: 'AKfycbwJ5DdUuS5k__U6z2fle19wBNRgDO2gVG9KmKt7csuq3nzHxldpwvtl0Vcs54en_vRrVw',
+    webAppUrl: 'https://script.google.com/macros/s/AKfycbwJ5DdUuS5k__U6z2fle19wBNRgDO2gVG9KmKt7csuq3nzHxldpwvtl0Vcs54en_vRrVw/exec',
   },
   
   // Google Sheets IDs (for reference)
@@ -478,6 +478,8 @@ export interface Feedback {
   status?: 'Pending' | 'Reviewed' | 'Resolved' | string;
   visibility?: 'Private' | 'Public' | string;
   imageUrl?: string;
+  rating?: number;
+  email?: string;
   replyTimestamp?: string;
   replyMessage?: string;
   replierName?: string; // Only visible to Admin/Auditor
@@ -494,6 +496,8 @@ export interface CreateFeedbackRequest {
   imageUrl?: string;
   imageBase64?: string; // data URL or raw base64
   imageFilename?: string;
+  rating?: number;
+  email?: string;
 }
 
 export interface ReplyToFeedbackRequest {
@@ -575,6 +579,7 @@ export interface HomepageContent {
   email: string;
   facebookUrl: string;
   projects: HomepageProject[];
+  motto?: string;
 }
 
 export interface HomepageResponse {
