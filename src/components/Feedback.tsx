@@ -107,7 +107,15 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
 
     try {
       setSubmitting(true);
-      
+
+      const debug = (() => {
+        try {
+          if (typeof window === 'undefined') return false;
+          if (new URLSearchParams(window.location.search).get('yspDebug') === '1') return true;
+          return window.localStorage.getItem('yspDebug') === '1';
+        } catch { return false; }
+      })();
+
       // For now, only upload the first image (backend supports single image)
       // TODO: Update backend to support multiple images
       let imageBase64: string | undefined;
@@ -126,8 +134,8 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
         imageBase64 = `data:${mime};base64,${base64}`;
         imageFilename = firstImage.name;
       }
-      
-      const createPromise = feedbackAPI.create({
+
+      const payload = {
         message: newMessage.trim(),
         authorName: currentUser?.name || currentUser?.firstName || 'Guest',
         authorIdCode: isGuest ? undefined : (currentUser?.id || currentUser?.idCode),
@@ -138,11 +146,26 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
         email: newEmail || undefined,
         imageBase64,
         imageFilename,
-      });
+      } as const;
+
+      if (debug) {
+        // eslint-disable-next-line no-console
+        console.groupCollapsed('SubmitFeedback → payload');
+        const redacted = { ...payload, imageBase64: payload.imageBase64 ? `[base64:${payload.imageBase64.length} bytes]` : undefined };
+        // eslint-disable-next-line no-console
+        console.log(redacted);
+        // eslint-disable-next-line no-console
+        console.groupEnd();
+      }
+
+      const createPromise = feedbackAPI.create(payload);
       await toast.promise(createPromise, {
         loading: 'Submitting feedback…',
         success: 'Feedback submitted successfully',
-        error: 'Failed to submit feedback',
+        error: (err) => {
+          const msg = (err instanceof Error) ? err.message : 'Failed to submit feedback';
+          return msg;
+        },
       });
       const response = await createPromise;
 
@@ -160,10 +183,13 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
         setShowCreateModal(false);
         // Refresh feedback list
         await fetchFeedback();
+      } else if (debug) {
+        // eslint-disable-next-line no-console
+        console.warn('SubmitFeedback → unexpected response shape:', response);
       }
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error('Error creating feedback:', error);
-      // Error already surfaced via toast.promise
     } finally {
       setSubmitting(false);
     }

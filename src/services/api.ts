@@ -34,7 +34,37 @@ const API_CONFIG = {
  * All requests go through this function
  */
 async function apiRequest<T = any>(action: string, data: Record<string, any> = {}): Promise<T> {
-  const requestBody = { action, ...data };
+  const debug = (() => {
+    try {
+      if (typeof window === 'undefined') return false;
+      if (new URLSearchParams(window.location.search).get('yspDebug') === '1') return true;
+      return window.localStorage.getItem('yspDebug') === '1';
+    } catch { return false; }
+  })();
+
+  const redact = (obj: any) => {
+    try {
+      const clone = JSON.parse(JSON.stringify(obj));
+      if (clone?.imageBase64) clone.imageBase64 = `[base64:${(clone.imageBase64.length || 0)} bytes]`;
+      if (clone?.password) clone.password = '[REDACTED]';
+      return clone;
+    } catch { return obj; }
+  };
+
+  const clientDebugId = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+  const requestBody = { action, clientDebugId, ...data };
+
+  if (debug && (action === 'createFeedback' || action === 'getFeedback')) {
+    // Collapsed group to keep console tidy
+    // eslint-disable-next-line no-console
+    console.groupCollapsed(`API → ${action} [${clientDebugId}]`);
+    // eslint-disable-next-line no-console
+    console.debug('Endpoint:', API_CONFIG.baseURL);
+    // eslint-disable-next-line no-console
+    console.debug('Request:', redact(requestBody));
+    // eslint-disable-next-line no-console
+    console.groupEnd();
+  }
 
   // Small helper: fetch with timeout + retry + better error messages
   const fetchWithRetry = async (attempt = 1): Promise<Response> => {
@@ -64,6 +94,10 @@ async function apiRequest<T = any>(action: string, data: Record<string, any> = {
       return res;
     } catch (err: any) {
       window.clearTimeout(timeout);
+      if (debug) {
+        // eslint-disable-next-line no-console
+        console.error(`API ✖ ${action} [${clientDebugId}] Network error:`, err);
+      }
       // Retry on abort/network errors
       if (attempt < 3 && (err?.name === 'AbortError' || String(err).includes('TypeError'))) {
         const backoff = 500 * Math.pow(2, attempt - 1);
@@ -88,14 +122,29 @@ async function apiRequest<T = any>(action: string, data: Record<string, any> = {
       } else if (response.status >= 500) {
         friendly = 'Server error while processing your request. Please try again.';
       }
-      throw new Error(friendly);
+      if (debug) {
+        // eslint-disable-next-line no-console
+        console.error(`API ✖ ${action} [${clientDebugId}]`, friendly, '\nResponse text:', text);
+      }
+      // Include snippet of raw response in debug mode
+      const extra = debug && text ? `: ${text.slice(0, 200)}` : '';
+      throw new Error(friendly + extra);
     }
 
     const result = await response.json();
+
+    if (debug && (action === 'createFeedback' || action === 'getFeedback')) {
+      // eslint-disable-next-line no-console
+      console.info(`API ✓ ${action} [${clientDebugId}]`, result);
+    }
+
     return result;
   } catch (error) {
-    // Surface clearer message to UI
     const msg = error instanceof Error ? error.message : 'Network error. Please check your internet connection.';
+    if (debug) {
+      // eslint-disable-next-line no-console
+      console.error(`API ✖ ${action} [${clientDebugId}]`, msg);
+    }
     throw new Error(msg);
   }
 }
