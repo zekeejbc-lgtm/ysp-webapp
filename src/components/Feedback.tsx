@@ -486,7 +486,7 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
                     <SelectTrigger className="mt-2 w-full">
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
-                    <SelectContent className="z-[100]">
+                    <SelectContent>
                       <SelectItem value="Complaint">Complaint</SelectItem>
                       <SelectItem value="Suggestion">Suggestion</SelectItem>
                       <SelectItem value="Bug">Bug</SelectItem>
