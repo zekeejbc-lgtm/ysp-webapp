@@ -550,8 +550,14 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
                 {searchTerm.trim() && <span className="font-medium text-[#f6421f]"> matching "{searchTerm}"</span>}
               </div>
             )}
-            
-            <div className="grid md:grid-cols-2 gap-4 max-h-[600px] overflow-y-auto pr-2">
+
+            {/* Recent Feedback Holder */}
+            <div className="ysp-card bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 shadow-sm">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Recent Feedback</h3>
+                <span className="text-xs text-gray-500">{filteredFeedback.length} items</span>
+              </div>
+              <div className="grid md:grid-cols-2 gap-4 max-h-[600px] overflow-y-auto pr-2">
               {filteredFeedback.map((feedback, index) => (
                 <motion.div
                   key={feedback.referenceId}
@@ -582,6 +588,7 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
                   </div>
                 </motion.div>
               ))}
+              </div>
             </div>
 
             {filteredFeedback.length === 0 && (
@@ -765,18 +772,22 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
                 <p className="text-justify whitespace-pre-wrap leading-relaxed bg-gray-50 dark:bg-gray-800 p-4 rounded-lg text-gray-900 dark:text-gray-100">
                   {selectedFeedback.message}
                 </p>
-                {selectedFeedback.imageUrl && (
+                {selectedFeedback.imageUrl ? (
                   <div className="mt-4">
                     <h5 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Attached Image:</h5>
                     <img 
                       src={selectedFeedback.imageUrl} 
                       alt="Feedback attachment" 
                       className="max-w-full max-h-96 rounded-lg border-2 border-gray-200 dark:border-gray-600 cursor-pointer hover:border-[#f6421f] transition-all"
-                      onClick={() => window.open(selectedFeedback.imageUrl, '_blank')}
+                      onClick={() => window.open(selectedFeedback.imageUrl!, '_blank')}
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).style.display = 'none';
+                        toast.error('Failed to load image');
+                      }}
                     />
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Click image to view full size</p>
                   </div>
-                )}
+                ) : null}
               </div>
 
               {selectedFeedback.hasReply && selectedFeedback.replyMessage && (

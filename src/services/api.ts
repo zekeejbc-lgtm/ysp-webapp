@@ -647,7 +647,19 @@ export const feedbackAPI = {
    * Only available to Admin and Auditor
    */
   updateDetails: async (referenceId: string, status?: 'Pending' | 'Reviewed' | 'Resolved', visibility?: 'Private' | 'Public', role?: string): Promise<FeedbackResponse> => {
-    return apiRequest('updateFeedbackDetails', { referenceId, status, visibility, role });
+    try {
+      return await apiRequest('updateFeedbackDetails', { referenceId, status, visibility, role });
+    } catch (err: any) {
+      const msg = (err?.message || '').toString();
+      // Fallback for older GAS deployments that don't support updateFeedbackDetails yet
+      if (msg.includes('Unknown action') || msg.includes('updateFeedbackDetails')) {
+        // Try to at least update visibility if provided
+        if (visibility) {
+          return await apiRequest('setFeedbackVisibility', { referenceId, visibility, role });
+        }
+      }
+      throw err;
+    }
   },
 };
 
