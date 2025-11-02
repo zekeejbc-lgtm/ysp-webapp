@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, Plus, X, MessageCircle, RefreshCw, Image as ImageIcon, Eye, EyeOff } from 'lucide-react';
+import { Search, Plus, X, MessageCircle, RefreshCw, Image as ImageIcon, Eye, EyeOff, Star, Pencil } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
@@ -32,6 +32,8 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
   const [newAnonymous, setNewAnonymous] = useState<boolean>(false);
   const [newImageFiles, setNewImageFiles] = useState<File[]>([]);
   const [newImagePreviews, setNewImagePreviews] = useState<string[]>([]);
+  const [newRating, setNewRating] = useState<number>(0);
+  const [newEmail, setNewEmail] = useState<string>('');
   const [replyMessage, setReplyMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [replyStatus, setReplyStatus] = useState<'Pending' | 'Reviewed' | 'Resolved'>('Reviewed');
@@ -93,6 +95,11 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
       return;
     }
 
+    if (newRating <= 0) {
+      toast.error('Please provide a star rating');
+      return;
+    }
+
     if (newImageFiles.length > 3) {
       toast.error('Maximum 3 images allowed');
       return;
@@ -127,6 +134,8 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
         anonymous: newAnonymous,
         category: newCategory as any,
         visibility: canReply ? newVisibility : 'Private', // Only Admin/Auditor can set visibility
+        rating: newRating,
+        email: newEmail || undefined,
         imageBase64,
         imageFilename,
       });
@@ -147,6 +156,7 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
         setNewAnonymous(false);
         setNewImageFiles([]);
         setNewImagePreviews([]);
+        resetCreateForm();
         setShowCreateModal(false);
         // Refresh feedback list
         await fetchFeedback();
@@ -157,6 +167,19 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
     } finally {
       setSubmitting(false);
     }
+  };
+  // Reset create form fields (used by Cancel/Close)
+  const resetCreateForm = () => {
+    setNewMessage('');
+    setNewCategory('Other');
+    setNewVisibility('Private');
+    setNewAnonymous(false);
+    // Revoke all preview URLs
+    newImagePreviews.forEach((url) => URL.revokeObjectURL(url));
+    setNewImageFiles([]);
+    setNewImagePreviews([]);
+    setNewRating(0);
+    setNewEmail('');
   };
 
   // Replace an image at a given index
@@ -478,7 +501,7 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="modal-overlay"
-            onClick={() => !submitting && setShowCreateModal(false)}
+            onClick={() => { if (!submitting) { resetCreateForm(); setShowCreateModal(false); }}}
           >
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
@@ -497,7 +520,7 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
                 <motion.button
                   whileHover={{ scale: 1.1, rotate: 90 }}
                   whileTap={{ scale: 0.9 }}
-                  onClick={() => !submitting && setShowCreateModal(false)}
+                  onClick={() => { if (!submitting) { resetCreateForm(); setShowCreateModal(false); }}}
                   className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors"
                   disabled={submitting}
                 >
@@ -514,6 +537,39 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
                     onChange={(e) => setNewMessage(e.target.value)}
                     placeholder="Enter your feedback, suggestions, or concerns..."
                     className="mt-2 min-h-[150px]"
+                    disabled={submitting}
+                  />
+                </div>
+
+                {/* Star Rating (required) */}
+                <div>
+                  <Label>Rate Your Experience (required)</Label>
+                  <div className="mt-2 flex items-center gap-1">
+                    {[1,2,3,4,5].map((i)=> (
+                      <button
+                        key={i}
+                        type="button"
+                        aria-label={`${i} star`}
+                        onClick={()=> setNewRating(i)}
+                        className="p-1"
+                        disabled={submitting}
+                      >
+                        <Star className={i <= newRating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'} size={24} />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Optional Email */}
+                <div>
+                  <Label htmlFor="email">Email (optional)</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="you@example.com"
+                    value={newEmail}
+                    onChange={(e)=> setNewEmail(e.target.value)}
+                    className="mt-2"
                     disabled={submitting}
                   />
                 </div>
@@ -584,13 +640,14 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
                         {newImageFiles.length >= 3 ? 'Maximum images reached' : `Click to add images (${newImageFiles.length}/3)`}
                       </span>
                     </label>
-                    <Input 
+                    {/* Use a native input fully hidden to avoid duplicate "Choose File" UI */}
+                    <input
                       id="image-upload"
-                      type="file" 
-                      accept="image/*" 
+                      type="file"
+                      accept="image/*"
                       multiple
                       disabled={submitting || newImageFiles.length >= 3}
-                      className="hidden"
+                      style={{ display: 'none' }}
                       onChange={(e)=>{
                         const files = Array.from(e.target.files || []);
                         if (files.length + newImageFiles.length > 3) {
@@ -630,13 +687,15 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
                             <div className="absolute top-1 right-1 flex gap-1">
                               <button
                                 type="button"
+                                title="Change image"
                                 onClick={(e)=>{ e.stopPropagation(); handleReplaceImage(idx); }}
-                                className="bg-white/90 text-gray-800 hover:bg-white text-xs px-2 py-1 rounded shadow md:opacity-0 md:group-hover:opacity-100 transition-opacity"
+                                className="bg-white/90 text-gray-800 hover:bg-white rounded-full p-1 shadow md:opacity-0 md:group-hover:opacity-100 transition-opacity"
                               >
-                                Change
+                                <Pencil size={16} />
                               </button>
                               <button
                                 type="button"
+                                title="Remove image"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   const newFiles = newImageFiles.filter((_, i) => i !== idx);
@@ -646,9 +705,9 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
                                   setNewImagePreviews(newPreviews);
                                   toast.success('Image removed');
                                 }}
-                                className="bg-red-500 hover:bg-red-600 text-white rounded px-2 py-1 text-xs shadow md:opacity-0 md:group-hover:opacity-100 transition-opacity"
+                                className="bg-red-500 hover:bg-red-600 text-white rounded-full p-1 shadow md:opacity-0 md:group-hover:opacity-100 transition-opacity"
                               >
-                                Remove
+                                <X size={16} />
                               </button>
                             </div>
                           </div>
@@ -682,7 +741,7 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
                   </motion.div>
                   <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="flex-1">
                     <Button
-                      onClick={() => setShowCreateModal(false)}
+                      onClick={() => { resetCreateForm(); setShowCreateModal(false); }}
                       disabled={submitting}
                       className="w-full bg-gray-500 hover:bg-gray-600"
                     >
