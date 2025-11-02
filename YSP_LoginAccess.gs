@@ -3,6 +3,7 @@ const SPREADSHEET_ID = '1zTgBQw3ISAtagKOKhMYl6JWL6DnQSpcHt7L3UnBevuU';
 const PROFILE_PICTURES_FOLDER_ID = '192-pVluL93fYKpyJoukfi_H5az_9fqFK'; // Google Drive folder for profile pictures
 const PROJECTS_FOLDER_ID = '1G68-t3Urdc6iBW6Utl7zbvlb4xa6MvSH'; // Google Drive folder for homepage project images
 const ORG_CHART_FOLDER_ID = '1-svfAWzLOwzY2WlNUom-KXoAF9_wNckR'; // Google Drive folder for org chart images
+const FEEDBACK_IMAGES_FOLDER_ID = '12GOFbwF9Cyh-6WxE4aeMe-XaOzMdMm52'; // Google Drive folder for feedback images
 const SHEETS = {
   ACCESS_LOGS: 'Access Logs',
   USER_PROFILES: 'User Profiles',
@@ -161,6 +162,14 @@ function handlePostRequest(data) {
       return handleGetFeedback(data);
     case 'replyToFeedback':
       return handleReplyToFeedback(data);
+    case 'getFeedbackByRef':
+      return handleGetFeedbackByRef(data);
+    case 'setFeedbackVisibility':
+      return handleSetFeedbackVisibility(data);
+    case 'uploadFeedbackImage':
+      return handleUploadFeedbackImage(data);
+    case 'initFeedbackSheet':
+      return handleInitFeedbackSheet();
     case 'getHomepageContent':
       return handleGetHomepageContent(data);
     case 'getUserProfile':
@@ -1684,49 +1693,68 @@ function handleCreateFeedback(data) {
   try {
     const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
     const feedbackSheet = ss.getSheetByName(SHEETS.FEEDBACK);
-    
+    ensureFeedbackSchema(feedbackSheet);
+
     // Validate required fields
-    if (!data.message || !data.authorName) {
-      return { success: false, message: 'Message and author name are required' };
+    if (!data.message) {
+      return { success: false, message: 'Message is required' };
+    }
+    const authorNameInput = data.anonymous ? 'Anonymous' : (data.authorName || 'Guest');
+
+    // Basic throttling: limit 3 submissions per 5 minutes per user/guest
+    try {
+      const throttled = checkFeedbackThrottle(data.authorIdCode || 'Guest', authorNameInput);
+      if (throttled) {
+        return { success: false, message: 'Too many submissions. Please try again in a few minutes.' };
+      }
+    } catch (thErr) {
+      Logger.log('Throttle check error: ' + thErr);
     }
     
     // Get PH timezone timestamp
     const now = new Date();
     const phTime = new Date(now.getTime() + (8 * 60 * 60 * 1000));
     
-    // Generate Reference ID (FBC-YYYY-###)
-    const feedbackData = feedbackSheet.getDataRange().getValues();
-    const currentYear = new Date().getFullYear();
-    let maxNumber = 0;
-    
-    // Find highest feedback number for current year
-    for (let i = 1; i < feedbackData.length; i++) {
-      const refId = feedbackData[i][4]; // Column E - Reference ID
-      if (refId) {
-        const match = refId.toString().match(/^FBC-(\d{4})-(\d{3})$/);
-        if (match && parseInt(match[1]) === currentYear) {
-          const num = parseInt(match[2]);
-          if (num > maxNumber) {
-            maxNumber = num;
-          }
-        }
-      }
-    }
-    
-    const newReferenceId = 'FBC-' + currentYear + '-' + String(maxNumber + 1).padStart(3, '0');
+    // Generate new Reference ID using FBCK-YYYY-XXXX (random base36)
+    const newReferenceId = generateFeedbackId(feedbackSheet);
     
     // Determine author ID code (Guest if not provided)
     const authorIdCode = data.authorIdCode || 'Guest';
-    
-    // Add feedback to sheet (Columns A-E, F-I will be empty until replied)
-    const nextRow = feedbackSheet.getLastRow() + 1;
-    feedbackSheet.getRange(nextRow, 1, 1, 5).setValues([[
-      phTime.toISOString(),           // A - Timestamp
-      data.authorName,                // B - Author Name
-      authorIdCode,                   // C - Author ID Code
-      data.message,                   // D - Feedback Message
-      newReferenceId                  // E - Reference ID
-    ]]);
+
+    // Normalize fields
+    const category = (data.category || 'Other').toString();
+    const status = (data.status || 'Pending').toString();
+    const visibility = (data.visibility || 'Private').toString();
+
+    // Handle image: use provided URL or upload base64 to Drive
+    let imageUrl = (data.imageUrl || '').toString();
+    try {
+      if (!imageUrl && data.imageBase64) {
+        imageUrl = _saveBase64ToDrive(FEEDBACK_IMAGES_FOLDER_ID, data.imageBase64, data.imageFilename || ('feedback-' + newReferenceId + '.png'));
+      }
+    } catch (imgErr) {
+      Logger.log('Image upload failed, proceeding without image. ' + imgErr);
+    }
+
+    // Write row using header-based indices
+    const headers = feedbackSheet.getRange(1, 1, 1, feedbackSheet.getLastColumn()).getValues()[0];
+    const idx = getFeedbackColumnIndexMap(headers);
+
+    const row = new Array(headers.length).fill('');
+    row[idx.Timestamp] = phTime.toISOString();
+    row[idx['Feedback ID']] = newReferenceId; // store also in Feedback ID if exists
+    row[idx['Reference ID']] = newReferenceId; // keep using Reference ID for compatibility
+    row[idx.Author] = authorNameInput;
+    row[idx.Anonymous] = data.anonymous ? true : false;
+    row[idx['Author ID Code']] = authorIdCode;
+    row[idx.Category] = category;
+    row[idx.Feedback] = data.message;
+    if (idx['Image URL'] !== undefined) row[idx['Image URL']] = imageUrl;
+    row[idx.Status] = status;
+    row[idx.Visibility] = visibility;
+    // Reply fields empty by default
+
+    feedbackSheet.appendRow(row);
     
     Logger.log('Created feedback: ' + newReferenceId + ' by ' + data.authorName);
     
@@ -1736,9 +1764,13 @@ function handleCreateFeedback(data) {
       feedback: {
         referenceId: newReferenceId,
         timestamp: phTime.toISOString(),
-        authorName: data.authorName,
+        authorName: authorNameInput,
         authorIdCode: authorIdCode,
-        message: data.message
+        message: data.message,
+        category: category,
+        status: status,
+        visibility: visibility,
+        imageUrl: imageUrl
       }
     };
   } catch (error) {
@@ -1752,6 +1784,7 @@ function handleGetFeedback(data) {
   try {
     const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
     const feedbackSheet = ss.getSheetByName(SHEETS.FEEDBACK);
+    ensureFeedbackSchema(feedbackSheet);
     
     const userIdCode = data.idCode;
     const userName = data.name;
@@ -1763,24 +1796,30 @@ function handleGetFeedback(data) {
     
     // Get all feedback data
     const feedbackData = feedbackSheet.getDataRange().getValues();
+    const headers = feedbackData[0] || [];
+    const idx = getFeedbackColumnIndexMap(headers);
     const feedbackList = [];
     
     // Skip header row
     for (let i = 1; i < feedbackData.length; i++) {
       const row = feedbackData[i];
       
-      // Skip empty rows
-      if (!row[4]) continue;
-      
-      const timestamp = row[0];
-      const authorName = row[1] || '';
-      const authorIdCode = row[2] || '';
-      const message = row[3] || '';
-      const referenceId = row[4] || '';
-      const replyTimestamp = row[5] || '';
-      const replierName = row[6] || '';
-      const replierIdCode = row[7] || '';
-      const replyMessage = row[8] || '';
+      // Skip rows without Reference ID
+      const referenceId = row[idx['Reference ID']] || row[idx['Feedback ID']] || '';
+      if (!referenceId) continue;
+
+      const timestamp = row[idx.Timestamp];
+      const authorName = row[idx.Author] || '';
+      const authorIdCode = row[idx['Author ID Code']] || '';
+      const message = row[idx.Feedback] || '';
+      const replyTimestamp = row[idx['Reply Timestamp']] || '';
+      const replierName = row[idx.Replier] || '';
+      const replierIdCode = row[idx['Replier ID']] || '';
+      const replyMessage = row[idx.Reply] || '';
+      const category = row[idx.Category] || 'Other';
+      const status = row[idx.Status] || 'Pending';
+      const visibility = row[idx.Visibility] || 'Private';
+      const imageUrl = row[idx['Image URL']] || '';
       
       // Check if user should see this feedback
       let shouldInclude = false;
@@ -1789,14 +1828,12 @@ function handleGetFeedback(data) {
         // Admin and Auditor see all feedback
         shouldInclude = true;
       } else {
-        // Regular users see only their own feedback
-        if (authorIdCode === 'Guest') {
-          // For guests, match by name
-          shouldInclude = (authorName.toLowerCase() === userName.toLowerCase());
-        } else {
-          // For members, match by ID Code
-          shouldInclude = (authorIdCode === userIdCode);
-        }
+        // Regular users see their own OR any Public items
+        const isOwn = (authorIdCode === 'Guest')
+          ? (authorName.toLowerCase() === (userName || '').toLowerCase())
+          : (authorIdCode === userIdCode);
+        const isPublic = (visibility === 'Public');
+        shouldInclude = isOwn || isPublic;
       }
       
       if (!shouldInclude) continue;
@@ -1829,7 +1866,11 @@ function handleGetFeedback(data) {
         timestamp: formattedTimestamp,
         authorName: authorName,
         message: message,
-        hasReply: !!(replyMessage && replyMessage.toString().trim() !== '')
+        hasReply: !!(replyMessage && replyMessage.toString().trim() !== ''),
+        category: category,
+        status: status,
+        visibility: visibility,
+        imageUrl: imageUrl
       };
       
       // Show author ID only to Admin/Auditor
@@ -1876,6 +1917,7 @@ function handleReplyToFeedback(data) {
   try {
     const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
     const feedbackSheet = ss.getSheetByName(SHEETS.FEEDBACK);
+    ensureFeedbackSchema(feedbackSheet);
     
     // Validate required fields
     if (!data.referenceId || !data.reply || !data.replierName || !data.replierIdCode) {
@@ -1887,13 +1929,16 @@ function handleReplyToFeedback(data) {
       return { success: false, message: 'Only Admin and Auditor can reply to feedback' };
     }
     
-    // Get all feedback data
-    const feedbackData = feedbackSheet.getDataRange().getValues();
+  // Get all feedback data
+  const feedbackData = feedbackSheet.getDataRange().getValues();
+  const headers = feedbackData[0] || [];
+  const idx = getFeedbackColumnIndexMap(headers);
     
     // Find the feedback by Reference ID
     let feedbackRowIndex = -1;
     for (let i = 1; i < feedbackData.length; i++) {
-      if (feedbackData[i][4] && feedbackData[i][4].toString() === data.referenceId.toString()) {
+      const ref = feedbackData[i][idx['Reference ID']] || feedbackData[i][idx['Feedback ID']];
+      if (ref && ref.toString() === data.referenceId.toString()) {
         feedbackRowIndex = i;
         break;
       }
@@ -1904,7 +1949,7 @@ function handleReplyToFeedback(data) {
     }
     
     // Check if already replied
-    const existingReply = feedbackData[feedbackRowIndex][8]; // Column I - Reply Message
+    const existingReply = feedbackData[feedbackRowIndex][idx.Reply];
     if (existingReply && existingReply.toString().trim() !== '') {
       return { success: false, message: 'This feedback has already been replied to' };
     }
@@ -1913,13 +1958,13 @@ function handleReplyToFeedback(data) {
     const now = new Date();
     const phTime = new Date(now.getTime() + (8 * 60 * 60 * 1000));
     
-    // Add reply (Columns F-I)
-    feedbackSheet.getRange(feedbackRowIndex + 1, 6, 1, 4).setValues([[
-      phTime.toISOString(),           // F - Reply Timestamp
-      data.replierName,               // G - Replier Name
-      data.replierIdCode,             // H - Replier ID Code
-      data.reply                      // I - Reply Message
-    ]]);
+    // Update reply and optionally status/visibility
+    if (idx['Reply Timestamp'] !== undefined) feedbackSheet.getRange(feedbackRowIndex + 1, idx['Reply Timestamp'] + 1).setValue(phTime.toISOString());
+    if (idx.Replier !== undefined) feedbackSheet.getRange(feedbackRowIndex + 1, idx.Replier + 1).setValue(data.replierName);
+    if (idx['Replier ID'] !== undefined) feedbackSheet.getRange(feedbackRowIndex + 1, idx['Replier ID'] + 1).setValue(data.replierIdCode);
+    if (idx.Reply !== undefined) feedbackSheet.getRange(feedbackRowIndex + 1, idx.Reply + 1).setValue(data.reply);
+    if (data.status && idx.Status !== undefined) feedbackSheet.getRange(feedbackRowIndex + 1, idx.Status + 1).setValue(data.status);
+    if (data.visibility && idx.Visibility !== undefined) feedbackSheet.getRange(feedbackRowIndex + 1, idx.Visibility + 1).setValue(data.visibility);
     
     Logger.log('Replied to feedback ' + data.referenceId + ' by ' + data.replierName);
     
@@ -1938,6 +1983,190 @@ function handleReplyToFeedback(data) {
     Logger.log('Error replying to feedback: ' + error.toString());
     return { success: false, message: 'Error replying to feedback: ' + error.toString() };
   }
+}
+
+// ===== GET FEEDBACK BY REFERENCE (Guest tracking) =====
+function handleGetFeedbackByRef(data) {
+  try {
+    const ref = (data.referenceId || '').toString();
+    if (!ref) return { success: false, message: 'referenceId is required' };
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const sheet = ss.getSheetByName(SHEETS.FEEDBACK);
+    ensureFeedbackSchema(sheet);
+    const values = sheet.getDataRange().getValues();
+    const headers = values[0] || [];
+    const idx = getFeedbackColumnIndexMap(headers);
+    for (let i = 1; i < values.length; i++) {
+      const row = values[i];
+      const referenceId = row[idx['Reference ID']] || row[idx['Feedback ID']] || '';
+      if (referenceId && referenceId.toString() === ref) {
+        const obj = {
+          referenceId: referenceId,
+          timestamp: toIso(row[idx.Timestamp]),
+          category: row[idx.Category] || 'Other',
+          status: row[idx.Status] || 'Pending',
+          visibility: row[idx.Visibility] || 'Private',
+          imageUrl: row[idx['Image URL']] || '',
+          authorName: row[idx.Author] || '',
+          message: row[idx.Feedback] || '',
+        };
+        const reply = row[idx.Reply];
+        if (reply && reply.toString().trim() !== '') {
+          obj.replyMessage = reply;
+          obj.replyTimestamp = toIso(row[idx['Reply Timestamp']]);
+          obj.replierName = row[idx.Replier] || '';
+        }
+        return { success: true, feedback: obj };
+      }
+    }
+    return { success: false, message: 'Not found' };
+  } catch (e) {
+    return { success: false, message: 'Error: ' + e.toString() };
+  }
+}
+
+// ===== SET VISIBILITY =====
+function handleSetFeedbackVisibility(data) {
+  try {
+    if (!data.referenceId || !data.visibility) return { success: false, message: 'referenceId and visibility required' };
+    if (data.role !== 'Admin' && data.role !== 'Auditor') return { success: false, message: 'Not authorized' };
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const sheet = ss.getSheetByName(SHEETS.FEEDBACK);
+    ensureFeedbackSchema(sheet);
+    const values = sheet.getDataRange().getValues();
+    const idx = getFeedbackColumnIndexMap(values[0] || []);
+    for (let i = 1; i < values.length; i++) {
+      const ref = values[i][idx['Reference ID']] || values[i][idx['Feedback ID']];
+      if (ref && ref.toString() === data.referenceId.toString()) {
+        sheet.getRange(i + 1, idx.Visibility + 1).setValue(data.visibility);
+        return { success: true };
+      }
+    }
+    return { success: false, message: 'Not found' };
+  } catch (e) { return { success: false, message: 'Error: ' + e.toString() }; }
+}
+
+// ===== UPLOAD FEEDBACK IMAGE =====
+function handleUploadFeedbackImage(data) {
+  try {
+    if (!data.imageBase64) return { success: false, message: 'imageBase64 is required' };
+    const url = _saveBase64ToDrive(FEEDBACK_IMAGES_FOLDER_ID, data.imageBase64, data.filename || ('feedback-' + Date.now() + '.png'));
+    return { success: true, url: url };
+  } catch (e) { return { success: false, message: 'Error: ' + e.toString() }; }
+}
+
+// ===== UTILITIES FOR FEEDBACK SCHEMA =====
+function ensureFeedbackSchema(sheet) {
+  if (!sheet) throw new Error('Feedback sheet not found');
+  const requiredHeaders = [
+    'Timestamp',
+    'Feedback ID',
+    'Reference ID',
+    'Author',
+    'Anonymous',
+    'Author ID Code',
+    'Category',
+    'Feedback',
+    'Image URL',
+    'Status',
+    'Visibility',
+    'Reply Timestamp',
+    'Replier',
+    'Replier ID',
+    'Reply',
+    'Notes'
+  ];
+  const lastCol = sheet.getLastColumn();
+  const headers = lastCol > 0 ? sheet.getRange(1, 1, 1, lastCol).getValues()[0] : [];
+  const missing = requiredHeaders.filter(h => headers.indexOf(h) === -1);
+  if (headers.length === 0) {
+    sheet.getRange(1, 1, 1, requiredHeaders.length).setValues([requiredHeaders]);
+  } else if (missing.length > 0) {
+    // append missing headers
+    sheet.getRange(1, headers.length + 1, 1, missing.length).setValues([missing]);
+  }
+  // Data validation for enums
+  const idx = getFeedbackColumnIndexMap(sheet.getRange(1,1,1,sheet.getLastColumn()).getValues()[0]);
+  const rules = SpreadsheetApp.newDataValidation().requireValueInList(['Complaint','Suggestion','Bug','Compliment','Inquiry','Other']).setAllowInvalid(true).build();
+  sheet.getRange(2, idx.Category + 1, Math.max(1, sheet.getMaxRows()-1)).setDataValidation(rules);
+  const srules = SpreadsheetApp.newDataValidation().requireValueInList(['Pending','Reviewed','Resolved']).setAllowInvalid(true).build();
+  sheet.getRange(2, idx.Status + 1, Math.max(1, sheet.getMaxRows()-1)).setDataValidation(srules);
+  const vrules = SpreadsheetApp.newDataValidation().requireValueInList(['Private','Public']).setAllowInvalid(true).build();
+  sheet.getRange(2, idx.Visibility + 1, Math.max(1, sheet.getMaxRows()-1)).setDataValidation(vrules);
+}
+
+function getFeedbackColumnIndexMap(headers) {
+  const map = {};
+  headers.forEach((h, i) => { map[h] = i; });
+  // Provide named indices with fallbacks to legacy positions
+  return {
+    Timestamp: map['Timestamp'] ?? 0,
+    'Feedback ID': map['Feedback ID'] ?? (map['Reference ID'] ?? 4),
+    'Reference ID': map['Reference ID'] ?? (map['Feedback ID'] ?? 4),
+    Author: map['Author'] ?? 1,
+    Anonymous: map['Anonymous'] ?? -1,
+    'Author ID Code': map['Author ID Code'] ?? 2,
+    Category: map['Category'] ?? -1,
+    Feedback: map['Feedback'] ?? 3,
+    'Image URL': map['Image URL'] ?? -1,
+    Status: map['Status'] ?? -1,
+    Visibility: map['Visibility'] ?? -1,
+    'Reply Timestamp': map['Reply Timestamp'] ?? 5,
+    Replier: map['Replier'] ?? 6,
+    'Replier ID': map['Replier ID'] ?? 7,
+    Reply: map['Reply'] ?? 8,
+    Notes: map['Notes'] ?? -1
+  };
+}
+
+function generateFeedbackId(sheet) {
+  const values = sheet.getDataRange().getValues();
+  const year = new Date().getFullYear();
+  const existing = new Set(values.slice(1).map(r => (r[1] || r[4] || '').toString())); // Feedback ID or Reference ID
+  let id = '';
+  do {
+    const rand = Math.random().toString(36).substring(2, 6).toUpperCase();
+    id = 'FBCK-' + year + '-' + rand;
+  } while (existing.has(id));
+  return id;
+}
+
+function _saveBase64ToDrive(folderId, base64, filename) {
+  const contentTypeMatch = base64.match(/^data:(.*?);base64,/);
+  const contentType = contentTypeMatch ? contentTypeMatch[1] : 'image/png';
+  const clean = base64.replace(/^data:.*;base64,/, '');
+  const blob = Utilities.newBlob(Utilities.base64Decode(clean), contentType, filename);
+  const folder = DriveApp.getFolderById(folderId);
+  const file = folder.createFile(blob);
+  file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  return file.getUrl();
+}
+
+function checkFeedbackThrottle(idCode, name) {
+  const cache = CacheService.getUserCache();
+  const key = 'fb_rate_' + (idCode || 'Guest') + '_' + (name || 'Guest');
+  const raw = cache.get(key);
+  let obj = raw ? JSON.parse(raw) : { count: 0, ts: Date.now() };
+  if (Date.now() - obj.ts > 5 * 60 * 1000) { // reset after 5 minutes
+    obj = { count: 0, ts: Date.now() };
+  }
+  obj.count += 1;
+  cache.put(key, JSON.stringify(obj), 5 * 60);
+  return obj.count > 3;
+}
+
+function toIso(val) {
+  if (!val) return '';
+  try { const d = new Date(val); return isNaN(d.getTime()) ? val.toString() : d.toISOString(); } catch(e){return val.toString();}
+}
+
+function handleInitFeedbackSheet() {
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const sheet = ss.getSheetByName(SHEETS.FEEDBACK);
+    ensureFeedbackSchema(sheet);
+    return { success: true };
+  } catch (e) { return { success: false, message: 'Error: ' + e.toString() }; }
 }
 
 // ===== GET HOMEPAGE CONTENT HANDLER =====

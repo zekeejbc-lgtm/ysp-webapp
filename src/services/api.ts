@@ -474,6 +474,10 @@ export interface Feedback {
   authorIdCode?: string; // Only visible to Admin/Auditor
   message: string;
   hasReply: boolean;
+  category?: string;
+  status?: 'Pending' | 'Reviewed' | 'Resolved' | string;
+  visibility?: 'Private' | 'Public' | string;
+  imageUrl?: string;
   replyTimestamp?: string;
   replyMessage?: string;
   replierName?: string; // Only visible to Admin/Auditor
@@ -484,6 +488,12 @@ export interface CreateFeedbackRequest {
   message: string;
   authorName: string;
   authorIdCode?: string; // Optional, defaults to "Guest" if not provided
+  anonymous?: boolean;
+  category?: 'Complaint' | 'Suggestion' | 'Bug' | 'Compliment' | 'Inquiry' | 'Other' | string;
+  visibility?: 'Private' | 'Public';
+  imageUrl?: string;
+  imageBase64?: string; // data URL or raw base64
+  imageFilename?: string;
 }
 
 export interface ReplyToFeedbackRequest {
@@ -492,6 +502,8 @@ export interface ReplyToFeedbackRequest {
   replierName: string;
   replierIdCode: string;
   replierRole: string;
+  status?: 'Pending' | 'Reviewed' | 'Resolved';
+  visibility?: 'Private' | 'Public';
 }
 
 export interface FeedbackResponse {
@@ -531,6 +543,14 @@ export const feedbackAPI = {
    */
   reply: async (data: ReplyToFeedbackRequest): Promise<FeedbackResponse> => {
     return apiRequest('replyToFeedback', data);
+  },
+
+  getByReference: async (referenceId: string): Promise<FeedbackResponse> => {
+    return apiRequest('getFeedbackByRef', { referenceId });
+  },
+
+  setVisibility: async (referenceId: string, visibility: 'Private' | 'Public', role: string): Promise<FeedbackResponse> => {
+    return apiRequest('setFeedbackVisibility', { referenceId, visibility, role });
   },
 };
 

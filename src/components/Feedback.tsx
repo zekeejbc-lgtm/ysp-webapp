@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, Plus, X, MessageCircle, RefreshCw } from 'lucide-react';
+import { Search, Plus, X, MessageCircle, RefreshCw, Image as ImageIcon, Eye, EyeOff } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
@@ -9,6 +9,9 @@ import { toast } from 'sonner';
 import { Badge } from './ui/badge';
 import { feedbackAPI, type Feedback as FeedbackType } from '../services/api';
 import { CardSkeleton } from './ui/skeletons';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Switch } from './ui/switch';
+import { Checkbox } from './ui/checkbox';
 
 interface FeedbackProps {
   darkMode: boolean;
@@ -24,8 +27,15 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
   const [selectedFeedback, setSelectedFeedback] = useState<FeedbackType | null>(null);
   const [showReplyModal, setShowReplyModal] = useState(false);
   const [newMessage, setNewMessage] = useState('');
+  const [newCategory, setNewCategory] = useState<string>('Other');
+  const [newVisibility, setNewVisibility] = useState<'Private' | 'Public'>('Private');
+  const [newAnonymous, setNewAnonymous] = useState<boolean>(false);
+  const [newImageFile, setNewImageFile] = useState<File | null>(null);
+  const [newImagePreview, setNewImagePreview] = useState<string | null>(null);
   const [replyMessage, setReplyMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [replyStatus, setReplyStatus] = useState<'Pending' | 'Reviewed' | 'Resolved'>('Reviewed');
+  const [replyVisibility, setReplyVisibility] = useState<'Private' | 'Public'>('Private');
 
   const canReply = currentUser && ['Admin', 'Auditor'].includes(currentUser.role);
   const isGuest = currentUser && currentUser.role === 'Guest';
@@ -82,10 +92,30 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
 
     try {
       setSubmitting(true);
+      let imageBase64: string | undefined;
+      let imageFilename: string | undefined;
+      if (newImageFile) {
+        // enforce 10MB limit client-side
+        if (newImageFile.size > 10 * 1024 * 1024) {
+          toast.error('Image too large. Max size is 10MB.');
+          setSubmitting(false);
+          return;
+        }
+        const buffer = await newImageFile.arrayBuffer();
+        const base64 = btoa(String.fromCharCode(...new Uint8Array(buffer)));
+        const mime = newImageFile.type || 'image/png';
+        imageBase64 = `data:${mime};base64,${base64}`;
+        imageFilename = newImageFile.name;
+      }
       const createPromise = feedbackAPI.create({
         message: newMessage.trim(),
         authorName: currentUser?.name || currentUser?.firstName || 'Guest',
         authorIdCode: isGuest ? undefined : (currentUser?.id || currentUser?.idCode),
+        anonymous: newAnonymous,
+        category: newCategory as any,
+        visibility: newVisibility,
+        imageBase64,
+        imageFilename,
       });
       await toast.promise(createPromise, {
         loading: 'Submitting feedback…',
@@ -99,6 +129,11 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
         toast.info(`Reference: ${newFeedback.referenceId}`, { duration: 3000 });
 
         setNewMessage('');
+        setNewCategory('Other');
+        setNewVisibility('Private');
+        setNewAnonymous(false);
+        setNewImageFile(null);
+        setNewImagePreview(null);
         setShowCreateModal(false);
         // Refresh feedback list
         await fetchFeedback();
@@ -130,6 +165,8 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
         replierName: currentUser?.name || currentUser?.firstName || 'Admin',
         replierIdCode: currentUser?.id || currentUser?.idCode || '',
         replierRole: currentUser?.role || 'Admin',
+        status: replyStatus,
+        visibility: replyVisibility,
       });
       await toast.promise(replyPromise, {
         loading: 'Sending reply…',
@@ -247,9 +284,17 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
                 >
                   <div className="flex items-start justify-between mb-3">
                     <Badge className="bg-[#f6421f] shadow-md">{feedback.referenceId}</Badge>
-                    {feedback.hasReply && (
+                    <div className="flex gap-2">
+                      {feedback.visibility === 'Public' && (
+                        <Badge className="bg-gradient-to-r from-purple-500 to-purple-600 shadow-md">Public</Badge>
+                      )}
+                      {feedback.category && (
+                        <Badge className="bg-gradient-to-r from-sky-500 to-sky-600 shadow-md">{feedback.category}</Badge>
+                      )}
+                      {feedback.hasReply && (
                       <Badge className="bg-gradient-to-r from-green-500 to-green-600 shadow-md">Replied</Badge>
-                    )}
+                      )}
+                    </div>
                   </div>
                   <p className="text-sm mb-3 line-clamp-3">{feedback.message}</p>
                   <div className="flex items-center justify-between text-xs text-gray-400">
@@ -323,6 +368,11 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
                 <p className="text-justify whitespace-pre-wrap leading-relaxed bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
                   {selectedFeedback.message}
                 </p>
+                {selectedFeedback.imageUrl && (
+                  <div className="mt-4">
+                    <img src={selectedFeedback.imageUrl} alt="Attachment" className="max-h-64 rounded-md border" />
+                  </div>
+                )}
               </div>
 
               {selectedFeedback.hasReply && selectedFeedback.replyMessage && (
@@ -421,6 +471,52 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
                   />
                 </div>
 
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label>Category</Label>
+                    <Select value={newCategory} onValueChange={(v: string) => setNewCategory(v)}>
+                      <SelectTrigger className="mt-2"><SelectValue placeholder="Select category" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Complaint">Complaint</SelectItem>
+                        <SelectItem value="Suggestion">Suggestion</SelectItem>
+                        <SelectItem value="Bug">Bug</SelectItem>
+                        <SelectItem value="Compliment">Compliment</SelectItem>
+                        <SelectItem value="Inquiry">Inquiry</SelectItem>
+                        <SelectItem value="Other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex items-end gap-3">
+                    <div className="flex items-center gap-2">
+                      <Switch id="visibility" checked={newVisibility === 'Public'} onCheckedChange={(c)=> setNewVisibility(c ? 'Public' : 'Private')} />
+                      <Label htmlFor="visibility" className="cursor-pointer flex items-center gap-2">{newVisibility === 'Public' ? <Eye size={16}/> : <EyeOff size={16}/>} {newVisibility}</Label>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <Checkbox id="anonymous" checked={newAnonymous} onCheckedChange={(c: boolean | string) => setNewAnonymous(!!c)} />
+                  <Label htmlFor="anonymous">Submit as Anonymous</Label>
+                </div>
+
+                <div>
+                  <Label>Optional Image</Label>
+                  <div className="mt-2 flex items-center gap-3">
+                    <Input type="file" accept="image/*" disabled={submitting} onChange={(e)=>{
+                      const f = e.target.files?.[0] || null;
+                      setNewImageFile(f);
+                      if (f) {
+                        const url = URL.createObjectURL(f);
+                        setNewImagePreview(url);
+                      } else { setNewImagePreview(null); }
+                    }} />
+                    <ImageIcon size={18} className="text-gray-500" />
+                  </div>
+                  {newImagePreview && (
+                    <div className="mt-3"><img src={newImagePreview} alt="preview" className="max-h-40 rounded-md border" /></div>
+                  )}
+                </div>
+
                 <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
                   <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="flex-1">
                     <Button
@@ -490,6 +586,26 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
                     className="mt-2 min-h-[150px]"
                     disabled={submitting}
                   />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label>Status</Label>
+                    <Select value={replyStatus} onValueChange={(v:any)=> setReplyStatus(v)}>
+                      <SelectTrigger className="mt-2"><SelectValue placeholder="Select status" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Pending">Pending</SelectItem>
+                        <SelectItem value="Reviewed">Reviewed</SelectItem>
+                        <SelectItem value="Resolved">Resolved</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex items-end gap-3">
+                    <div className="flex items-center gap-2">
+                      <Switch id="replyVisibility" checked={replyVisibility === 'Public'} onCheckedChange={(c)=> setReplyVisibility(c ? 'Public' : 'Private')} />
+                      <Label htmlFor="replyVisibility" className="cursor-pointer flex items-center gap-2">{replyVisibility === 'Public' ? <Eye size={16}/> : <EyeOff size={16}/>} {replyVisibility}</Label>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
