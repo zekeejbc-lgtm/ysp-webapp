@@ -76,9 +76,10 @@
     "build": "vite build",
     "preview": "vite preview",
     "sheets:snapshot": "tsx scripts/sheets/snapshot-headers.ts",
-    "gas:login": "clasp login --no-localhost",
+    "gas:login": "clasp login --creds secrets/client_secret_151174609303-rifgvemnu05rs8rlhbu0ncj3tib6q3uu.apps.googleusercontent.com.json",
     "gas:push": "clasp push -f",
-    "gas:deploy": "clasp deploy --description 'YSP auto deploy'",
-    "gas:auto-deploy": "tsx scripts/gas/deploy-to-gas.ts"
+    "gas:deploy": "clasp deploy --description 'Auto-deployed from VS Code'",
+    "gas:auto-deploy": "tsx scripts/gas/deploy-to-gas.ts",
+    "gas:clasp-deploy": "clasp push -f && clasp deploy --description 'Auto-deployed from VS Code'"
   }
 }
