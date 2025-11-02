@@ -36,6 +36,7 @@
     "cmdk": "^1.1.1",
     "embla-carousel-react": "^8.6.0",
     "framer-motion": "^12.23.24",
+    "googleapis": "^139.0.0",
     "html5-qrcode": "^2.3.8",
     "input-otp": "^1.4.2",
     "lucide-react": "^0.487.0",
@@ -62,7 +63,9 @@
     "sharp": "^0.34.4",
     "terser": "^5.44.0",
     "typescript": "^5.9.3",
-    "vite": "^5.3.4"
+    "vite": "^5.3.4",
+    "tsx": "^4.19.2",
+    "@google/clasp": "^2.4.2"
   },
   "engines": {
     "node": "20.x"
@@ -70,6 +73,10 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "sheets:snapshot": "tsx scripts/sheets/snapshot-headers.ts",
+    "gas:login": "clasp login --no-localhost",
+    "gas:push": "clasp push -f",
+    "gas:deploy": "clasp deploy --description 'YSP auto deploy'"
   }
 }

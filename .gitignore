@@ -15,5 +15,10 @@ secrets/
 # Appwrite backup (local only)
 APPWRITE_BACKUP/
 
+# GAS & build artifacts
+.clasp.json
+.claspignore
+.scripts-cache/
+
 # Scripts (may contain sensitive data)
 scripts/
