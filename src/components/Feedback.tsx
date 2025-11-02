@@ -76,9 +76,18 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
 
   // Filter feedback based on search and status
   const filteredFeedback = feedbackList.filter(f => {
-    const matchesSearch = searchTerm
-      ? f.referenceId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        f.message.toLowerCase().includes(searchTerm.toLowerCase())
+    // More robust search that checks multiple fields
+    const matchesSearch = searchTerm.trim()
+      ? (
+          // Search in Reference ID (case-insensitive)
+          f.referenceId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          // Search in message content (case-insensitive)
+          f.message?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          // Search in author name (case-insensitive)
+          f.authorName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          // Search in category (case-insensitive)
+          f.category?.toLowerCase().includes(searchTerm.toLowerCase())
+        )
       : true;
 
     const matchesFilter = 
@@ -391,11 +400,20 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
               <Input
                 type="text"
-                placeholder="Search by Reference ID or message..."
+                placeholder="Search by Reference ID, message, author, or category..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                className="pl-10 pr-10"
               />
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm('')}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+                  aria-label="Clear search"
+                >
+                  <X size={16} />
+                </button>
+              )}
             </div>
           </div>
           
@@ -459,6 +477,14 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
           </div>
         ) : (
           <>
+            {/* Search/Filter Results Count */}
+            {(searchTerm.trim() || filterStatus !== 'all') && filteredFeedback.length > 0 && (
+              <div className="mb-4 text-sm text-gray-600 dark:text-gray-400">
+                Showing {filteredFeedback.length} of {feedbackList.length} feedback{filteredFeedback.length !== 1 ? 's' : ''}
+                {searchTerm.trim() && <span className="font-medium text-[#f6421f]"> matching "{searchTerm}"</span>}
+              </div>
+            )}
+            
             <div className="grid md:grid-cols-2 gap-4 max-h-[600px] overflow-y-auto pr-2">
               {filteredFeedback.map((feedback, index) => (
                 <motion.div
