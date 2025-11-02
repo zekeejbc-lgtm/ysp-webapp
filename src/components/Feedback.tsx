@@ -568,16 +568,16 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
                   className="ysp-card bg-gradient-to-br from-gray-50 to-blue-50/30 dark:from-gray-800 dark:to-gray-700 cursor-pointer hover:shadow-xl transition-all duration-300 border border-blue-100 dark:border-gray-600"
                 >
                   <div className="flex items-start justify-between mb-3">
-                    <Badge className="bg-[#f6421f] shadow-md">{feedback.referenceId}</Badge>
+                    <Badge className="border border-orange-300 bg-orange-100 text-black shadow-md dark:bg-[#f6421f] dark:border-transparent dark:text-white">{feedback.referenceId}</Badge>
                     <div className="flex gap-2">
                       {feedback.visibility === 'Public' && (
-                        <Badge className="bg-gradient-to-r from-purple-500 to-purple-600 shadow-md">Public</Badge>
+                        <Badge className="border border-purple-300 bg-purple-100 text-black shadow-md dark:text-white dark:bg-gradient-to-r dark:from-purple-500 dark:to-purple-600 dark:border-transparent">Public</Badge>
                       )}
                       {feedback.category && (
-                        <Badge className="bg-gradient-to-r from-sky-500 to-sky-600 shadow-md">{feedback.category}</Badge>
+                        <Badge className="border border-sky-300 bg-sky-100 text-black shadow-md dark:text-white dark:bg-gradient-to-r dark:from-sky-500 dark:to-sky-600 dark:border-transparent">{feedback.category}</Badge>
                       )}
                       {feedback.hasReply && (
-                      <Badge className="bg-gradient-to-r from-green-500 to-green-600 shadow-md">Replied</Badge>
+                        <Badge className="border border-green-300 bg-green-100 text-black shadow-md dark:text-white dark:bg-gradient-to-r dark:from-green-500 dark:to-green-600 dark:border-transparent">Replied</Badge>
                       )}
                     </div>
                   </div>
@@ -623,7 +623,7 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
             >
               <div className="flex items-start justify-between mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
                 <div className="flex-1">
-                  <Badge className="bg-[#f6421f] mb-3 shadow-md">{selectedFeedback.referenceId}</Badge>
+                  <Badge className="mb-3 border border-orange-300 bg-orange-100 text-black shadow-md dark:bg-[#f6421f] dark:text-white dark:border-transparent">{selectedFeedback.referenceId}</Badge>
                   <div className="flex items-center gap-3 text-sm text-gray-500 mb-2 flex-wrap">
                     <span>By {selectedFeedback.authorName}</span>
                     {canReply && selectedFeedback.authorIdCode && selectedFeedback.authorIdCode !== 'Guest' && (
@@ -778,11 +778,14 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
                     <img 
                       src={selectedFeedback.imageUrl} 
                       alt="Feedback attachment" 
-                      className="max-w-full max-h-96 rounded-lg border-2 border-gray-200 dark:border-gray-600 cursor-pointer hover:border-[#f6421f] transition-all"
+                      className="max-w-full max-h-96 rounded-lg border-2 border-gray-200 dark:border-gray-600 cursor-pointer hover:border-[#f6421f] transition-all object-contain"
                       onClick={() => window.open(selectedFeedback.imageUrl!, '_blank')}
                       onError={(e) => {
                         (e.currentTarget as HTMLImageElement).style.display = 'none';
-                        toast.error('Failed to load image');
+                        const placeholder = document.createElement('div');
+                        placeholder.className = 'text-xs text-gray-500 dark:text-gray-400 mt-1';
+                        placeholder.textContent = 'Image unavailable';
+                        e.currentTarget.parentElement?.appendChild(placeholder);
                       }}
                     />
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Click image to view full size</p>
