@@ -3,9 +3,9 @@
 //
 // Google Apps Script Backend Details:
 // Script ID: 1CEx53zlJZHarkYESoUzbuV3Jj04rA6YKVSpsh1n-sClm_PHjXJyeuSXf
-// Deployment ID: AKfycbzlr0F0w1Q7tivpN13hEzYAS3a-arrxa8k8skiIF-E1bvjtcg3RdEtqj6BzeoEpGG8dlA (Enhanced debugging - Nov 2, 2025)
+// Deployment ID: AKfycbwI4Pmh-r3RtpmqzRlnU-56ByzeWvRD6QKtCyDrKD9YU4jVhvaauN4lkxl2i7Wsl_Ps (Feedback update & search - Nov 2, 2025 @148)
 //
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbzlr0F0w1Q7tivpN13hEzYAS3a-arrxa8k8skiIF-E1bvjtcg3RdEtqj6BzeoEpGG8dlA/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbwI4Pmh-r3RtpmqzRlnU-56ByzeWvRD6QKtCyDrKD9YU4jVhvaauN4lkxl2i7Wsl_Ps/exec';
 
 export default async function handler(req, res) {
   // Handle preflight

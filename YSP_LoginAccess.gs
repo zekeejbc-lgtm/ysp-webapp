@@ -192,6 +192,8 @@ function handlePostRequest(data) {
       return handleGetFeedbackByRef(data);
     case 'setFeedbackVisibility':
       return handleSetFeedbackVisibility(data);
+    case 'updateFeedbackDetails':
+      return handleUpdateFeedbackDetails(data);
     case 'uploadFeedbackImage':
       return handleUploadFeedbackImage(data);
     case 'initFeedbackSheet':
@@ -2120,6 +2122,44 @@ function handleSetFeedbackVisibility(data) {
     }
     return { success: false, message: 'Not found' };
   } catch (e) { return { success: false, message: 'Error: ' + e.toString() }; }
+}
+
+// ===== UPDATE FEEDBACK DETAILS (STATUS & VISIBILITY) =====
+function handleUpdateFeedbackDetails(data) {
+  try {
+    Logger.log('[GAS Debug] handleUpdateFeedbackDetails called with: ' + JSON.stringify(data));
+    
+    if (!data.referenceId) return { success: false, message: 'referenceId required' };
+    if (data.role !== 'Admin' && data.role !== 'Auditor') return { success: false, message: 'Not authorized' };
+    
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const sheet = ss.getSheetByName(SHEETS.FEEDBACK);
+    ensureFeedbackSchema(sheet);
+    const values = sheet.getDataRange().getValues();
+    const idx = getFeedbackColumnIndexMap(values[0] || []);
+    
+    for (let i = 1; i < values.length; i++) {
+      const ref = values[i][idx['Reference ID']] || values[i][idx['Feedback ID']];
+      if (ref && ref.toString() === data.referenceId.toString()) {
+        // Update status if provided
+        if (data.status && idx.Status !== undefined) {
+          sheet.getRange(i + 1, idx.Status + 1).setValue(data.status);
+          Logger.log('[GAS Debug] Updated status to: ' + data.status);
+        }
+        // Update visibility if provided
+        if (data.visibility && idx.Visibility !== undefined) {
+          sheet.getRange(i + 1, idx.Visibility + 1).setValue(data.visibility);
+          Logger.log('[GAS Debug] Updated visibility to: ' + data.visibility);
+        }
+        Logger.log('[GAS Debug] Feedback updated successfully');
+        return { success: true, message: 'Feedback updated successfully' };
+      }
+    }
+    return { success: false, message: 'Feedback not found' };
+  } catch (e) { 
+    Logger.log('[GAS Debug] Error updating feedback: ' + e.toString());
+    return { success: false, message: 'Error: ' + e.toString() }; 
+  }
 }
 
 // ===== UPLOAD FEEDBACK IMAGE =====

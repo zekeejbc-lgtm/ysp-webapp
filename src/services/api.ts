@@ -16,8 +16,8 @@ const API_CONFIG = {
   // Google Apps Script Backend Details (for reference)
   backend: {
     scriptId: '1CEx53zlJZHarkYESoUzbuV3Jj04rA6YKVSpsh1n-sClm_PHjXJyeuSXf',
-    deploymentId: 'AKfycbzlr0F0w1Q7tivpN13hEzYAS3a-arrxa8k8skiIF-E1bvjtcg3RdEtqj6BzeoEpGG8dlA',
-    webAppUrl: 'https://script.google.com/macros/s/AKfycbzlr0F0w1Q7tivpN13hEzYAS3a-arrxa8k8skiIF-E1bvjtcg3RdEtqj6BzeoEpGG8dlA/exec',
+    deploymentId: 'AKfycbwI4Pmh-r3RtpmqzRlnU-56ByzeWvRD6QKtCyDrKD9YU4jVhvaauN4lkxl2i7Wsl_Ps',
+    webAppUrl: 'https://script.google.com/macros/s/AKfycbwI4Pmh-r3RtpmqzRlnU-56ByzeWvRD6QKtCyDrKD9YU4jVhvaauN4lkxl2i7Wsl_Ps/exec',
   },
   
   // Google Sheets IDs (for reference)
@@ -640,6 +640,14 @@ export const feedbackAPI = {
 
   setVisibility: async (referenceId: string, visibility: 'Private' | 'Public', role: string): Promise<FeedbackResponse> => {
     return apiRequest('setFeedbackVisibility', { referenceId, visibility, role });
+  },
+
+  /**
+   * Update feedback details (status and/or visibility)
+   * Only available to Admin and Auditor
+   */
+  updateDetails: async (referenceId: string, status?: 'Pending' | 'Reviewed' | 'Resolved', visibility?: 'Private' | 'Public', role?: string): Promise<FeedbackResponse> => {
+    return apiRequest('updateFeedbackDetails', { referenceId, status, visibility, role });
   },
 };
 

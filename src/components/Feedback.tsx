@@ -41,6 +41,11 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
   // For replacing a specific image
   const [replaceIndex, setReplaceIndex] = useState<number | null>(null);
   const replaceInputRef = useRef<HTMLInputElement | null>(null);
+  
+  // For Admin/Auditor to edit feedback details
+  const [editingStatus, setEditingStatus] = useState<'Pending' | 'Reviewed' | 'Resolved'>('Pending');
+  const [editingVisibility, setEditingVisibility] = useState<'Private' | 'Public'>('Private');
+  const [updatingFeedback, setUpdatingFeedback] = useState(false);
 
   const canReply = currentUser && ['Admin', 'Auditor'].includes(currentUser.role);
   const isGuest = currentUser && currentUser.role === 'Guest';
@@ -50,6 +55,14 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
     fetchFeedback();
   }, [currentUser]);
 
+  // Initialize editing states when feedback is selected
+  useEffect(() => {
+    if (selectedFeedback) {
+      setEditingStatus(selectedFeedback.status as any || 'Pending');
+      setEditingVisibility(selectedFeedback.visibility as any || 'Private');
+    }
+  }, [selectedFeedback]);
+
   const fetchFeedback = async () => {
     try {
       setLoading(true);
@@ -58,19 +71,54 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
       const name = currentUser?.name || currentUser?.firstName || 'Guest';
       const role = currentUser?.role || 'Guest';
       
+      console.log('[Feedback Debug] Fetching feedback for:', { idCode, name, role });
       const response = await feedbackAPI.getAll(idCode, name, role);
+      console.log('[Feedback Debug] Fetch response:', response);
       
       if (response.success && Array.isArray(response.feedback)) {
         setFeedbackList(response.feedback);
+        console.log('[Feedback Debug] Loaded', response.feedback.length, 'feedback items');
       } else {
-        console.error('Failed to fetch feedback:', response.message);
-        toast.error('Failed to load feedback');
+        console.error('[Feedback Debug] Failed to fetch feedback:', response.message);
+        toast.error(`Failed to load feedback: ${response.message || 'Unknown error'}`, {
+          duration: 5000,
+          description: 'Try searching by Feedback ID instead'
+        });
       }
     } catch (error) {
-      console.error('Error fetching feedback:', error);
-      toast.error('Failed to load feedback');
+      console.error('[Feedback Debug] Error fetching feedback:', error);
+      const errorMsg = (error instanceof Error) ? error.message : 'Unknown error';
+      toast.error(`Failed to load feedback: ${errorMsg}`, {
+        duration: 5000,
+        description: 'Try searching by Feedback ID instead'
+      });
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Search by specific Feedback ID if search looks like an ID
+  const searchById = async (feedbackId: string) => {
+    if (!feedbackId.trim()) return;
+    
+    try {
+      console.log('[Feedback Debug] Searching by ID:', feedbackId);
+      toast.loading(`Searching for ${feedbackId}...`);
+      
+      // Use the getFeedbackByRef API
+      const response = await feedbackAPI.getByReference(feedbackId.trim());
+      console.log('[Feedback Debug] Search by ID response:', response);
+      
+      if (response.success && response.feedback) {
+        const feedback = Array.isArray(response.feedback) ? response.feedback[0] : response.feedback;
+        toast.success(`Found: ${feedbackId}`);
+        setSelectedFeedback(feedback);
+      } else {
+        toast.error(`Feedback not found: ${feedbackId}`);
+      }
+    } catch (error) {
+      console.error('[Feedback Debug] Error searching by ID:', error);
+      toast.error('Failed to search feedback');
     }
   };
 
@@ -396,23 +444,41 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
       >
         <div className="flex items-center justify-between gap-4 mb-6 flex-wrap">
           <div className="flex-1 min-w-[200px]">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-              <Input
-                type="text"
-                placeholder="Search by Reference ID, message, author, or category..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-10"
-              />
-              {searchTerm && (
-                <button
-                  onClick={() => setSearchTerm('')}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
-                  aria-label="Clear search"
+            <div className="relative flex gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                <Input
+                  type="text"
+                  placeholder="Search by Reference ID, message, author, or category..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && searchTerm.trim().startsWith('FBCK-')) {
+                      searchById(searchTerm.trim());
+                    }
+                  }}
+                  className="pl-10 pr-10"
+                />
+                {searchTerm && (
+                  <button
+                    onClick={() => setSearchTerm('')}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+                    aria-label="Clear search"
+                  >
+                    <X size={16} />
+                  </button>
+                )}
+              </div>
+              {searchTerm.trim().startsWith('FBCK-') && (
+                <Button
+                  onClick={() => searchById(searchTerm.trim())}
+                  variant="outline"
+                  size="sm"
+                  className="whitespace-nowrap"
                 >
-                  <X size={16} />
-                </button>
+                  <Search size={16} className="mr-1" />
+                  Find ID
+                </Button>
               )}
             </div>
           </div>
@@ -577,18 +643,47 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
               <div className="mb-6 grid grid-cols-2 gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
                 <div>
                   <span className="text-xs text-gray-500 dark:text-gray-400">Category</span>
-                  <p className="font-medium">{selectedFeedback.category || 'Other'}</p>
+                  <p className="font-medium text-gray-900 dark:text-gray-100">{selectedFeedback.category || 'Other'}</p>
                 </div>
                 <div>
                   <span className="text-xs text-gray-500 dark:text-gray-400">Status</span>
-                  <p className="font-medium">{selectedFeedback.status || 'Pending'}</p>
+                  {canReply ? (
+                    <Select 
+                      value={editingStatus || selectedFeedback.status || 'Pending'} 
+                      onValueChange={(v: any) => setEditingStatus(v)}
+                    >
+                      <SelectTrigger className="mt-1 h-8 text-sm">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Pending">Pending</SelectItem>
+                        <SelectItem value="Reviewed">Reviewed</SelectItem>
+                        <SelectItem value="Resolved">Resolved</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <p className="font-medium text-gray-900 dark:text-gray-100">{selectedFeedback.status || 'Pending'}</p>
+                  )}
                 </div>
                 <div>
                   <span className="text-xs text-gray-500 dark:text-gray-400">Visibility</span>
-                  <p className="font-medium flex items-center gap-1">
-                    {selectedFeedback.visibility === 'Public' ? <Eye size={14} /> : <EyeOff size={14} />}
-                    {selectedFeedback.visibility || 'Private'}
-                  </p>
+                  {canReply ? (
+                    <div className="flex items-center gap-2 mt-1">
+                      <Switch 
+                        checked={editingVisibility === 'Public'} 
+                        onCheckedChange={(c) => setEditingVisibility(c ? 'Public' : 'Private')}
+                      />
+                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100 flex items-center gap-1">
+                        {editingVisibility === 'Public' ? <Eye size={14} /> : <EyeOff size={14} />}
+                        {editingVisibility}
+                      </span>
+                    </div>
+                  ) : (
+                    <p className="font-medium text-gray-900 dark:text-gray-100 flex items-center gap-1">
+                      {selectedFeedback.visibility === 'Public' ? <Eye size={14} /> : <EyeOff size={14} />}
+                      {selectedFeedback.visibility || 'Private'}
+                    </p>
+                  )}
                 </div>
                 {selectedFeedback.rating && (
                   <div>
@@ -601,29 +696,85 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
                           className={i <= (selectedFeedback.rating || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'} 
                         />
                       ))}
-                      <span className="ml-1 text-sm">({selectedFeedback.rating}/5)</span>
+                      <span className="ml-1 text-sm text-gray-900 dark:text-gray-100">({selectedFeedback.rating}/5)</span>
                     </div>
                   </div>
                 )}
                 {selectedFeedback.email && canReply && (
                   <div className="col-span-2">
                     <span className="text-xs text-gray-500 dark:text-gray-400">Email</span>
-                    <p className="font-medium">{selectedFeedback.email}</p>
+                    <p className="font-medium text-gray-900 dark:text-gray-100">{selectedFeedback.email}</p>
                   </div>
                 )}
               </div>
+
+              {/* Update Button for Admin/Auditor */}
+              {canReply && (editingStatus !== selectedFeedback.status || editingVisibility !== selectedFeedback.visibility) && (
+                <div className="mb-4">
+                  <Button
+                    onClick={async () => {
+                      try {
+                        setUpdatingFeedback(true);
+                        console.log('[Feedback Debug] Updating feedback:', {
+                          referenceId: selectedFeedback.referenceId,
+                          status: editingStatus,
+                          visibility: editingVisibility,
+                          role: currentUser?.role
+                        });
+                        
+                        const updatePromise = feedbackAPI.updateDetails(
+                          selectedFeedback.referenceId,
+                          editingStatus,
+                          editingVisibility,
+                          currentUser?.role
+                        );
+                        
+                        await toast.promise(updatePromise, {
+                          loading: 'Updating feedback...',
+                          success: 'Feedback updated successfully! 🎉',
+                          error: 'Failed to update feedback'
+                        });
+                        
+                        const response = await updatePromise;
+                        console.log('[Feedback Debug] Update response:', response);
+                        
+                        // Refresh feedback list
+                        await fetchFeedback();
+                        setSelectedFeedback(null);
+                      } catch (error) {
+                        console.error('[Feedback Debug] Error updating feedback:', error);
+                        const errorMsg = (error instanceof Error) ? error.message : 'Unknown error';
+                        toast.error(`Failed to update: ${errorMsg}`);
+                      } finally {
+                        setUpdatingFeedback(false);
+                      }
+                    }}
+                    disabled={updatingFeedback}
+                    className="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700"
+                  >
+                    {updatingFeedback ? 'Updating...' : 'Save Changes'}
+                  </Button>
+                </div>
+              )}
 
               <div className="mb-6">
                 <h4 className="text-[#f6421f] dark:text-[#ee8724] mb-3 flex items-center gap-2">
                   <MessageCircle size={20} />
                   Feedback Message
                 </h4>
-                <p className="text-justify whitespace-pre-wrap leading-relaxed bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                <p className="text-justify whitespace-pre-wrap leading-relaxed bg-gray-50 dark:bg-gray-800 p-4 rounded-lg text-gray-900 dark:text-gray-100">
                   {selectedFeedback.message}
                 </p>
                 {selectedFeedback.imageUrl && (
                   <div className="mt-4">
-                    <img src={selectedFeedback.imageUrl} alt="Attachment" className="max-h-64 rounded-md border" />
+                    <h5 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Attached Image:</h5>
+                    <img 
+                      src={selectedFeedback.imageUrl} 
+                      alt="Feedback attachment" 
+                      className="max-w-full max-h-96 rounded-lg border-2 border-gray-200 dark:border-gray-600 cursor-pointer hover:border-[#f6421f] transition-all"
+                      onClick={() => window.open(selectedFeedback.imageUrl, '_blank')}
+                    />
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Click image to view full size</p>
                   </div>
                 )}
               </div>
