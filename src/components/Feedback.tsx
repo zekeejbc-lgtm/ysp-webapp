@@ -10,6 +10,7 @@ import { Badge } from './ui/badge';
 import { feedbackAPI, type Feedback as FeedbackType } from '../services/api';
 import { CardSkeleton } from './ui/skeletons';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { useRef } from 'react';
 import { Switch } from './ui/switch';
 
 interface FeedbackProps {
@@ -35,6 +36,9 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
   const [submitting, setSubmitting] = useState(false);
   const [replyStatus, setReplyStatus] = useState<'Pending' | 'Reviewed' | 'Resolved'>('Reviewed');
   const [replyVisibility, setReplyVisibility] = useState<'Private' | 'Public'>('Private');
+  // For replacing a specific image
+  const [replaceIndex, setReplaceIndex] = useState<number | null>(null);
+  const replaceInputRef = useRef<HTMLInputElement | null>(null);
 
   const canReply = currentUser && ['Admin', 'Auditor'].includes(currentUser.role);
   const isGuest = currentUser && currentUser.role === 'Guest';
@@ -153,6 +157,40 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
     } finally {
       setSubmitting(false);
     }
+  };
+
+  // Replace an image at a given index
+  const handleReplaceImage = (idx: number) => {
+    setReplaceIndex(idx);
+    // Trigger hidden file input
+    replaceInputRef.current?.click();
+  };
+
+  const onReplaceFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file == null || replaceIndex == null) return;
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('Image too large. Max size is 10MB.');
+      e.currentTarget.value = '';
+      return;
+    }
+    // Update arrays immutably
+    setNewImageFiles(prev => {
+      const next = [...prev];
+      next[replaceIndex] = file;
+      return next;
+    });
+    setNewImagePreviews(prev => {
+      const next = [...prev];
+      // Revoke old preview URL to avoid memory leaks
+      if (next[replaceIndex]) URL.revokeObjectURL(next[replaceIndex]);
+      next[replaceIndex] = URL.createObjectURL(file);
+      return next;
+    });
+    // reset
+    setReplaceIndex(null);
+    e.currentTarget.value = '';
+    toast.success('Image replaced');
   };
 
   const handleReply = async () => {
@@ -482,19 +520,20 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
 
                 <div>
                   <Label>Category</Label>
-                  <Select value={newCategory} onValueChange={(v: string) => setNewCategory(v)} disabled={submitting}>
-                    <SelectTrigger className="mt-2 w-full">
-                      <SelectValue placeholder="Select category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Complaint">Complaint</SelectItem>
-                      <SelectItem value="Suggestion">Suggestion</SelectItem>
-                      <SelectItem value="Bug">Bug</SelectItem>
-                      <SelectItem value="Compliment">Compliment</SelectItem>
-                      <SelectItem value="Inquiry">Inquiry</SelectItem>
-                      <SelectItem value="Other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  {/* Native select fallback to guarantee visibility inside modal */}
+                  <select
+                    value={newCategory}
+                    onChange={(e)=> setNewCategory(e.target.value)}
+                    disabled={submitting}
+                    className="mt-2 w-full h-9 rounded-md border border-input bg-input-background px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:bg-input/30"
+                  >
+                    <option value="Complaint">Complaint</option>
+                    <option value="Suggestion">Suggestion</option>
+                    <option value="Bug">Bug</option>
+                    <option value="Compliment">Compliment</option>
+                    <option value="Inquiry">Inquiry</option>
+                    <option value="Other">Other</option>
+                  </select>
                 </div>
 
                 {canReply && (
@@ -578,30 +617,38 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
                           initial={{ opacity: 0, scale: 0.8 }}
                           animate={{ opacity: 1, scale: 1 }}
                           exit={{ opacity: 0, scale: 0.8 }}
-                          className="relative group cursor-pointer"
+                          className="relative group"
                         >
                           <div className="relative overflow-hidden rounded-lg border-2 border-gray-200 hover:border-[#f6421f] transition-all">
                             <img 
                               src={preview} 
                               alt={`preview ${idx + 1}`} 
-                              className="w-full h-24 object-cover transition-transform group-hover:scale-110"
+                              className="w-full h-24 object-cover transition-transform group-hover:scale-110 cursor-pointer"
                               onClick={() => window.open(preview, '_blank')}
                             />
-                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center">
+                            {/* top-right controls: always visible on mobile; fade-in on md+ */}
+                            <div className="absolute top-1 right-1 flex gap-1">
+                              <button
+                                type="button"
+                                onClick={(e)=>{ e.stopPropagation(); handleReplaceImage(idx); }}
+                                className="bg-white/90 text-gray-800 hover:bg-white text-xs px-2 py-1 rounded shadow md:opacity-0 md:group-hover:opacity-100 transition-opacity"
+                              >
+                                Change
+                              </button>
                               <button
                                 type="button"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   const newFiles = newImageFiles.filter((_, i) => i !== idx);
                                   const newPreviews = newImagePreviews.filter((_, i) => i !== idx);
-                                  URL.revokeObjectURL(preview); // Clean up memory
+                                  URL.revokeObjectURL(preview);
                                   setNewImageFiles(newFiles);
                                   setNewImagePreviews(newPreviews);
                                   toast.success('Image removed');
                                 }}
-                                className="opacity-0 group-hover:opacity-100 transition-opacity bg-red-500 hover:bg-red-600 text-white rounded-full p-2 shadow-lg transform hover:scale-110"
+                                className="bg-red-500 hover:bg-red-600 text-white rounded px-2 py-1 text-xs shadow md:opacity-0 md:group-hover:opacity-100 transition-opacity"
                               >
-                                <X size={18} />
+                                Remove
                               </button>
                             </div>
                           </div>
@@ -612,6 +659,15 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
                       ))}
                     </div>
                   )}
+                  {/* hidden input used to replace one image */}
+                  <Input
+                    ref={replaceInputRef as any}
+                    id="image-replace"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={onReplaceFileChange}
+                  />
                 </div>
 
                 <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
