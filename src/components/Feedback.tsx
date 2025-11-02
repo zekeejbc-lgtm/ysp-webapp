@@ -30,8 +30,8 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
   const [newCategory, setNewCategory] = useState<string>('Other');
   const [newVisibility, setNewVisibility] = useState<'Private' | 'Public'>('Private');
   const [newAnonymous, setNewAnonymous] = useState<boolean>(false);
-  const [newImageFile, setNewImageFile] = useState<File | null>(null);
-  const [newImagePreview, setNewImagePreview] = useState<string | null>(null);
+  const [newImageFiles, setNewImageFiles] = useState<File[]>([]);
+  const [newImagePreviews, setNewImagePreviews] = useState<string[]>([]);
   const [replyMessage, setReplyMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [replyStatus, setReplyStatus] = useState<'Pending' | 'Reviewed' | 'Resolved'>('Reviewed');
@@ -90,30 +90,40 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
       return;
     }
 
+    if (newImageFiles.length > 3) {
+      toast.error('Maximum 3 images allowed');
+      return;
+    }
+
     try {
       setSubmitting(true);
+      
+      // For now, only upload the first image (backend supports single image)
+      // TODO: Update backend to support multiple images
       let imageBase64: string | undefined;
       let imageFilename: string | undefined;
-      if (newImageFile) {
+      if (newImageFiles.length > 0) {
+        const firstImage = newImageFiles[0];
         // enforce 10MB limit client-side
-        if (newImageFile.size > 10 * 1024 * 1024) {
+        if (firstImage.size > 10 * 1024 * 1024) {
           toast.error('Image too large. Max size is 10MB.');
           setSubmitting(false);
           return;
         }
-        const buffer = await newImageFile.arrayBuffer();
+        const buffer = await firstImage.arrayBuffer();
         const base64 = btoa(String.fromCharCode(...new Uint8Array(buffer)));
-        const mime = newImageFile.type || 'image/png';
+        const mime = firstImage.type || 'image/png';
         imageBase64 = `data:${mime};base64,${base64}`;
-        imageFilename = newImageFile.name;
+        imageFilename = firstImage.name;
       }
+      
       const createPromise = feedbackAPI.create({
         message: newMessage.trim(),
         authorName: currentUser?.name || currentUser?.firstName || 'Guest',
         authorIdCode: isGuest ? undefined : (currentUser?.id || currentUser?.idCode),
         anonymous: newAnonymous,
         category: newCategory as any,
-        visibility: newVisibility,
+        visibility: canReply ? newVisibility : 'Private', // Only Admin/Auditor can set visibility
         imageBase64,
         imageFilename,
       });
@@ -132,8 +142,8 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
         setNewCategory('Other');
         setNewVisibility('Private');
         setNewAnonymous(false);
-        setNewImageFile(null);
-        setNewImagePreview(null);
+        setNewImageFiles([]);
+        setNewImagePreviews([]);
         setShowCreateModal(false);
         // Refresh feedback list
         await fetchFeedback();
@@ -474,7 +484,7 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label>Category</Label>
-                    <Select value={newCategory} onValueChange={(v: string) => setNewCategory(v)}>
+                    <Select value={newCategory} onValueChange={(v: string) => setNewCategory(v)} disabled={submitting}>
                       <SelectTrigger className="mt-2"><SelectValue placeholder="Select category" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="Complaint">Complaint</SelectItem>
@@ -486,34 +496,72 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="flex items-end gap-3">
-                    <div className="flex items-center gap-2">
-                      <Switch id="visibility" checked={newVisibility === 'Public'} onCheckedChange={(c)=> setNewVisibility(c ? 'Public' : 'Private')} />
-                      <Label htmlFor="visibility" className="cursor-pointer flex items-center gap-2">{newVisibility === 'Public' ? <Eye size={16}/> : <EyeOff size={16}/>} {newVisibility}</Label>
+                  {canReply && (
+                    <div className="flex items-end gap-3">
+                      <div className="flex items-center gap-2">
+                        <Switch id="visibility" checked={newVisibility === 'Public'} onCheckedChange={(c)=> setNewVisibility(c ? 'Public' : 'Private')} disabled={submitting} />
+                        <Label htmlFor="visibility" className="cursor-pointer flex items-center gap-2">{newVisibility === 'Public' ? <Eye size={16}/> : <EyeOff size={16}/>} {newVisibility}</Label>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
 
-                <div className="flex items-center gap-3">
-                  <Checkbox id="anonymous" checked={newAnonymous} onCheckedChange={(c: boolean | string) => setNewAnonymous(!!c)} />
-                  <Label htmlFor="anonymous">Submit as Anonymous</Label>
+                <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                  <Checkbox 
+                    id="anonymous" 
+                    checked={newAnonymous} 
+                    onCheckedChange={(c: boolean | string) => setNewAnonymous(!!c)} 
+                    disabled={submitting}
+                    className="border-2"
+                  />
+                  <Label htmlFor="anonymous" className="cursor-pointer font-medium">Submit as Anonymous</Label>
                 </div>
 
                 <div>
-                  <Label>Optional Image</Label>
+                  <Label>Optional Images (Max 3)</Label>
                   <div className="mt-2 flex items-center gap-3">
-                    <Input type="file" accept="image/*" disabled={submitting} onChange={(e)=>{
-                      const f = e.target.files?.[0] || null;
-                      setNewImageFile(f);
-                      if (f) {
-                        const url = URL.createObjectURL(f);
-                        setNewImagePreview(url);
-                      } else { setNewImagePreview(null); }
-                    }} />
+                    <Input 
+                      type="file" 
+                      accept="image/*" 
+                      multiple
+                      disabled={submitting || newImageFiles.length >= 3} 
+                      onChange={(e)=>{
+                        const files = Array.from(e.target.files || []);
+                        if (files.length + newImageFiles.length > 3) {
+                          toast.error('Maximum 3 images allowed');
+                          return;
+                        }
+                        const validFiles = files.filter(f => f.size <= 10 * 1024 * 1024);
+                        if (validFiles.length !== files.length) {
+                          toast.error('Some images were too large (max 10MB each)');
+                        }
+                        setNewImageFiles([...newImageFiles, ...validFiles]);
+                        const previews = validFiles.map(f => URL.createObjectURL(f));
+                        setNewImagePreviews([...newImagePreviews, ...previews]);
+                      }} 
+                    />
                     <ImageIcon size={18} className="text-gray-500" />
                   </div>
-                  {newImagePreview && (
-                    <div className="mt-3"><img src={newImagePreview} alt="preview" className="max-h-40 rounded-md border" /></div>
+                  {newImagePreviews.length > 0 && (
+                    <div className="mt-3 grid grid-cols-3 gap-2">
+                      {newImagePreviews.map((preview, idx) => (
+                        <div key={idx} className="relative group">
+                          <img src={preview} alt={`preview ${idx + 1}`} className="w-full h-24 object-cover rounded-md border" />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newFiles = newImageFiles.filter((_, i) => i !== idx);
+                              const newPreviews = newImagePreviews.filter((_, i) => i !== idx);
+                              setNewImageFiles(newFiles);
+                              setNewImagePreviews(newPreviews);
+                            }}
+                            className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
                   )}
                 </div>
 
