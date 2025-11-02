@@ -573,6 +573,46 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
                 </motion.button>
               </div>
 
+              {/* Feedback Details Section - Show all metadata */}
+              <div className="mb-6 grid grid-cols-2 gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                <div>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">Category</span>
+                  <p className="font-medium">{selectedFeedback.category || 'Other'}</p>
+                </div>
+                <div>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">Status</span>
+                  <p className="font-medium">{selectedFeedback.status || 'Pending'}</p>
+                </div>
+                <div>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">Visibility</span>
+                  <p className="font-medium flex items-center gap-1">
+                    {selectedFeedback.visibility === 'Public' ? <Eye size={14} /> : <EyeOff size={14} />}
+                    {selectedFeedback.visibility || 'Private'}
+                  </p>
+                </div>
+                {selectedFeedback.rating && (
+                  <div>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">Rating</span>
+                    <div className="flex items-center gap-1 mt-1">
+                      {[1,2,3,4,5].map((i) => (
+                        <Star 
+                          key={i} 
+                          size={16} 
+                          className={i <= (selectedFeedback.rating || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'} 
+                        />
+                      ))}
+                      <span className="ml-1 text-sm">({selectedFeedback.rating}/5)</span>
+                    </div>
+                  </div>
+                )}
+                {selectedFeedback.email && canReply && (
+                  <div className="col-span-2">
+                    <span className="text-xs text-gray-500 dark:text-gray-400">Email</span>
+                    <p className="font-medium">{selectedFeedback.email}</p>
+                  </div>
+                )}
+              </div>
+
               <div className="mb-6">
                 <h4 className="text-[#f6421f] dark:text-[#ee8724] mb-3 flex items-center gap-2">
                   <MessageCircle size={20} />
