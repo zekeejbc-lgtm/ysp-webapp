@@ -16,8 +16,8 @@ const API_CONFIG = {
   // Google Apps Script Backend Details (for reference)
   backend: {
     scriptId: '1CEx53zlJZHarkYESoUzbuV3Jj04rA6YKVSpsh1n-sClm_PHjXJyeuSXf',
-    deploymentId: 'AKfycbwJ5DdUuS5k__U6z2fle19wBNRgDO2gVG9KmKt7csuq3nzHxldpwvtl0Vcs54en_vRrVw',
-    webAppUrl: 'https://script.google.com/macros/s/AKfycbwJ5DdUuS5k__U6z2fle19wBNRgDO2gVG9KmKt7csuq3nzHxldpwvtl0Vcs54en_vRrVw/exec',
+    deploymentId: 'AKfycbzlr0F0w1Q7tivpN13hEzYAS3a-arrxa8k8skiIF-E1bvjtcg3RdEtqj6BzeoEpGG8dlA',
+    webAppUrl: 'https://script.google.com/macros/s/AKfycbzlr0F0w1Q7tivpN13hEzYAS3a-arrxa8k8skiIF-E1bvjtcg3RdEtqj6BzeoEpGG8dlA/exec',
   },
   
   // Google Sheets IDs (for reference)
@@ -109,10 +109,21 @@ async function apiRequest<T = any>(action: string, data: Record<string, any> = {
   };
 
   try {
+    console.log(`[API Debug] ${action} - Starting request [${clientDebugId}]`);
     const response = await fetchWithRetry();
+    console.log(`[API Debug] ${action} - Response received:`, {
+      ok: response.ok,
+      status: response.status,
+      statusText: response.statusText
+    });
 
     if (!response.ok) {
       const text = await response.text().catch(() => '');
+      console.error(`[API Debug] ${action} - Non-OK response:`, {
+        status: response.status,
+        text: text.slice(0, 500)
+      });
+      
       const lower = text.toLowerCase();
       let friendly = `Request failed (HTTP ${response.status})`;
       if (lower.includes('service invoked too many times') || response.status === 429) {
@@ -121,25 +132,50 @@ async function apiRequest<T = any>(action: string, data: Record<string, any> = {
         friendly = 'Server timed out processing your request. Please try again.';
       } else if (response.status >= 500) {
         friendly = 'Server error while processing your request. Please try again.';
+      } else if (response.status === 404) {
+        friendly = 'API endpoint not found. Please check your configuration.';
+      } else if (response.status === 403) {
+        friendly = 'Access denied. Please check your permissions.';
       }
+      
       if (debug) {
         // eslint-disable-next-line no-console
         console.error(`API ✖ ${action} [${clientDebugId}]`, friendly, '\nResponse text:', text);
       }
       // Include snippet of raw response in debug mode
-      const extra = debug && text ? `: ${text.slice(0, 200)}` : '';
+      const extra = text ? ` (${text.slice(0, 200)}${text.length > 200 ? '...' : ''})` : '';
       throw new Error(friendly + extra);
     }
 
-    const result = await response.json();
+    const contentType = response.headers.get('content-type');
+    console.log(`[API Debug] ${action} - Content-Type:`, contentType);
+    
+    let result: any;
+    try {
+      const text = await response.text();
+      console.log(`[API Debug] ${action} - Raw response text:`, text.slice(0, 500));
+      result = JSON.parse(text);
+      console.log(`[API Debug] ${action} - Parsed JSON:`, result);
+    } catch (parseError) {
+      console.error(`[API Debug] ${action} - JSON parse error:`, parseError);
+      throw new Error('Server returned invalid JSON. Please try again.');
+    }
 
     if (debug && (action === 'createFeedback' || action === 'getFeedback')) {
       // eslint-disable-next-line no-console
       console.info(`API ✓ ${action} [${clientDebugId}]`, result);
     }
 
+    // Check if backend returned success: false
+    if (result && result.success === false) {
+      const errorMsg = result.message || 'Operation failed';
+      console.error(`[API Debug] ${action} - Backend returned error:`, errorMsg);
+      throw new Error(errorMsg);
+    }
+
     return result;
   } catch (error) {
+    console.error(`[API Debug] ${action} - Catch block error:`, error);
     const msg = error instanceof Error ? error.message : 'Network error. Please check your internet connection.';
     if (debug) {
       // eslint-disable-next-line no-console

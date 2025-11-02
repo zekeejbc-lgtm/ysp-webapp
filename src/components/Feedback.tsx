@@ -90,22 +90,39 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
   });
 
   const handleCreateFeedback = async () => {
+    // Enhanced validation with detailed error messages
+    console.log('[Feedback Debug] handleCreateFeedback called');
+    console.log('[Feedback Debug] State:', {
+      newMessage: newMessage.trim(),
+      newRating,
+      newImageFilesCount: newImageFiles.length,
+      submitting,
+      currentUser: currentUser?.name || 'Guest'
+    });
+
     if (!newMessage.trim()) {
-      toast.error('Please enter your feedback message');
+      console.error('[Feedback Debug] Validation failed: Empty message');
+      toast.error('Please enter your feedback message', { duration: 4000 });
       return;
     }
 
     if (newRating <= 0) {
-      toast.error('Please provide a star rating');
+      console.error('[Feedback Debug] Validation failed: No rating selected');
+      toast.error('⭐ Please provide a star rating (1-5 stars required)', { 
+        duration: 5000,
+        description: 'Click on the stars above to rate your experience' 
+      });
       return;
     }
 
     if (newImageFiles.length > 3) {
-      toast.error('Maximum 3 images allowed');
+      console.error('[Feedback Debug] Validation failed: Too many images');
+      toast.error('Maximum 3 images allowed', { duration: 4000 });
       return;
     }
 
     try {
+      console.log('[Feedback Debug] Starting submission process...');
       setSubmitting(true);
 
       const debug = (() => {
@@ -121,18 +138,32 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
       let imageBase64: string | undefined;
       let imageFilename: string | undefined;
       if (newImageFiles.length > 0) {
+        console.log('[Feedback Debug] Processing image upload...');
         const firstImage = newImageFiles[0];
         // enforce 10MB limit client-side
         if (firstImage.size > 10 * 1024 * 1024) {
-          toast.error('Image too large. Max size is 10MB.');
+          console.error('[Feedback Debug] Image too large:', firstImage.size);
+          toast.error('Image too large. Max size is 10MB.', { duration: 4000 });
           setSubmitting(false);
           return;
         }
-        const buffer = await firstImage.arrayBuffer();
-        const base64 = btoa(String.fromCharCode(...new Uint8Array(buffer)));
-        const mime = firstImage.type || 'image/png';
-        imageBase64 = `data:${mime};base64,${base64}`;
-        imageFilename = firstImage.name;
+        try {
+          const buffer = await firstImage.arrayBuffer();
+          const base64 = btoa(String.fromCharCode(...new Uint8Array(buffer)));
+          const mime = firstImage.type || 'image/png';
+          imageBase64 = `data:${mime};base64,${base64}`;
+          imageFilename = firstImage.name;
+          console.log('[Feedback Debug] Image processed successfully:', {
+            filename: imageFilename,
+            mime,
+            size: firstImage.size
+          });
+        } catch (imgError) {
+          console.error('[Feedback Debug] Image processing error:', imgError);
+          toast.error('Failed to process image. Please try a different image.', { duration: 4000 });
+          setSubmitting(false);
+          return;
+        }
       }
 
       const payload = {
@@ -148,6 +179,11 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
         imageFilename,
       } as const;
 
+      console.log('[Feedback Debug] Payload prepared:', {
+        ...payload,
+        imageBase64: payload.imageBase64 ? `[${payload.imageBase64.length} bytes]` : undefined
+      });
+
       if (debug) {
         // eslint-disable-next-line no-console
         console.groupCollapsed('SubmitFeedback → payload');
@@ -158,21 +194,34 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
         console.groupEnd();
       }
 
+      console.log('[Feedback Debug] Calling feedbackAPI.create...');
       const createPromise = feedbackAPI.create(payload);
+      
       await toast.promise(createPromise, {
         loading: 'Submitting feedback…',
-        success: 'Feedback submitted successfully',
+        success: (data) => {
+          console.log('[Feedback Debug] API response received:', data);
+          return 'Feedback submitted successfully! 🎉';
+        },
         error: (err) => {
+          console.error('[Feedback Debug] API error:', err);
           const msg = (err instanceof Error) ? err.message : 'Failed to submit feedback';
-          return msg;
+          return `Error: ${msg}`;
         },
       });
+      
       const response = await createPromise;
+      console.log('[Feedback Debug] Full API response:', response);
 
       if (response.success && response.feedback) {
         const newFeedback = Array.isArray(response.feedback) ? response.feedback[0] : response.feedback;
-        toast.info(`Reference: ${newFeedback.referenceId}`, { duration: 3000 });
+        console.log('[Feedback Debug] Feedback created successfully:', newFeedback);
+        toast.success(`Reference ID: ${newFeedback.referenceId}`, { 
+          duration: 5000,
+          description: 'Thank you for your feedback!'
+        });
 
+        // Reset form
         setNewMessage('');
         setNewCategory('Other');
         setNewVisibility('Private');
@@ -181,16 +230,28 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
         setNewImagePreviews([]);
         resetCreateForm();
         setShowCreateModal(false);
+        
         // Refresh feedback list
+        console.log('[Feedback Debug] Refreshing feedback list...');
         await fetchFeedback();
-      } else if (debug) {
-        // eslint-disable-next-line no-console
-        console.warn('SubmitFeedback → unexpected response shape:', response);
+        console.log('[Feedback Debug] Process completed successfully');
+      } else {
+        console.error('[Feedback Debug] Unexpected response shape:', response);
+        toast.error(`Submission failed: ${response.message || 'Unknown error'}`, { duration: 5000 });
       }
     } catch (error) {
       // eslint-disable-next-line no-console
-      console.error('Error creating feedback:', error);
+      console.error('[Feedback Debug] Catch block - Error creating feedback:', error);
+      console.error('[Feedback Debug] Error stack:', (error as Error)?.stack);
+      
+      // Show user-friendly error
+      const errorMsg = (error instanceof Error) ? error.message : 'Unknown error occurred';
+      toast.error(`Failed to submit feedback: ${errorMsg}`, {
+        duration: 6000,
+        description: 'Please try again or contact support if the issue persists.'
+      });
     } finally {
+      console.log('[Feedback Debug] Finally block - resetting submitting state');
       setSubmitting(false);
     }
   };

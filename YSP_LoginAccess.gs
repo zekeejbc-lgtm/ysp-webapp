@@ -93,14 +93,40 @@ function getOptimizedRange(sheet, headerRows = 1) {
 // ===== MAIN ENTRY POINT =====
 function doPost(e) {
   try {
+    Logger.log('[GAS Debug] doPost called - raw postData: ' + (e.postData?.contents || 'undefined'));
+    
+    if (!e.postData || !e.postData.contents) {
+      Logger.log('[GAS Debug] ERROR: No postData contents received');
+      return ContentService.createTextOutput(JSON.stringify({
+        success: false,
+        message: 'No data received in request'
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+    
     const data = JSON.parse(e.postData.contents);
+    Logger.log('[GAS Debug] Parsed data action: ' + (data.action || 'undefined'));
+    Logger.log('[GAS Debug] Client Debug ID: ' + (data.clientDebugId || 'undefined'));
+    
     const response = handlePostRequest(data);
+    Logger.log('[GAS Debug] Response prepared: ' + JSON.stringify(response).slice(0, 200));
+    
+    // Ensure response is always valid JSON with success field
+    if (typeof response !== 'object' || response === null) {
+      Logger.log('[GAS Debug] WARNING: Response is not an object, wrapping it');
+      return ContentService.createTextOutput(JSON.stringify({
+        success: false,
+        message: 'Invalid response format from handler'
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+    
     return ContentService.createTextOutput(JSON.stringify(response))
       .setMimeType(ContentService.MimeType.JSON);
   } catch (error) {
+    Logger.log('[GAS Debug] CRITICAL ERROR in doPost: ' + error.toString());
+    Logger.log('[GAS Debug] Error stack: ' + error.stack);
     return ContentService.createTextOutput(JSON.stringify({
       success: false,
-      message: 'Error: ' + error.toString()
+      message: 'Server error: ' + error.toString()
     })).setMimeType(ContentService.MimeType.JSON);
   }
 }
@@ -1691,24 +1717,46 @@ function handleMarkAnnouncementAsRead(data) {
 // ===== CREATE FEEDBACK HANDLER =====
 function handleCreateFeedback(data) {
   try {
+    Logger.log('[Feedback Debug] handleCreateFeedback called with data: ' + JSON.stringify(data).slice(0, 300));
+    
     const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    Logger.log('[Feedback Debug] Spreadsheet opened successfully');
+    
     const feedbackSheet = ss.getSheetByName(SHEETS.FEEDBACK);
+    if (!feedbackSheet) {
+      Logger.log('[Feedback Debug] ERROR: Feedback sheet not found');
+      return { success: false, message: 'Feedback sheet not found in spreadsheet' };
+    }
+    Logger.log('[Feedback Debug] Feedback sheet found');
+    
     ensureFeedbackSchema(feedbackSheet);
+    Logger.log('[Feedback Debug] Schema ensured');
 
     // Validate required fields
     if (!data.message) {
+      Logger.log('[Feedback Debug] ERROR: Message is missing');
       return { success: false, message: 'Message is required' };
     }
+    
+    if (!data.rating || data.rating < 1 || data.rating > 5) {
+      Logger.log('[Feedback Debug] ERROR: Invalid rating: ' + data.rating);
+      return { success: false, message: 'Valid rating (1-5) is required' };
+    }
+    
+    Logger.log('[Feedback Debug] Validation passed - message length: ' + data.message.length + ', rating: ' + data.rating);
+    
     const authorNameInput = data.anonymous ? 'Anonymous' : (data.authorName || 'Guest');
 
     // Basic throttling: limit 3 submissions per 5 minutes per user/guest
     try {
       const throttled = checkFeedbackThrottle(data.authorIdCode || 'Guest', authorNameInput);
       if (throttled) {
+        Logger.log('[Feedback Debug] Throttle limit hit');
         return { success: false, message: 'Too many submissions. Please try again in a few minutes.' };
       }
+      Logger.log('[Feedback Debug] Throttle check passed');
     } catch (thErr) {
-      Logger.log('Throttle check error: ' + thErr);
+      Logger.log('[Feedback Debug] Throttle check error (non-critical): ' + thErr);
     }
     
     // Get PH timezone timestamp
@@ -1758,11 +1806,13 @@ function handleCreateFeedback(data) {
   if (idx.Email !== undefined) row[idx.Email] = email;
     // Reply fields empty by default
 
+    Logger.log('[Feedback Debug] Appending row to sheet...');
     feedbackSheet.appendRow(row);
+    Logger.log('[Feedback Debug] Row appended successfully');
     
-    Logger.log('Created feedback: ' + newReferenceId + ' by ' + data.authorName);
+    Logger.log('[Feedback Debug] Created feedback: ' + newReferenceId + ' by ' + authorNameInput);
     
-    return {
+    const successResponse = {
       success: true,
       message: 'Feedback submitted successfully',
       feedback: {
@@ -1779,8 +1829,12 @@ function handleCreateFeedback(data) {
         email: email || undefined
       }
     };
+    
+    Logger.log('[Feedback Debug] Success response prepared: ' + JSON.stringify(successResponse).slice(0, 200));
+    return successResponse;
   } catch (error) {
-    Logger.log('Error creating feedback: ' + error.toString());
+    Logger.log('[Feedback Debug] CRITICAL ERROR in handleCreateFeedback: ' + error.toString());
+    Logger.log('[Feedback Debug] Error stack: ' + error.stack);
     return { success: false, message: 'Error creating feedback: ' + error.toString() };
   }
 }
