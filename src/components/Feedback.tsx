@@ -140,6 +140,19 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
       if (newImageFiles.length > 0) {
         console.log('[Feedback Debug] Processing image upload...');
         const firstImage = newImageFiles[0];
+        
+        // Validate file type
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+        if (!allowedTypes.includes(firstImage.type.toLowerCase())) {
+          console.error('[Feedback Debug] Invalid file type:', firstImage.type);
+          toast.error('Only JPG and PNG images are allowed.', { 
+            duration: 4000,
+            description: 'Please select a .jpg or .png file'
+          });
+          setSubmitting(false);
+          return;
+        }
+        
         // enforce 10MB limit client-side
         if (firstImage.size > 10 * 1024 * 1024) {
           console.error('[Feedback Debug] Image too large:', firstImage.size);
@@ -147,6 +160,7 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
           setSubmitting(false);
           return;
         }
+        
         try {
           const buffer = await firstImage.arrayBuffer();
           const base64 = btoa(String.fromCharCode(...new Uint8Array(buffer)));
@@ -160,7 +174,10 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
           });
         } catch (imgError) {
           console.error('[Feedback Debug] Image processing error:', imgError);
-          toast.error('Failed to process image. Please try a different image.', { duration: 4000 });
+          toast.error('Failed to process image. Please try a different image.', { 
+            duration: 4000,
+            description: 'The image file may be corrupted or in an unsupported format'
+          });
           setSubmitting(false);
           return;
         }
@@ -279,11 +296,24 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
   const onReplaceFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file == null || replaceIndex == null) return;
+    
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+    if (!allowedTypes.includes(file.type.toLowerCase())) {
+      toast.error('Only JPG and PNG images are allowed.', {
+        duration: 4000,
+        description: 'Please select a .jpg or .png file'
+      });
+      e.currentTarget.value = '';
+      return;
+    }
+    
     if (file.size > 10 * 1024 * 1024) {
       toast.error('Image too large. Max size is 10MB.');
       e.currentTarget.value = '';
       return;
     }
+    
     // Update arrays immutably
     setNewImageFiles(prev => {
       const next = [...prev];
@@ -709,7 +739,7 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
                 </div>
 
                 <div>
-                  <Label>Optional Images (Max 3)</Label>
+                  <Label>Optional Images (Max 3, JPG/PNG only)</Label>
                   <div className="mt-2">
                     <label 
                       htmlFor="image-upload"
@@ -724,14 +754,14 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
                     >
                       <ImageIcon size={20} className={submitting || newImageFiles.length >= 3 ? 'text-gray-400' : 'text-[#f6421f]'} />
                       <span className={submitting || newImageFiles.length >= 3 ? 'text-gray-400' : 'text-gray-700 dark:text-gray-300'}>
-                        {newImageFiles.length >= 3 ? 'Maximum images reached' : `Click to add images (${newImageFiles.length}/3)`}
+                        {newImageFiles.length >= 3 ? 'Maximum images reached' : `Click to add JPG/PNG images (${newImageFiles.length}/3)`}
                       </span>
                     </label>
                     {/* Use a native input fully hidden to avoid duplicate "Choose File" UI */}
                     <input
                       id="image-upload"
                       type="file"
-                      accept="image/*"
+                      accept="image/jpeg,image/jpg,image/png"
                       multiple
                       disabled={submitting || newImageFiles.length >= 3}
                       style={{ display: 'none' }}
@@ -741,13 +771,31 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
                           toast.error('Maximum 3 images allowed');
                           return;
                         }
+                        
+                        // Validate file types
+                        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+                        const invalidFiles = files.filter(f => !allowedTypes.includes(f.type.toLowerCase()));
+                        if (invalidFiles.length > 0) {
+                          toast.error('Only JPG and PNG images are allowed.', {
+                            duration: 4000,
+                            description: `${invalidFiles.length} file(s) rejected`
+                          });
+                          e.target.value = '';
+                          return;
+                        }
+                        
+                        // Validate file sizes
                         const validFiles = files.filter(f => f.size <= 10 * 1024 * 1024);
                         if (validFiles.length !== files.length) {
                           toast.error('Some images were too large (max 10MB each)');
                         }
-                        setNewImageFiles([...newImageFiles, ...validFiles]);
-                        const previews = validFiles.map(f => URL.createObjectURL(f));
-                        setNewImagePreviews([...newImagePreviews, ...previews]);
+                        
+                        if (validFiles.length > 0) {
+                          setNewImageFiles([...newImageFiles, ...validFiles]);
+                          const previews = validFiles.map(f => URL.createObjectURL(f));
+                          setNewImagePreviews([...newImagePreviews, ...previews]);
+                        }
+                        
                         // Reset input
                         e.target.value = '';
                       }} 
@@ -810,7 +858,7 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
                     ref={replaceInputRef as any}
                     id="image-replace"
                     type="file"
-                    accept="image/*"
+                    accept="image/jpeg,image/jpg,image/png"
                     className="hidden"
                     onChange={onReplaceFileChange}
                   />
