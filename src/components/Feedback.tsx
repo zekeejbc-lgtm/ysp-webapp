@@ -25,6 +25,7 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
   const [filterStatus, setFilterStatus] = useState<'all' | 'replied' | 'not-replied'>('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedFeedback, setSelectedFeedback] = useState<FeedbackType | null>(null);
+  const [searchedFeedback, setSearchedFeedback] = useState<FeedbackType | null>(null);
   const [showReplyModal, setShowReplyModal] = useState(false);
   const [newMessage, setNewMessage] = useState('');
   const [newCategory, setNewCategory] = useState<string>('Other');
@@ -57,11 +58,34 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
 
   // Initialize editing states when feedback is selected
   useEffect(() => {
-    if (selectedFeedback) {
-      setEditingStatus(selectedFeedback.status as any || 'Pending');
-      setEditingVisibility(selectedFeedback.visibility as any || 'Private');
+    const fb = selectedFeedback || searchedFeedback;
+    if (fb) {
+      setEditingStatus((fb.status as any) || 'Pending');
+      setEditingVisibility((fb.visibility as any) || 'Private');
     }
-  }, [selectedFeedback]);
+  }, [selectedFeedback, searchedFeedback]);
+
+  // Normalize Google Drive URLs to a safe, displayable thumbnail URL (avoids CORS blocks)
+  function getDisplayableGoogleDriveUrl(url?: string, width: number = 1200): string {
+    if (!url) return '';
+    try {
+      const u = String(url);
+      let fileId = '';
+      const m1 = u.match(/[?&]id=([^&]+)/);
+      if (m1 && m1[1]) fileId = m1[1];
+      const m2 = u.match(/\/file\/d\/([^/]+)/);
+      if (!fileId && m2 && m2[1]) fileId = m2[1];
+      const m3 = u.match(/open\?id=([^&]+)/);
+      if (!fileId && m3 && m3[1]) fileId = m3[1];
+      if (fileId) {
+        const w = Math.max(400, Math.min(2000, width));
+        return `https://drive.google.com/thumbnail?id=${fileId}&sz=w${w}`;
+      }
+      return u;
+    } catch {
+      return url || '';
+    }
+  }
 
   const fetchFeedback = async () => {
     try {
@@ -112,7 +136,8 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
       if (response.success && response.feedback) {
         const feedback = Array.isArray(response.feedback) ? response.feedback[0] : response.feedback;
         toast.success(`Found: ${feedbackId}`);
-        setSelectedFeedback(feedback);
+        setSearchedFeedback(feedback);
+        setSelectedFeedback(null);
       } else {
         toast.error(`Feedback not found: ${feedbackId}`);
       }
@@ -551,8 +576,125 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
               </div>
             )}
 
+            {searchedFeedback && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Left: Searched Feedback Details */}
+                <div className="ysp-card bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 shadow-sm">
+                  <div className="flex items-start justify-between mb-4">
+                    <div>
+                      <Badge className="mb-2 border border-orange-300 bg-orange-100 text-black shadow-md dark:bg-[#f6421f] dark:text-white dark:border-transparent">{searchedFeedback.referenceId}</Badge>
+                      <div className="flex items-center gap-3 text-sm text-gray-500 flex-wrap">
+                        <span>By {searchedFeedback.authorName}</span>
+                        <span>•</span>
+                        <span>{new Date(searchedFeedback.timestamp).toLocaleDateString()}</span>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      {searchedFeedback.visibility === 'Public' && (
+                        <Badge className="border border-purple-300 bg-purple-100 text-black shadow-md dark:text-white dark:bg-gradient-to-r dark:from-purple-500 dark:to-purple-600 dark:border-transparent">Public</Badge>
+                      )}
+                      {searchedFeedback.category && (
+                        <Badge className="border border-sky-300 bg-sky-100 text-black shadow-md dark:text-white dark:bg-gradient-to-r dark:from-sky-500 dark:to-sky-600 dark:border-transparent">{searchedFeedback.category}</Badge>
+                      )}
+                    </div>
+                  </div>
+                  <div className="mb-4 grid grid-cols-2 gap-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <div>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">Category</span>
+                      <p className="font-medium text-gray-900 dark:text-gray-100">{searchedFeedback.category || 'Other'}</p>
+                    </div>
+                    <div>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">Status</span>
+                      {canReply ? (
+                        <select value={editingStatus} onChange={(e)=> setEditingStatus(e.target.value as any)} className="mt-1 w-full h-8 rounded-md border border-input bg-input-background px-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:bg-input/30">
+                          <option value="Pending">Pending</option>
+                          <option value="Reviewed">Reviewed</option>
+                          <option value="Resolved">Resolved</option>
+                        </select>
+                      ) : (
+                        <p className="font-medium text-gray-900 dark:text-gray-100">{searchedFeedback.status || 'Pending'}</p>
+                      )}
+                    </div>
+                    <div className="col-span-2">
+                      <span className="text-xs text-gray-500 dark:text-gray-400">Visibility</span>
+                      {canReply ? (
+                        <div className="flex items-center gap-2 mt-1">
+                          <Switch checked={editingVisibility === 'Public'} onCheckedChange={(c) => setEditingVisibility(c ? 'Public' : 'Private')} />
+                          <span className="text-sm font-medium text-gray-900 dark:text-gray-100 flex items-center gap-1">
+                            {editingVisibility === 'Public' ? <Eye size={14} /> : <EyeOff size={14} />}
+                            {editingVisibility}
+                          </span>
+                        </div>
+                      ) : (
+                        <p className="font-medium text-gray-900 dark:text-gray-100 flex items-center gap-1">
+                          {searchedFeedback.visibility === 'Public' ? <Eye size={14} /> : <EyeOff size={14} />}
+                          {searchedFeedback.visibility || 'Private'}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="mb-4">
+                    <h4 className="text-[#f6421f] dark:text-[#ee8724] mb-2 flex items-center gap-2">
+                      <MessageCircle size={18} />
+                      Feedback Message
+                    </h4>
+                    <p className="text-justify whitespace-pre-wrap leading-relaxed bg-gray-50 dark:bg-gray-800 p-3 rounded-lg text-gray-900 dark:text-gray-100">{searchedFeedback.message}</p>
+                    {searchedFeedback.imageUrl ? (
+                      <div className="mt-3">
+                        <h5 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Attached Image:</h5>
+                        <img src={getDisplayableGoogleDriveUrl(searchedFeedback.imageUrl)} alt="Feedback attachment" referrerPolicy="no-referrer" className="max-w-full max-h-96 rounded-lg border-2 border-gray-200 dark:border-gray-600 cursor-pointer hover:border-[#f6421f] transition-all object-contain bg-white" onClick={() => window.open(getDisplayableGoogleDriveUrl(searchedFeedback.imageUrl), '_blank')} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; const placeholder = document.createElement('div'); placeholder.className = 'text-xs text-gray-500 dark:text-gray-400 mt-1'; placeholder.textContent = 'Image unavailable'; e.currentTarget.parentElement?.appendChild(placeholder); }} />
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Click image to view full size</p>
+                      </div>
+                    ) : null}
+                  </div>
+                  <div className="flex gap-3">
+                    {canReply && !searchedFeedback.hasReply && (
+                      <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="flex-1">
+                        <Button onClick={() => { setSelectedFeedback(searchedFeedback); setShowReplyModal(true); }} className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700">Reply</Button>
+                      </motion.div>
+                    )}
+                    {(canReply && (editingStatus !== searchedFeedback.status || editingVisibility !== searchedFeedback.visibility)) && (
+                      <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="flex-1">
+                        <Button onClick={async () => { try { setUpdatingFeedback(true); const updatePromise = feedbackAPI.updateDetails(searchedFeedback.referenceId, editingStatus, editingVisibility, currentUser?.role); await toast.promise(updatePromise, { loading: 'Updating feedback...', success: 'Feedback updated successfully! 🎉', error: 'Failed to update feedback' }); await updatePromise; await fetchFeedback(); setSearchedFeedback({ ...searchedFeedback, status: editingStatus, visibility: editingVisibility }); } catch (error) { const errorMsg = (error instanceof Error) ? error.message : 'Unknown error'; toast.error(`Failed to update: ${errorMsg}`); } finally { setUpdatingFeedback(false); } }} disabled={updatingFeedback} className="w-full bg-purple-600 text-white shadow-lg border border-purple-300 hover:bg-purple-700 focus-visible:ring-[3px] focus-visible:ring-purple-500/50">{updatingFeedback ? 'Updating...' : 'Save Changes'}</Button>
+                      </motion.div>
+                    )}
+                  </div>
+                </div>
+                {/* Right: Public Feedbacks */}
+                <div className="ysp-card bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 shadow-sm">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Public Feedback</h3>
+                    <span className="text-xs text-gray-500">{feedbackList.filter(f => f.visibility === 'Public').length} items</span>
+                  </div>
+                  <div className="grid md:grid-cols-1 gap-4 max-h-[600px] overflow-y-auto pr-2">
+                    {feedbackList.filter(f => f.visibility === 'Public').map((feedback, index) => (
+                      <motion.div key={feedback.referenceId} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.03 }} onClick={() => setSelectedFeedback(feedback)} className="ysp-card bg-gradient-to-br from-gray-50 to-blue-50/30 dark:from-gray-800 dark:to-gray-700 cursor-pointer hover:shadow-xl transition-all duration-300 border border-blue-100 dark:border-gray-600">
+                        <div className="flex items-start justify-between mb-3">
+                          <Badge className="border border-orange-300 bg-orange-100 text-black shadow-md dark:bg-[#f6421f] dark:border-transparent dark:text-white">{feedback.referenceId}</Badge>
+                          <div className="flex gap-2">
+                            <Badge className="border border-purple-300 bg-purple-100 text-black shadow-md dark:text-white dark:bg-gradient-to-r dark:from-purple-500 dark:to-purple-600 dark:border-transparent">Public</Badge>
+                            {feedback.category && (
+                              <Badge className="border border-sky-300 bg-sky-100 text-black shadow-md dark:text-white dark:bg-gradient-to-r dark:from-sky-500 dark:to-sky-600 dark:border-transparent">{feedback.category}</Badge>
+                            )}
+                            {feedback.hasReply && (
+                              <Badge className="border border-green-300 bg-green-100 text-black shadow-md dark:text-white dark:bg-gradient-to-r dark:from-green-500 dark:to-green-600 dark:border-transparent">Replied</Badge>
+                            )}
+                          </div>
+                        </div>
+                        <p className="text-sm mb-3 line-clamp-3">{feedback.message}</p>
+                        <div className="flex items-center justify-between text-xs text-gray-400">
+                          <span>By {feedback.authorName}</span>
+                          <span>{new Date(feedback.timestamp).toLocaleDateString()}</span>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Recent Feedback Holder */}
-            <div className="ysp-card bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 shadow-sm">
+            <div className={`ysp-card bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 shadow-sm ${searchedFeedback ? 'hidden' : ''}`}>
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Recent Feedback</h3>
                 <span className="text-xs text-gray-500">{filteredFeedback.length} items</span>
@@ -591,7 +733,7 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
               </div>
             </div>
 
-            {filteredFeedback.length === 0 && (
+            {!searchedFeedback && filteredFeedback.length === 0 && (
               <div className="text-center py-12 text-gray-500">
                 {searchTerm || filterStatus !== 'all' 
                   ? 'No feedback found matching your filters' 
@@ -655,19 +797,15 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
                 <div>
                   <span className="text-xs text-gray-500 dark:text-gray-400">Status</span>
                   {canReply ? (
-                    <Select 
-                      value={editingStatus || selectedFeedback.status || 'Pending'} 
-                      onValueChange={(v: any) => setEditingStatus(v)}
+                    <select
+                      value={editingStatus || selectedFeedback.status || 'Pending'}
+                      onChange={(e) => setEditingStatus(e.target.value as any)}
+                      className="mt-1 w-full h-8 rounded-md border border-input bg-input-background px-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:bg-input/30"
                     >
-                      <SelectTrigger className="mt-1 h-8 text-sm">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Pending">Pending</SelectItem>
-                        <SelectItem value="Reviewed">Reviewed</SelectItem>
-                        <SelectItem value="Resolved">Resolved</SelectItem>
-                      </SelectContent>
-                    </Select>
+                      <option value="Pending">Pending</option>
+                      <option value="Reviewed">Reviewed</option>
+                      <option value="Resolved">Resolved</option>
+                    </select>
                   ) : (
                     <p className="font-medium text-gray-900 dark:text-gray-100">{selectedFeedback.status || 'Pending'}</p>
                   )}
@@ -757,7 +895,7 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
                       }
                     }}
                     disabled={updatingFeedback}
-                    className="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700"
+                    className="w-full bg-purple-600 text-white shadow-lg border border-purple-300 hover:bg-purple-700 focus-visible:ring-[3px] focus-visible:ring-purple-500/50"
                   >
                     {updatingFeedback ? 'Updating...' : 'Save Changes'}
                   </Button>
@@ -776,10 +914,11 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
                   <div className="mt-4">
                     <h5 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Attached Image:</h5>
                     <img 
-                      src={selectedFeedback.imageUrl} 
+                      src={getDisplayableGoogleDriveUrl(selectedFeedback.imageUrl)} 
                       alt="Feedback attachment" 
-                      className="max-w-full max-h-96 rounded-lg border-2 border-gray-200 dark:border-gray-600 cursor-pointer hover:border-[#f6421f] transition-all object-contain"
-                      onClick={() => window.open(selectedFeedback.imageUrl!, '_blank')}
+                      referrerPolicy="no-referrer"
+                      className="max-w-full max-h-96 rounded-lg border-2 border-gray-200 dark:border-gray-600 cursor-pointer hover:border-[#f6421f] transition-all object-contain bg-white"
+                      onClick={() => window.open(getDisplayableGoogleDriveUrl(selectedFeedback.imageUrl), '_blank')}
                       onError={(e) => {
                         (e.currentTarget as HTMLImageElement).style.display = 'none';
                         const placeholder = document.createElement('div');
@@ -1169,14 +1308,15 @@ export default function Feedback({ darkMode: _darkMode, currentUser }: FeedbackP
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label>Status</Label>
-                    <Select value={replyStatus} onValueChange={(v:any)=> setReplyStatus(v)}>
-                      <SelectTrigger className="mt-2"><SelectValue placeholder="Select status" /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Pending">Pending</SelectItem>
-                        <SelectItem value="Reviewed">Reviewed</SelectItem>
-                        <SelectItem value="Resolved">Resolved</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <select
+                      value={replyStatus}
+                      onChange={(e) => setReplyStatus(e.target.value as any)}
+                      className="mt-2 w-full h-9 rounded-md border border-input bg-input-background px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:bg-input/30"
+                    >
+                      <option value="Pending">Pending</option>
+                      <option value="Reviewed">Reviewed</option>
+                      <option value="Resolved">Resolved</option>
+                    </select>
                   </div>
                   <div className="flex items-end gap-3">
                     <div className="flex items-center gap-2">
