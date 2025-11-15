@@ -154,6 +154,8 @@ function handlePostRequest(data) {
   }
   
   switch(action) {
+    case 'ping':
+      return { success: true, message: 'Backend is alive!', timestamp: new Date().toISOString(), version: 'b464368' };
     case 'login':
       return handleLogin(data);
     case 'guestLogin':
@@ -238,17 +240,21 @@ function handlePostRequest(data) {
 // ===== LOGIN HANDLER =====
 function handleLogin(data) {
   try {
+    Logger.log('LOGIN ATTEMPT - Username: ' + data.username);
     const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
     const profilesSheet = ss.getSheetByName(SHEETS.USER_PROFILES);
     const accessLogsSheet = ss.getSheetByName(SHEETS.ACCESS_LOGS);
     
     const profilesData = profilesSheet.getDataRange().getValues();
+    Logger.log('Total rows in User Profiles: ' + profilesData.length);
     
     // Find user (skip header row)
     for (let i = 1; i < profilesData.length; i++) {
       const row = profilesData[i];
       const username = row[13]; // Column N - Username
       const password = row[14]; // Column O - Password
+      
+      Logger.log('Checking row ' + i + ' - Username: ' + username);
       
       if (username === data.username && password === data.password) {
         // Log access with correct column order: Timestamp, Account Created, Email, ID Code, Name, Role
@@ -283,8 +289,10 @@ function handleLogin(data) {
       }
     }
     
+    Logger.log('LOGIN FAILED - No matching username/password found');
     return { success: false, message: 'Invalid username or password' };
   } catch (error) {
+    Logger.log('LOGIN ERROR: ' + error.toString());
     return { success: false, message: 'Login error: ' + error.toString() };
   }
 }
