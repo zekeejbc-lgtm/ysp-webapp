@@ -54,17 +54,9 @@ async function apiRequest<T = any>(action: string, data: Record<string, any> = {
   const clientDebugId = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
   const requestBody = { action, clientDebugId, ...data };
 
-  if (debug && (action === 'createFeedback' || action === 'getFeedback')) {
-    // Collapsed group to keep console tidy
-    // eslint-disable-next-line no-console
-    console.groupCollapsed(`API → ${action} [${clientDebugId}]`);
-    // eslint-disable-next-line no-console
-    console.debug('Endpoint:', API_CONFIG.baseURL);
-    // eslint-disable-next-line no-console
-    console.debug('Request:', redact(requestBody));
-    // eslint-disable-next-line no-console
-    console.groupEnd();
-  }
+  // Always log for debugging
+  console.log(`[API] ${action} - Request:`, redact(requestBody));
+  console.log(`[API] ${action} - Endpoint:`, API_CONFIG.baseURL);
 
   // Small helper: fetch with timeout + retry + better error messages
   const fetchWithRetry = async (attempt = 1): Promise<Response> => {
