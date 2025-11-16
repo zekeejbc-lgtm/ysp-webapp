@@ -2403,9 +2403,16 @@ function handleGetHomepageContent(data) {
             if (!row[0]) continue;
             const obj = {};
             for (let c=0;c<headers.length;c++) obj[headers[c]] = row[c];
-            // Gather achievements
+            // Gather achievements (unlimited, stop when no more found)
             const achievements = [];
-            for (let a=1;a<=10;a++) if (obj['Achievement_'+a]) achievements.push(obj['Achievement_'+a]);
+            for (let a=1; a<=100; a++) { // reasonable upper bound
+              const key = 'Achievement_' + a;
+              if (obj[key] && obj[key].toString().trim() !== '') {
+                achievements.push(obj[key]);
+              } else {
+                break; // stop when we find the first missing achievement
+              }
+            }
             founders.push({
               id: obj['ID']||'',
               name: obj['Name']||'',
@@ -4717,7 +4724,7 @@ function handleUpdateFounderInfo(data) {
 
     // Ensure headers match new schema
     var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-    var requiredHeaders = ['ID','Name','Nickname','Role','About','BackgroundJourney','Achievement_1','Achievement_2','Achievement_3','Achievement_4','Achievement_5','Achievement_6','Achievement_7','Achievement_8','Achievement_9','Achievement_10','OrganizationalImpact','LeadershipPhilosophy','ProfilePicture','Facebook','Instagram','Twitter','LinkedIn','Website','Email','Phone','OfficeLocation','Active'];
+    var requiredHeaders = ['ID','Name','Nickname','Role','About','BackgroundJourney','Achievement_1','Achievement_2','Achievement_3','Achievement_4','Achievement_5','Achievement_6','Achievement_7','Achievement_8','Achievement_9','Achievement_10','Achievement_11','Achievement_12','Achievement_13','Achievement_14','Achievement_15','Achievement_16','Achievement_17','Achievement_18','Achievement_19','Achievement_20','Achievement_21','Achievement_22','Achievement_23','Achievement_24','Achievement_25','Achievement_26','Achievement_27','Achievement_28','Achievement_29','Achievement_30','OrganizationalImpact','LeadershipPhilosophy','ProfilePicture','Facebook','Instagram','Twitter','LinkedIn','Website','Email','Phone','OfficeLocation','Active'];
     if (headers.length < requiredHeaders.length || headers[1] !== 'Name') {
       // Reinitialize schema if mismatch
       initializeFounderInfoSheet();
@@ -4762,8 +4769,8 @@ function handleUpdateFounderInfo(data) {
     if (data.officeLocation !== undefined) sheet.getRange(rowIndex, headers.indexOf('OfficeLocation')+1).setValue(data.officeLocation);
     if (data.active !== undefined) sheet.getRange(rowIndex, headers.indexOf('Active')+1).setValue(data.active !== false);
 
-    // Write achievements up to 10
-    for (var a=0; a<10; a++) {
+    // Write achievements up to 30
+    for (var a=0; a<30; a++) {
       var colName = 'Achievement_' + (a+1);
       var colIdx = headers.indexOf(colName)+1;
       if (colIdx > 0) {
@@ -4883,7 +4890,7 @@ function initializeFounderInfoSheet() {
     var sheet = ss.getSheetByName('Home_FounderInfo');
     if (!sheet) sheet = ss.insertSheet('Home_FounderInfo');
 
-    var headers = ['ID','Name','Nickname','Role','About','BackgroundJourney','Achievement_1','Achievement_2','Achievement_3','Achievement_4','Achievement_5','Achievement_6','Achievement_7','Achievement_8','Achievement_9','Achievement_10','OrganizationalImpact','LeadershipPhilosophy','ProfilePicture','Facebook','Instagram','Twitter','LinkedIn','Website','Email','Phone','OfficeLocation','Active'];
+    var headers = ['ID','Name','Nickname','Role','About','BackgroundJourney','Achievement_1','Achievement_2','Achievement_3','Achievement_4','Achievement_5','Achievement_6','Achievement_7','Achievement_8','Achievement_9','Achievement_10','Achievement_11','Achievement_12','Achievement_13','Achievement_14','Achievement_15','Achievement_16','Achievement_17','Achievement_18','Achievement_19','Achievement_20','Achievement_21','Achievement_22','Achievement_23','Achievement_24','Achievement_25','Achievement_26','Achievement_27','Achievement_28','Achievement_29','Achievement_30','OrganizationalImpact','LeadershipPhilosophy','ProfilePicture','Facebook','Instagram','Twitter','LinkedIn','Website','Email','Phone','OfficeLocation','Active'];
     sheet.clear();
     sheet.getRange(1,1,1,headers.length).setValues([headers]);
     sheet.getRange(1,1,1,headers.length).setFontWeight('bold').setBackground('#4a90e2').setFontColor('#ffffff');
