@@ -2542,10 +2542,7 @@ function handleGetHomepageContent(data) {
         { platform: 'twitter', url: twitterUrl || '' },
         { platform: 'linkedin', url: linkedinUrl || '' },
         { platform: 'youtube', url: youtubeUrl || '' },
-        { platform: 'tiktok', url: tiktokUrl || '' },
-        // Include location and partner as clickable items as well (frontend can decide how to render)
-        { platform: 'location', url: locationUrl || getMapValue(['location_url', 'locationUrl', 'location', 'location-link']) || '' },
-        { platform: 'partner', url: partnerUrl || getMapValue(['partner_url', 'partnerUrl', 'partner', 'partner-link']) || '' }
+        { platform: 'tiktok', url: tiktokUrl || '' }
       ].filter(function(s){ return s.url && s.url.toString().trim() !== ''; })
     };
 
