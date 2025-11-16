@@ -2542,7 +2542,8 @@ function handleGetHomepageContent(data) {
         { platform: 'twitter', url: twitterUrl || '' },
         { platform: 'linkedin', url: linkedinUrl || '' },
         { platform: 'youtube', url: youtubeUrl || '' },
-        { platform: 'tiktok', url: tiktokUrl || '' }
+        { platform: 'tiktok', url: tiktokUrl || '' },
+        { platform: 'partner', url: partnerUrl || getMapValue(['partner_url', 'partnerUrl', 'partner', 'partner-link']) || '' }
       ].filter(function(s){ return s.url && s.url.toString().trim() !== ''; })
     };
 
