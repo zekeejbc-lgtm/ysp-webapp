@@ -1,0 +1,715 @@
+{
+  "timestamp": "2025-11-16T04:10:32.339Z",
+  "summary": {
+    "totalExpected": 15,
+    "totalActual": 20,
+    "sheetsWithIssues": 6,
+    "missingSheets": 3,
+    "totalMissingHeaders": 28,
+    "totalExtraHeaders": 53,
+    "totalOutOfOrder": 14,
+    "totalCloseMatches": 15
+  },
+  "sheets": [
+    {
+      "expectedName": "User Profiles",
+      "actualName": "User Profiles",
+      "status": "HAS_ISSUES",
+      "mode": "exact",
+      "actualColumns": 22,
+      "expectedColumns": 26,
+      "issues": [
+        "Missing 4 headers",
+        "1 headers with slight differences",
+        "1 extra headers"
+      ],
+      "missing": [
+        {
+          "header": "Data Collection Agreement",
+          "expectedIndex": 17
+        },
+        {
+          "header": "Committee",
+          "expectedIndex": 23
+        },
+        {
+          "header": "Notes",
+          "expectedIndex": 24
+        },
+        {
+          "header": "Last Updated",
+          "expectedIndex": 25
+        }
+      ],
+      "extras": [
+        {
+          "header": "Do you understand that by prohibiting the collection of your personal information, your application will not be processed?  ",
+          "actualIndex": 17
+        }
+      ],
+      "outOfOrder": [],
+      "closeMatches": [
+        {
+          "expected": "Status",
+          "actual": "Civil Status",
+          "expectedIndex": 22
+        }
+      ]
+    },
+    {
+      "expectedName": "Access Logs",
+      "actualName": "Access Logs",
+      "status": "OK",
+      "mode": "exact",
+      "actualColumns": 11,
+      "expectedColumns": 11,
+      "issues": [],
+      "missing": [],
+      "extras": [],
+      "outOfOrder": [],
+      "closeMatches": []
+    },
+    {
+      "expectedName": "Master Attendance Log",
+      "actualName": "Master Attendance Log",
+      "status": "OK",
+      "mode": "prefix-only",
+      "actualColumns": 22,
+      "expectedColumns": 4,
+      "issues": [],
+      "missing": [],
+      "extras": [],
+      "outOfOrder": [],
+      "closeMatches": []
+    },
+    {
+      "expectedName": "Events Control",
+      "status": "MISSING",
+      "variants": [
+        "Events Control",
+        "Events_Control"
+      ],
+      "issues": [
+        "Sheet does not exist"
+      ]
+    },
+    {
+      "expectedName": "Announcements",
+      "actualName": "Announcements",
+      "status": "HAS_ISSUES",
+      "mode": "exact",
+      "actualColumns": 46,
+      "expectedColumns": 16,
+      "issues": [
+        "7 headers with slight differences",
+        "30 extra headers"
+      ],
+      "missing": [],
+      "extras": [
+        {
+          "header": "Recipeint Value ",
+          "actualIndex": 8
+        },
+        {
+          "header": "ID Code",
+          "actualIndex": 16
+        },
+        {
+          "header": "Name",
+          "actualIndex": 17
+        },
+        {
+          "header": "Position",
+          "actualIndex": 18
+        },
+        {
+          "header": "Role",
+          "actualIndex": 19
+        },
+        {
+          "header": "ANN-2025-001",
+          "actualIndex": 20
+        },
+        {
+          "header": "Testing the Announcement",
+          "actualIndex": 21
+        },
+        {
+          "header": "ANN-2025-002",
+          "actualIndex": 22
+        },
+        {
+          "header": "TEsting",
+          "actualIndex": 23
+        },
+        {
+          "header": "ANN-2025-003",
+          "actualIndex": 24
+        },
+        {
+          "header": "Test",
+          "actualIndex": 25
+        },
+        {
+          "header": "ANN-2025-004",
+          "actualIndex": 26
+        },
+        {
+          "header": "Testest",
+          "actualIndex": 27
+        },
+        {
+          "header": "ANN-2025-005",
+          "actualIndex": 28
+        },
+        {
+          "header": "Zek",
+          "actualIndex": 29
+        },
+        {
+          "header": "ANN-2025-006",
+          "actualIndex": 30
+        },
+        {
+          "header": "testing",
+          "actualIndex": 31
+        },
+        {
+          "header": "ANN-2025-007",
+          "actualIndex": 32
+        },
+        {
+          "header": "ANN-2025-008",
+          "actualIndex": 34
+        },
+        {
+          "header": "Title test",
+          "actualIndex": 35
+        },
+        {
+          "header": "ANN-2025-009",
+          "actualIndex": 36
+        },
+        {
+          "header": "Eze",
+          "actualIndex": 37
+        },
+        {
+          "header": "ANN-2025-010",
+          "actualIndex": 38
+        },
+        {
+          "header": "toaster",
+          "actualIndex": 39
+        },
+        {
+          "header": "ANN-2025-011",
+          "actualIndex": 40
+        },
+        {
+          "header": "check",
+          "actualIndex": 41
+        },
+        {
+          "header": "ANN-2025-012",
+          "actualIndex": 42
+        },
+        {
+          "header": "test",
+          "actualIndex": 43
+        },
+        {
+          "header": "ANN-2025-013",
+          "actualIndex": 44
+        },
+        {
+          "header": "test",
+          "actualIndex": 45
+        }
+      ],
+      "outOfOrder": [],
+      "closeMatches": [
+        {
+          "expected": "Recipient Value",
+          "actual": "Recipient Type",
+          "expectedIndex": 8
+        },
+        {
+          "expected": "Priority",
+          "actual": "",
+          "expectedIndex": 10
+        },
+        {
+          "expected": "Category",
+          "actual": "",
+          "expectedIndex": 11
+        },
+        {
+          "expected": "IsPinned",
+          "actual": "",
+          "expectedIndex": 12
+        },
+        {
+          "expected": "ImageURL_1",
+          "actual": "",
+          "expectedIndex": 13
+        },
+        {
+          "expected": "ImageURL_2",
+          "actual": "",
+          "expectedIndex": 14
+        },
+        {
+          "expected": "ImageURL_3",
+          "actual": "",
+          "expectedIndex": 15
+        }
+      ]
+    },
+    {
+      "expectedName": "Feedback",
+      "actualName": "Feedback",
+      "status": "HAS_ISSUES",
+      "mode": "exact",
+      "actualColumns": 18,
+      "expectedColumns": 18,
+      "issues": [
+        "1 headers with slight differences",
+        "1 extra headers",
+        "11 headers out of order"
+      ],
+      "missing": [],
+      "extras": [
+        {
+          "header": "Reference ID",
+          "actualIndex": 15
+        }
+      ],
+      "outOfOrder": [
+        {
+          "header": "Feedback ID",
+          "expectedIndex": 0,
+          "actualIndex": 8
+        },
+        {
+          "header": "Timestamp",
+          "expectedIndex": 1,
+          "actualIndex": 0
+        },
+        {
+          "header": "Author",
+          "expectedIndex": 2,
+          "actualIndex": 1
+        },
+        {
+          "header": "Author ID Code",
+          "expectedIndex": 3,
+          "actualIndex": 2
+        },
+        {
+          "header": "Feedback",
+          "expectedIndex": 4,
+          "actualIndex": 3
+        },
+        {
+          "header": "Reply Timestamp",
+          "expectedIndex": 5,
+          "actualIndex": 4
+        },
+        {
+          "header": "Replier",
+          "expectedIndex": 6,
+          "actualIndex": 5
+        },
+        {
+          "header": "Replier ID",
+          "expectedIndex": 7,
+          "actualIndex": 6
+        },
+        {
+          "header": "Reply",
+          "expectedIndex": 8,
+          "actualIndex": 7
+        },
+        {
+          "header": "Email",
+          "expectedIndex": 15,
+          "actualIndex": 16
+        },
+        {
+          "header": "Rating",
+          "expectedIndex": 16,
+          "actualIndex": 17
+        }
+      ],
+      "closeMatches": [
+        {
+          "expected": "Reference",
+          "actual": "Reference ID",
+          "expectedIndex": 17
+        }
+      ]
+    },
+    {
+      "expectedName": "Homepage_Content",
+      "actualName": "Homepage Content",
+      "status": "OK",
+      "mode": "exact",
+      "actualColumns": 3,
+      "expectedColumns": 3,
+      "issues": [],
+      "missing": [],
+      "extras": [],
+      "outOfOrder": [],
+      "closeMatches": []
+    },
+    {
+      "expectedName": "Homepage_Projects",
+      "actualName": "Homepage_Projects",
+      "status": "OK",
+      "mode": "exact",
+      "actualColumns": 7,
+      "expectedColumns": 7,
+      "issues": [],
+      "missing": [],
+      "extras": [],
+      "outOfOrder": [],
+      "closeMatches": []
+    },
+    {
+      "expectedName": "Donations",
+      "actualName": "Donations",
+      "status": "OK",
+      "mode": "exact",
+      "actualColumns": 12,
+      "expectedColumns": 12,
+      "issues": [],
+      "missing": [],
+      "extras": [],
+      "outOfOrder": [],
+      "closeMatches": []
+    },
+    {
+      "expectedName": "Donation_Campaigns",
+      "actualName": "Donation_Campaigns",
+      "status": "OK",
+      "mode": "exact",
+      "actualColumns": 8,
+      "expectedColumns": 8,
+      "issues": [],
+      "missing": [],
+      "extras": [],
+      "outOfOrder": [],
+      "closeMatches": []
+    },
+    {
+      "expectedName": "Donation_Settings",
+      "actualName": "Donation_Settings",
+      "status": "HAS_ISSUES",
+      "mode": "exact",
+      "actualColumns": 5,
+      "expectedColumns": 5,
+      "issues": [
+        "Missing 1 headers",
+        "1 headers with slight differences",
+        "2 extra headers"
+      ],
+      "missing": [
+        {
+          "header": "ID",
+          "expectedIndex": 0
+        }
+      ],
+      "extras": [
+        {
+          "header": "Setting Key",
+          "actualIndex": 0
+        },
+        {
+          "header": "Account Name",
+          "actualIndex": 3
+        }
+      ],
+      "outOfOrder": [],
+      "closeMatches": [
+        {
+          "expected": "Account Name/Number",
+          "actual": "Account Name",
+          "expectedIndex": 3
+        }
+      ]
+    },
+    {
+      "expectedName": "Member_Applications",
+      "status": "MISSING",
+      "variants": [
+        "Member_Applications",
+        "Member Applications"
+      ],
+      "issues": [
+        "Sheet does not exist"
+      ]
+    },
+    {
+      "expectedName": "Polls",
+      "actualName": "Polls",
+      "status": "HAS_ISSUES",
+      "mode": "exact",
+      "actualColumns": 19,
+      "expectedColumns": 22,
+      "issues": [
+        "Missing 14 headers",
+        "4 headers with slight differences",
+        "15 extra headers",
+        "3 headers out of order"
+      ],
+      "missing": [
+        {
+          "header": "Visibility",
+          "expectedIndex": 5
+        },
+        {
+          "header": "Created By",
+          "expectedIndex": 6
+        },
+        {
+          "header": "Created By Role",
+          "expectedIndex": 7
+        },
+        {
+          "header": "Created At",
+          "expectedIndex": 8
+        },
+        {
+          "header": "Updated At",
+          "expectedIndex": 9
+        },
+        {
+          "header": "Deadline",
+          "expectedIndex": 10
+        },
+        {
+          "header": "Open Forever",
+          "expectedIndex": 11
+        },
+        {
+          "header": "Allow Edit After Submit",
+          "expectedIndex": 13
+        },
+        {
+          "header": "Allow Multiple Submissions",
+          "expectedIndex": 14
+        },
+        {
+          "header": "Account Only Submissions",
+          "expectedIndex": 17
+        },
+        {
+          "header": "IP Lock",
+          "expectedIndex": 18
+        },
+        {
+          "header": "Device Lock",
+          "expectedIndex": 19
+        },
+        {
+          "header": "Requires Approval",
+          "expectedIndex": 20
+        },
+        {
+          "header": "Theme JSON",
+          "expectedIndex": 21
+        }
+      ],
+      "extras": [
+        {
+          "header": "Timestamp Created",
+          "actualIndex": 1
+        },
+        {
+          "header": "Creator ID Code",
+          "actualIndex": 2
+        },
+        {
+          "header": "Creator Name",
+          "actualIndex": 3
+        },
+        {
+          "header": "Questions JSON",
+          "actualIndex": 6
+        },
+        {
+          "header": "Target Audience Type",
+          "actualIndex": 7
+        },
+        {
+          "header": "Target Value",
+          "actualIndex": 8
+        },
+        {
+          "header": "Start Date",
+          "actualIndex": 9
+        },
+        {
+          "header": "End Date",
+          "actualIndex": 10
+        },
+        {
+          "header": "Anonymous",
+          "actualIndex": 12
+        },
+        {
+          "header": "Show Results After Vote",
+          "actualIndex": 13
+        },
+        {
+          "header": "Show Results After Close",
+          "actualIndex": 14
+        },
+        {
+          "header": "Template Used",
+          "actualIndex": 15
+        },
+        {
+          "header": "Total Votes",
+          "actualIndex": 16
+        },
+        {
+          "header": "Voters List JSON",
+          "actualIndex": 17
+        },
+        {
+          "header": "Email Sent",
+          "actualIndex": 18
+        }
+      ],
+      "outOfOrder": [
+        {
+          "header": "Title",
+          "expectedIndex": 1,
+          "actualIndex": 4
+        },
+        {
+          "header": "Description",
+          "expectedIndex": 2,
+          "actualIndex": 5
+        },
+        {
+          "header": "Status",
+          "expectedIndex": 4,
+          "actualIndex": 11
+        }
+      ],
+      "closeMatches": [
+        {
+          "expected": "Type",
+          "actual": "Target Audience Type",
+          "expectedIndex": 3
+        },
+        {
+          "expected": "Target Audience",
+          "actual": "Target Audience Type",
+          "expectedIndex": 12
+        },
+        {
+          "expected": "Anonymous Responses",
+          "actual": "Anonymous",
+          "expectedIndex": 15
+        },
+        {
+          "expected": "Show Results To Participants",
+          "actual": "Show Results After Vote",
+          "expectedIndex": 16
+        }
+      ]
+    },
+    {
+      "expectedName": "Poll_Questions",
+      "status": "MISSING",
+      "variants": [
+        "Poll_Questions",
+        "Poll Questions"
+      ],
+      "issues": [
+        "Sheet does not exist"
+      ]
+    },
+    {
+      "expectedName": "Poll_Responses",
+      "actualName": "Poll Responses",
+      "status": "HAS_ISSUES",
+      "mode": "exact",
+      "actualColumns": 8,
+      "expectedColumns": 14,
+      "issues": [
+        "Missing 9 headers",
+        "1 headers with slight differences",
+        "4 extra headers"
+      ],
+      "missing": [
+        {
+          "header": "Device",
+          "expectedIndex": 5
+        },
+        {
+          "header": "IP Address",
+          "expectedIndex": 6
+        },
+        {
+          "header": "Status",
+          "expectedIndex": 7
+        },
+        {
+          "header": "Score",
+          "expectedIndex": 8
+        },
+        {
+          "header": "Result Visibility",
+          "expectedIndex": 9
+        },
+        {
+          "header": "Answers JSON",
+          "expectedIndex": 10
+        },
+        {
+          "header": "Reviewer",
+          "expectedIndex": 11
+        },
+        {
+          "header": "Reviewed At",
+          "expectedIndex": 12
+        },
+        {
+          "header": "Notes",
+          "expectedIndex": 13
+        }
+      ],
+      "extras": [
+        {
+          "header": "Respondent Position",
+          "actualIndex": 4
+        },
+        {
+          "header": "Respondent Committee",
+          "actualIndex": 5
+        },
+        {
+          "header": "Timestamp Submitted",
+          "actualIndex": 6
+        },
+        {
+          "header": "Responses JSON",
+          "actualIndex": 7
+        }
+      ],
+      "outOfOrder": [],
+      "closeMatches": [
+        {
+          "expected": "Timestamp",
+          "actual": "Timestamp Submitted",
+          "expectedIndex": 4
+        }
+      ]
+    }
+  ]
+}

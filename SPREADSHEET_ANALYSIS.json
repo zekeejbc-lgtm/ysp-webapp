@@ -1,0 +1,429 @@
+{
+  "spreadsheetTitle": "YSPT System Web App",
+  "sheets": [
+    {
+      "name": "User Profiles",
+      "id": 1808822776,
+      "rowCount": 27,
+      "columnCount": 22,
+      "headers": [
+        "Timestamp",
+        "Email Address",
+        "DATA PRIVACY AGREEMENT",
+        "Full name",
+        "Date of Birth",
+        "Age",
+        "Sex/Gender",
+        "Pronouns",
+        "Civil Status",
+        "Contact Number",
+        "Religion",
+        "Nationality",
+        "Personal Email Address",
+        "Username",
+        "Password",
+        "Data Privacy Acknowledgment",
+        "Declaration of Truthfulness and Responsibility",
+        "Do you understand that by prohibiting the collection of your personal information, your application will not be processed?  ",
+        "ID Code",
+        "Position",
+        "Role",
+        "ProfilePictureURL"
+      ]
+    },
+    {
+      "name": "Donations",
+      "id": 667199691,
+      "rowCount": 1,
+      "columnCount": 12,
+      "headers": [
+        "Donation ID",
+        "Timestamp",
+        "Donor Name",
+        "Contact",
+        "Amount",
+        "Payment Method",
+        "Campaign",
+        "Reference Number",
+        "Receipt URL",
+        "Status",
+        "Notes",
+        "Verified By"
+      ]
+    },
+    {
+      "name": "Donation_Campaigns",
+      "id": 1061804755,
+      "rowCount": 4,
+      "columnCount": 8,
+      "headers": [
+        "Campaign ID",
+        "Name",
+        "Description",
+        "Target Amount",
+        "Current Amount",
+        "Start Date",
+        "End Date",
+        "Status"
+      ]
+    },
+    {
+      "name": "Donation_Settings",
+      "id": 1885038164,
+      "rowCount": 3,
+      "columnCount": 5,
+      "headers": [
+        "Setting Key",
+        "Method",
+        "QR Image URL",
+        "Account Name",
+        "Active"
+      ]
+    },
+    {
+      "name": "Logging Debug",
+      "id": 1943822914,
+      "rowCount": 12,
+      "columnCount": 6,
+      "headers": [
+        "RecordedAt (PH)",
+        "Status",
+        "idCode",
+        "userRowIndex",
+        "userRow (json)",
+        "toAppend (json)"
+      ]
+    },
+    {
+      "name": "WeakPasswords",
+      "id": 1677081289,
+      "rowCount": 25,
+      "columnCount": 6,
+      "headers": [
+        "10/15/2025 0:25:36",
+        "ezequieljohncrisostomo20@gmail.com",
+        "ZekeYSP",
+        "Zeke25200",
+        "75",
+        "Strong"
+      ]
+    },
+    {
+      "name": "Main",
+      "id": 561234478,
+      "rowCount": 32,
+      "columnCount": 30,
+      "headers": [
+        "Timestamp",
+        "Email Address",
+        "DATA PRIVACY AGREEMENT",
+        "Full name",
+        "Date of Birth",
+        "Age",
+        "Sex",
+        "Pronouns",
+        "Civil Status",
+        "Contact Number",
+        "Religion",
+        "Nationality",
+        "School and Year Level",
+        "Personal Email Address",
+        "Complete Permanent Address",
+        "Complete Current Address",
+        "Available Device/s",
+        "Do you have any existing medical conditions, allergies, or health concerns that the committee should be aware of?  ",
+        "Emergency Contact Person",
+        "Relationship to Emergency Contact",
+        "Emergency Contact Number",
+        "Youth Service Organization Designation",
+        "Upload a recent digital 1x1 Formal ID Picture",
+        "Facebook and Messenger Account",
+        "Data Privacy Acknowledgment",
+        "Declaration of Truthfulness and Responsibility  ",
+        "ID Code",
+        "ID Number",
+        "",
+        "Do you understand that by prohibiting the collection of your personal information, your application will not be processed?  "
+      ]
+    },
+    {
+      "name": "Officer Directory",
+      "id": 245890371,
+      "rowCount": 32,
+      "columnCount": 5,
+      "headers": [
+        "ID Code",
+        "Name",
+        "Position",
+        "ID Number",
+        "Sort ID"
+      ]
+    },
+    {
+      "name": "Homepage Content",
+      "id": 1016802787,
+      "rowCount": 23,
+      "columnCount": 3,
+      "headers": [
+        "Key",
+        "Value",
+        "UpdatedAt"
+      ]
+    },
+    {
+      "name": "Access Logs",
+      "id": 402028942,
+      "rowCount": 9,
+      "columnCount": 11,
+      "headers": [
+        "Timestamp",
+        "Account Created",
+        "Email",
+        "ID Code",
+        "Name",
+        "Role",
+        "Action",
+        "ActionType",
+        "IP Address",
+        "Device",
+        "Status"
+      ]
+    },
+    {
+      "name": "Feedback",
+      "id": 951124931,
+      "rowCount": 1,
+      "columnCount": 18,
+      "headers": [
+        "Timestamp",
+        "Author",
+        "Author ID Code",
+        "Feedback",
+        "Reply Timestamp",
+        "Replier",
+        "Replier ID",
+        "Reply",
+        "Feedback ID",
+        "Anonymous",
+        "Category",
+        "Image URL",
+        "Status",
+        "Visibility",
+        "Notes",
+        "Reference ID",
+        "Email",
+        "Rating"
+      ]
+    },
+    {
+      "name": "Master Attendance Log",
+      "id": 1760082774,
+      "rowCount": 32,
+      "columnCount": 22,
+      "headers": [
+        "ID Code",
+        "Name",
+        "Position",
+        "ID Number",
+        "1",
+        "Test 123",
+        "2025-10-28",
+        "Time IN",
+        "Time OUT",
+        "Inactive",
+        "2",
+        "YSP",
+        "2025-10-28",
+        "Time IN",
+        "Time OUT",
+        "Inactive",
+        "3",
+        "NYVS 2025",
+        "2025-11-15",
+        "Time IN",
+        "Time OUT",
+        "Active"
+      ]
+    },
+    {
+      "name": "Polls",
+      "id": 1772340566,
+      "rowCount": 1,
+      "columnCount": 19,
+      "headers": [
+        "Poll ID",
+        "Timestamp Created",
+        "Creator ID Code",
+        "Creator Name",
+        "Title",
+        "Description",
+        "Questions JSON",
+        "Target Audience Type",
+        "Target Value",
+        "Start Date",
+        "End Date",
+        "Status",
+        "Anonymous",
+        "Show Results After Vote",
+        "Show Results After Close",
+        "Template Used",
+        "Total Votes",
+        "Voters List JSON",
+        "Email Sent"
+      ]
+    },
+    {
+      "name": "Poll Responses",
+      "id": 1181710648,
+      "rowCount": 1,
+      "columnCount": 8,
+      "headers": [
+        "Response ID",
+        "Poll ID",
+        "Respondent ID Code",
+        "Respondent Name",
+        "Respondent Position",
+        "Respondent Committee",
+        "Timestamp Submitted",
+        "Responses JSON"
+      ]
+    },
+    {
+      "name": "Poll Templates",
+      "id": 175810274,
+      "rowCount": 7,
+      "columnCount": 5,
+      "headers": [
+        "Template ID",
+        "Template Name",
+        "Template Description",
+        "Default Questions JSON",
+        "Recommended Settings JSON"
+      ]
+    },
+    {
+      "name": "Announcements",
+      "id": 486310343,
+      "rowCount": 38,
+      "columnCount": 46,
+      "headers": [
+        "Timestamp",
+        "Announcement ID",
+        "Author ID Code",
+        "Author Name",
+        "Title",
+        "Subject",
+        "Body",
+        "Recipient Type",
+        "Recipeint Value ",
+        "Email Status",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "ID Code",
+        "Name",
+        "Position",
+        "Role",
+        "ANN-2025-001",
+        "Testing the Announcement",
+        "ANN-2025-002",
+        "TEsting",
+        "ANN-2025-003",
+        "Test",
+        "ANN-2025-004",
+        "Testest",
+        "ANN-2025-005",
+        "Zek",
+        "ANN-2025-006",
+        "testing",
+        "ANN-2025-007",
+        "Title",
+        "ANN-2025-008",
+        "Title test",
+        "ANN-2025-009",
+        "Eze",
+        "ANN-2025-010",
+        "toaster",
+        "ANN-2025-011",
+        "check",
+        "ANN-2025-012",
+        "test",
+        "ANN-2025-013",
+        "test"
+      ]
+    },
+    {
+      "name": "Form Responses 5",
+      "id": 189738688,
+      "rowCount": 1,
+      "columnCount": 11,
+      "headers": [
+        "Timestamp",
+        "Email Address",
+        "DATA PRIVACY AGREEMENT",
+        "Full name",
+        "Youth Service Organization Designation",
+        "Enter your assigned YSPT ID Code",
+        "Event",
+        "Status",
+        "Time Attended",
+        "Time Exited",
+        "Upload a picture taken during the Event/Activity"
+      ]
+    },
+    {
+      "name": "Homepage_Projects",
+      "id": 1529174881,
+      "rowCount": 1,
+      "columnCount": 7,
+      "headers": [
+        "Project ID",
+        "Title",
+        "Description",
+        "ImageURL",
+        "Link",
+        "LinkText",
+        "Active"
+      ]
+    },
+    {
+      "name": "Home_DevInfo",
+      "id": 59577207,
+      "rowCount": 1,
+      "columnCount": 10,
+      "headers": [
+        "Dev ID",
+        "Name",
+        "Role",
+        "Bio",
+        "ProfilePictureURL",
+        "GitHub",
+        "LinkedIn",
+        "Twitter",
+        "Email",
+        "Active"
+      ]
+    },
+    {
+      "name": "Home_FounderInfo",
+      "id": 1598309683,
+      "rowCount": 1,
+      "columnCount": 10,
+      "headers": [
+        "Founder ID",
+        "Name",
+        "Role",
+        "Bio",
+        "ProfilePictureURL",
+        "Facebook",
+        "Instagram",
+        "LinkedIn",
+        "Email",
+        "Active"
+      ]
+    }
+  ]
+}

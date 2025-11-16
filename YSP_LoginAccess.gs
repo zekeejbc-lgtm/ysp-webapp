@@ -4,6 +4,12 @@ const PROFILE_PICTURES_FOLDER_ID = '192-pVluL93fYKpyJoukfi_H5az_9fqFK'; // Googl
 const PROJECTS_FOLDER_ID = '1G68-t3Urdc6iBW6Utl7zbvlb4xa6MvSH'; // Google Drive folder for homepage project images
 const ORG_CHART_FOLDER_ID = '1-svfAWzLOwzY2WlNUom-KXoAF9_wNckR'; // Google Drive folder for org chart images
 const FEEDBACK_IMAGES_FOLDER_ID = '12GOFbwF9Cyh-6WxE4aeMe-XaOzMdMm52'; // Google Drive folder for feedback images
+
+// New image upload folder IDs from user requirements
+const PROJECTS_IMPLEMENTED_FOLDER_ID = '1WfWmKxF9ewna6E5GnyAmNVS5HI7rlqRR'; // ProjectsImplementedURL
+const ORGCHART_UPLOAD_FOLDER_ID = '109vHL0iaJAcmAb0H9v6qSAdWJk2bAHyt'; // OrgChartURL
+const FOUNDER_IMAGE_FOLDER_ID = '1d7emUcnL3YEOpS40Y19ssoEFAohDveuv'; // FounderURL
+const DEVELOPER_IMAGE_FOLDER_ID = '1d7emUcnL3YEOpS40Y19ssoEFAohDveuv'; // DeveloperURL
 const SHEETS = {
   ACCESS_LOGS: 'Access Logs',
   USER_PROFILES: 'User Profiles',
@@ -91,42 +97,48 @@ function getOptimizedRange(sheet, headerRows = 1) {
 }
 
 // ===== MAIN ENTRY POINT =====
+// Handle OPTIONS request for CORS preflight
+function doGet(e) {
+  return ContentService.createTextOutput(JSON.stringify({
+    status: 'success',
+    message: 'YSP Web App API is running. Use POST requests for data operations.'
+  }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
 function doPost(e) {
   try {
-    Logger.log('[GAS Debug] doPost called - raw postData: ' + (e.postData?.contents || 'undefined'));
+    let data;
     
-    if (!e.postData || !e.postData.contents) {
-      Logger.log('[GAS Debug] ERROR: No postData contents received');
-      return ContentService.createTextOutput(JSON.stringify({
-        success: false,
-        message: 'No data received in request'
-      })).setMimeType(ContentService.MimeType.JSON);
+    // Handle both JSON and URL-encoded form data
+    if (e.postData.type === 'application/x-www-form-urlencoded') {
+      // Parse URL-encoded data
+      data = {};
+      const params = e.parameter;
+      for (let key in params) {
+        try {
+          // Try to parse as JSON if it looks like JSON
+          data[key] = params[key].startsWith('{') || params[key].startsWith('[') 
+            ? JSON.parse(params[key]) 
+            : params[key];
+        } catch (err) {
+          data[key] = params[key];
+        }
+      }
+    } else {
+      // Parse JSON data
+      data = JSON.parse(e.postData.contents);
     }
-    
-    const data = JSON.parse(e.postData.contents);
-    Logger.log('[GAS Debug] Parsed data action: ' + (data.action || 'undefined'));
-    Logger.log('[GAS Debug] Client Debug ID: ' + (data.clientDebugId || 'undefined'));
     
     const response = handlePostRequest(data);
-    Logger.log('[GAS Debug] Response prepared: ' + JSON.stringify(response).slice(0, 200));
     
-    // Ensure response is always valid JSON with success field
-    if (typeof response !== 'object' || response === null) {
-      Logger.log('[GAS Debug] WARNING: Response is not an object, wrapping it');
-      return ContentService.createTextOutput(JSON.stringify({
-        success: false,
-        message: 'Invalid response format from handler'
-      })).setMimeType(ContentService.MimeType.JSON);
-    }
-    
+    // Return response with CORS headers
     return ContentService.createTextOutput(JSON.stringify(response))
       .setMimeType(ContentService.MimeType.JSON);
   } catch (error) {
-    Logger.log('[GAS Debug] CRITICAL ERROR in doPost: ' + error.toString());
-    Logger.log('[GAS Debug] Error stack: ' + error.stack);
     return ContentService.createTextOutput(JSON.stringify({
       success: false,
-      message: 'Server error: ' + error.toString()
+      message: 'Error: ' + error.toString()
     })).setMimeType(ContentService.MimeType.JSON);
   }
 }
@@ -154,8 +166,6 @@ function handlePostRequest(data) {
   }
   
   switch(action) {
-    case 'ping':
-      return { success: true, message: 'Backend is alive!', timestamp: new Date().toISOString(), version: 'b464368' };
     case 'login':
       return handleLogin(data);
     case 'guestLogin':
@@ -194,8 +204,6 @@ function handlePostRequest(data) {
       return handleGetFeedbackByRef(data);
     case 'setFeedbackVisibility':
       return handleSetFeedbackVisibility(data);
-    case 'updateFeedbackDetails':
-      return handleUpdateFeedbackDetails(data);
     case 'uploadFeedbackImage':
       return handleUploadFeedbackImage(data);
     case 'initFeedbackSheet':
@@ -210,6 +218,10 @@ function handlePostRequest(data) {
       return handleUploadProfilePicture(data);
     case 'updateProfilePicture':
       return handleUpdateProfilePicture(data);
+    case 'getAllAnnouncementsForMigration':
+      return handleGetAllAnnouncementsForMigration(data);
+    case 'getAllAttendanceForMigration':
+      return handleGetAllAttendanceForMigration(data);
     case 'recalcAgesNow':
       return handleRecalcAgesNow(data);
     case 'installAgeRecalcTrigger':
@@ -218,8 +230,12 @@ function handlePostRequest(data) {
       return handleUploadProjectImage(data);
     case 'addHomepageProject':
       return handleAddHomepageProject(data);
+    case 'createProject':
+      return handleCreateProject(data);
     case 'deleteHomepageProject':
       return handleDeleteHomepageProject(data);
+    case 'updateHomepageContent':
+      return handleUpdateHomepageContent(data);
       case 'uploadOrgChartImage':
         return handleUploadOrgChartImage(data);
       case 'updateOrgChartUrl':
@@ -232,6 +248,24 @@ function handlePostRequest(data) {
       return handleGetAllUserRoles(data);
     case 'updateUserRole':
       return handleUpdateUserRole(data);
+    case 'uploadImage':
+      return handleUploadImage(data);
+    case 'uploadFounderImage':
+      return handleUploadFounderImage(data);
+    case 'uploadDeveloperImage':
+      return handleUploadDeveloperImage(data);
+    case 'updateFounderInfo':
+      return handleUpdateFounderInfo(data);
+    case 'updateDeveloperInfo':
+      return handleUpdateDeveloperInfo(data);
+    case 'deleteFounder':
+      return handleDeleteFounder(data);
+    case 'deleteDeveloper':
+      return handleDeleteDeveloper(data);
+    case 'initializeFounderInfo':
+      return initializeFounderInfoSheet();
+    case 'initializeDeveloperInfo':
+      return initializeDeveloperInfoSheet();
     default:
       return { success: false, message: 'Unknown action: ' + action };
   }
@@ -240,24 +274,24 @@ function handlePostRequest(data) {
 // ===== LOGIN HANDLER =====
 function handleLogin(data) {
   try {
-    Logger.log('LOGIN ATTEMPT - Username: ' + data.username);
     const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
     const profilesSheet = ss.getSheetByName(SHEETS.USER_PROFILES);
     const accessLogsSheet = ss.getSheetByName(SHEETS.ACCESS_LOGS);
     
     const profilesData = profilesSheet.getDataRange().getValues();
-    Logger.log('Total rows in User Profiles: ' + profilesData.length);
     
+    // Normalize input
+    const inputUsername = (data.username || '').toString().trim();
+    const inputPassword = (data.password || '').toString().trim();
+
     // Find user (skip header row)
     for (let i = 1; i < profilesData.length; i++) {
       const row = profilesData[i];
-      const username = row[13]; // Column N - Username
-      const password = row[14]; // Column O - Password
+      const username = (row[13] || '').toString().trim(); // Column N - Username
+      const password = (row[14] || '').toString().trim(); // Column O - Password
       
-      Logger.log('Checking row ' + i + ' - Username: ' + username);
-      
-      if (username === data.username && password === data.password) {
-        // Log access with correct column order: Timestamp, Account Created, Email, ID Code, Name, Role
+      if (username === inputUsername && password === inputPassword) {
+        // Log access with NEW structure: Timestamp, Account Created, Email, ID Code, Name, Role, Action, ActionType, IP Address, Device, Status
         const timestamp = new Date().toISOString();
         const accountCreated = row[0];        // Column A - Timestamp (from User Profiles)
         const email = row[12];                // Column M - Personal Email Address
@@ -265,7 +299,14 @@ function handleLogin(data) {
         const fullName = row[3];              // Column D - Full Name
         const role = row[20];                 // Column U - Role
         
-        accessLogsSheet.appendRow([timestamp, accountCreated, email, idCode, fullName, role]);
+        // New columns
+        const action = 'login';
+        const actionType = 'authentication';
+        const ipAddress = ''; // Not available from Apps Script
+        const device = ''; // Not available from Apps Script
+        const status = 'success';
+        
+        accessLogsSheet.appendRow([timestamp, accountCreated, email, idCode, fullName, role, action, actionType, ipAddress, device, status]);
         
         // Return user data
         return {
@@ -289,10 +330,8 @@ function handleLogin(data) {
       }
     }
     
-    Logger.log('LOGIN FAILED - No matching username/password found');
     return { success: false, message: 'Invalid username or password' };
   } catch (error) {
-    Logger.log('LOGIN ERROR: ' + error.toString());
     return { success: false, message: 'Login error: ' + error.toString() };
   }
 }
@@ -303,9 +342,9 @@ function handleGuestLogin(data) {
     const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
     const accessLogsSheet = ss.getSheetByName(SHEETS.ACCESS_LOGS);
     
-    // Log guest access with correct column order: Timestamp, Account Created, Email, ID Code, Name, Role
+    // Log guest access with NEW structure: Timestamp, Account Created, Email, ID Code, Name, Role, Action, ActionType, IP Address, Device, Status
     const timestamp = new Date().toISOString();
-    accessLogsSheet.appendRow([timestamp, 'N/A', 'N/A', 'N/A', data.name || 'Guest', 'Guest']);
+    accessLogsSheet.appendRow([timestamp, 'N/A', 'N/A', 'N/A', data.name || 'Guest', 'Guest', 'guestLogin', 'authentication', '', '', 'success']);
     
     return {
       success: true,
@@ -1727,46 +1766,24 @@ function handleMarkAnnouncementAsRead(data) {
 // ===== CREATE FEEDBACK HANDLER =====
 function handleCreateFeedback(data) {
   try {
-    Logger.log('[Feedback Debug] handleCreateFeedback called with data: ' + JSON.stringify(data).slice(0, 300));
-    
     const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-    Logger.log('[Feedback Debug] Spreadsheet opened successfully');
-    
     const feedbackSheet = ss.getSheetByName(SHEETS.FEEDBACK);
-    if (!feedbackSheet) {
-      Logger.log('[Feedback Debug] ERROR: Feedback sheet not found');
-      return { success: false, message: 'Feedback sheet not found in spreadsheet' };
-    }
-    Logger.log('[Feedback Debug] Feedback sheet found');
-    
     ensureFeedbackSchema(feedbackSheet);
-    Logger.log('[Feedback Debug] Schema ensured');
 
     // Validate required fields
     if (!data.message) {
-      Logger.log('[Feedback Debug] ERROR: Message is missing');
       return { success: false, message: 'Message is required' };
     }
-    
-    if (!data.rating || data.rating < 1 || data.rating > 5) {
-      Logger.log('[Feedback Debug] ERROR: Invalid rating: ' + data.rating);
-      return { success: false, message: 'Valid rating (1-5) is required' };
-    }
-    
-    Logger.log('[Feedback Debug] Validation passed - message length: ' + data.message.length + ', rating: ' + data.rating);
-    
     const authorNameInput = data.anonymous ? 'Anonymous' : (data.authorName || 'Guest');
 
     // Basic throttling: limit 3 submissions per 5 minutes per user/guest
     try {
       const throttled = checkFeedbackThrottle(data.authorIdCode || 'Guest', authorNameInput);
       if (throttled) {
-        Logger.log('[Feedback Debug] Throttle limit hit');
         return { success: false, message: 'Too many submissions. Please try again in a few minutes.' };
       }
-      Logger.log('[Feedback Debug] Throttle check passed');
     } catch (thErr) {
-      Logger.log('[Feedback Debug] Throttle check error (non-critical): ' + thErr);
+      Logger.log('Throttle check error: ' + thErr);
     }
     
     // Get PH timezone timestamp
@@ -1816,13 +1833,11 @@ function handleCreateFeedback(data) {
   if (idx.Email !== undefined) row[idx.Email] = email;
     // Reply fields empty by default
 
-    Logger.log('[Feedback Debug] Appending row to sheet...');
     feedbackSheet.appendRow(row);
-    Logger.log('[Feedback Debug] Row appended successfully');
     
-    Logger.log('[Feedback Debug] Created feedback: ' + newReferenceId + ' by ' + authorNameInput);
+    Logger.log('Created feedback: ' + newReferenceId + ' by ' + data.authorName);
     
-    const successResponse = {
+    return {
       success: true,
       message: 'Feedback submitted successfully',
       feedback: {
@@ -1839,12 +1854,8 @@ function handleCreateFeedback(data) {
         email: email || undefined
       }
     };
-    
-    Logger.log('[Feedback Debug] Success response prepared: ' + JSON.stringify(successResponse).slice(0, 200));
-    return successResponse;
   } catch (error) {
-    Logger.log('[Feedback Debug] CRITICAL ERROR in handleCreateFeedback: ' + error.toString());
-    Logger.log('[Feedback Debug] Error stack: ' + error.stack);
+    Logger.log('Error creating feedback: ' + error.toString());
     return { success: false, message: 'Error creating feedback: ' + error.toString() };
   }
 }
@@ -2132,44 +2143,6 @@ function handleSetFeedbackVisibility(data) {
   } catch (e) { return { success: false, message: 'Error: ' + e.toString() }; }
 }
 
-// ===== UPDATE FEEDBACK DETAILS (STATUS & VISIBILITY) =====
-function handleUpdateFeedbackDetails(data) {
-  try {
-    Logger.log('[GAS Debug] handleUpdateFeedbackDetails called with: ' + JSON.stringify(data));
-    
-    if (!data.referenceId) return { success: false, message: 'referenceId required' };
-    if (data.role !== 'Admin' && data.role !== 'Auditor') return { success: false, message: 'Not authorized' };
-    
-    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-    const sheet = ss.getSheetByName(SHEETS.FEEDBACK);
-    ensureFeedbackSchema(sheet);
-    const values = sheet.getDataRange().getValues();
-    const idx = getFeedbackColumnIndexMap(values[0] || []);
-    
-    for (let i = 1; i < values.length; i++) {
-      const ref = values[i][idx['Reference ID']] || values[i][idx['Feedback ID']];
-      if (ref && ref.toString() === data.referenceId.toString()) {
-        // Update status if provided
-        if (data.status && idx.Status !== undefined) {
-          sheet.getRange(i + 1, idx.Status + 1).setValue(data.status);
-          Logger.log('[GAS Debug] Updated status to: ' + data.status);
-        }
-        // Update visibility if provided
-        if (data.visibility && idx.Visibility !== undefined) {
-          sheet.getRange(i + 1, idx.Visibility + 1).setValue(data.visibility);
-          Logger.log('[GAS Debug] Updated visibility to: ' + data.visibility);
-        }
-        Logger.log('[GAS Debug] Feedback updated successfully');
-        return { success: true, message: 'Feedback updated successfully' };
-      }
-    }
-    return { success: false, message: 'Feedback not found' };
-  } catch (e) { 
-    Logger.log('[GAS Debug] Error updating feedback: ' + e.toString());
-    return { success: false, message: 'Error: ' + e.toString() }; 
-  }
-}
-
 // ===== UPLOAD FEEDBACK IMAGE =====
 function handleUploadFeedbackImage(data) {
   try {
@@ -2301,144 +2274,373 @@ function handleInitFeedbackSheet() {
 // ===== GET HOMEPAGE CONTENT HANDLER =====
 function handleGetHomepageContent(data) {
   try {
-    // Use cached homepage content
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    
+    // Get Homepage Content (key-value pairs)
     const homepageData = getCachedOrFetch(
       'homepage_content',
       function() {
-        const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
         const homepageSheet = ss.getSheetByName(SHEETS.HOMEPAGE_CONTENT);
-        
-        if (!homepageSheet) {
-          throw new Error('Homepage Content sheet not found');
-        }
-        
-        const lastRow = homepageSheet.getLastRow();
-        const lastCol = homepageSheet.getLastColumn();
-        return homepageSheet.getRange(1, 1, lastRow, lastCol).getValues();
+        if (!homepageSheet) throw new Error('Homepage Content sheet not found');
+        return homepageSheet.getRange(1, 1, homepageSheet.getLastRow(), homepageSheet.getLastColumn()).getValues();
       },
       CACHE_EXPIRATION.HOMEPAGE_CONTENT
     );
-    
-    // ===================================================================
-    // CRITICAL: NO HEADER ROW IN SHEET!
-    // Sheet Row 1 = Array Index 0 (contains vision content)
-    // ===================================================================
-    
-    // YOUR EXACT SHEET STRUCTURE:
-    // SHEET ROW 1  (index 0): vision - Column B has Vision content
-    // SHEET ROW 2  (index 1): mission - Column B has Mission content  
-    // SHEET ROW 3  (index 2): Section 3... - Column B has Pillars content
-    // SHEET ROW 4  (index 3): orgChartUrl
-    // SHEET ROW 5  (index 4): facebookUrl
-    // SHEET ROW 6  (index 5): email
-    // SHEET ROW 7  (index 6): founderName
-    // SHEET ROW 8  (index 7): aboutYSP
-    // SHEET ROW 9  (index 8): projectImageUrl_1
-    // SHEET ROW 10 (index 9): projectDesc_1
-    // SHEET ROW 11 (index 10): projectImageUrl_2
-    // SHEET ROW 12 (index 11): projectDesc_2
-    // etc...
-    
-    let vision = '';
-    let mission = '';
-  let objectives = '';
-    let orgChartUrl = '';
-    let facebookUrl = '';
-    let email = '';
-    let founderName = '';
-    let aboutYSP = '';
-  let motto = '';
-    
-    // Read from index 0 onwards (NO header row offset!)
-    if (homepageData.length > 0) vision = homepageData[0][1] || ''; // SHEET ROW 1, Column B
-    if (homepageData.length > 1) mission = homepageData[1][1] || ''; // SHEET ROW 2, Column B
-    if (homepageData.length > 2) objectives = homepageData[2][1] || ''; // SHEET ROW 3, Column B
-    if (homepageData.length > 3) orgChartUrl = homepageData[3][1] || ''; // SHEET ROW 4, Column B
-    if (homepageData.length > 4) facebookUrl = homepageData[4][1] || ''; // SHEET ROW 5, Column B
-    if (homepageData.length > 5) email = homepageData[5][1] || ''; // SHEET ROW 6, Column B
-    if (homepageData.length > 6) founderName = homepageData[6][1] || ''; // SHEET ROW 7, Column B
-    if (homepageData.length > 7) aboutYSP = homepageData[7][1] || ''; // SHEET ROW 8, Column B
 
-    // Optional Motto row handling (backward-compatible):
-    // If SHEET ROW 9 (index 8) first cell is not 'projectTitle_1', treat it as motto
-    if (homepageData.length > 8) {
-      const row9colA = (homepageData[8][0] || '').toString();
-      if (!row9colA.startsWith('projectTitle_')) {
-        motto = homepageData[8][1] || '';
-      }
+    // Build key-value map from Column A (key) and Column B (value), skip header row
+    const map = {};
+    for (let i = 1; i < homepageData.length; i++) {
+      const k = (homepageData[i][0] || '').toString().trim();
+      const v = homepageData[i][1];
+      if (k) map[k] = v;
     }
-    
-    // Keep objectives as-is, don't split
-    const objectivesArray = objectives ? [objectives] : [];
-    
-    // Extract projects starting from SHEET ROW 9 (array index 8)
-    // NEW SCHEMA (3 rows per project):
-    // SHEET ROW 9  (index 8): projectTitle_1
-    // SHEET ROW 10 (index 9): projectImageUrl_1
-    // SHEET ROW 11 (index 10): projectDesc_1
-    // SHEET ROW 12 (index 11): projectTitle_2
-    // SHEET ROW 13 (index 12): projectImageUrl_2
-    // SHEET ROW 14 (index 13): projectDesc_2
-    // etc...
-    const projects = [];
-    // Projects start at SHEET ROW 9 (index 8) by default;
-    // if a Motto row occupies SHEET ROW 9, start at SHEET ROW 10 (index 9)
-    let rowIndex = 8;
-    if (homepageData.length > 8) {
-      const row9colA = (homepageData[8][0] || '').toString();
-      if (!row9colA.startsWith('projectTitle_')) {
-        rowIndex = 9; // Skip motto row
+
+    // Ensure all expected homepage fields are present with fallback values
+    const ensure = (val, fallback = '') => (typeof val === 'string' && val.trim() !== '' ? val : fallback);
+    map['aboutYSP'] = ensure(map['aboutYSP'] || map['about'], '');
+    map['mission'] = ensure(map['mission'], '');
+    map['vision'] = ensure(map['vision'], '');
+    map['Section 3. YSP shall be guided by the following advocacy pillars:'] = ensure(map['Section 3. YSP shall be guided by the following advocacy pillars:'], '');
+    map['title'] = ensure(map['title'], 'Welcome to Youth Service Philippines');
+    map['subtitle'] = ensure(map['subtitle'], 'Tagum Chapter');
+    map['motto'] = ensure(map['motto'], 'Empowering youth to serve communities');
+    map['membership_URL'] = ensure(map['membership_URL'], '');
+    map['orgChartUrl'] = ensure(map['orgChartUrl'], '');
+    map['email'] = ensure(map['email'], '');
+    map['phone'] = ensure(map['phone'], '');
+    map['founderName'] = ensure(map['founderName'], '');
+    map['location_url'] = ensure(map['location_url'], '');
+    map['partner_url'] = ensure(map['partner_url'], '');
+
+    // Get Projects from Homepage_Projects sheet
+    const projectsData = getCachedOrFetch(
+      'homepage_projects',
+      function() {
+        const projectsSheet = ss.getSheetByName('Homepage_Projects');
+        if (!projectsSheet) return [];
+        return getOptimizedRange(projectsSheet); // Skip header row
+      },
+      CACHE_EXPIRATION.HOMEPAGE_CONTENT
+    );
+
+    const projects = projectsData.map(function(row) {
+      return {
+        id: row[0] || '',
+        title: row[1] || '',
+        description: row[2] || '',
+        image: convertToPublicDriveUrl(row[3] || ''),
+        link: row[4] || '',
+        linkText: row[5] || 'Learn More',
+        active: row[6] !== false // Default to true if not specified
+      };
+    }).filter(function(p) { return p.active && p.title; }); // Only active projects with titles
+
+    // Get Developer Info (new schema) from Home_DevInfo sheet (NO CACHE for always fresh data)
+    let developers = [];
+    try {
+      const devSheet = ss.getSheetByName('Home_DevInfo');
+      if (devSheet) {
+        const values = devSheet.getDataRange().getValues();
+        if (values.length >= 2) {
+          const headers = values[0];
+          for (let i=1;i<values.length;i++) {
+            const row = values[i];
+            if (!row[0]) continue;
+            const obj = {};
+            for (let c=0;c<headers.length;c++) obj[headers[c]] = row[c];
+            // Aggregate backgrounds
+            const backgrounds = [];
+            for (let b=1;b<=5;b++) if (obj['Background_'+b]) backgrounds.push(obj['Background_'+b]);
+            // Aggregate affiliations
+            const affiliations = [];
+            for (let a=1;a<=5;a++) {
+              const aff = obj['Affiliation_'+a];
+              const pos = obj['Position_'+a];
+              if (aff || pos) affiliations.push({ affiliation: aff||'', position: pos||'' });
+            }
+            developers.push({
+              id: obj['ID']||'',
+              name: obj['Name']||'',
+              role: obj['Role']||'',
+              position: obj['Position']||'',
+              organization: obj['Organization']||'',
+              about: obj['About']||'',
+              backgroundSegments: backgrounds,
+              affiliations: affiliations,
+              projectHighlights: obj['ProjectHighlights']||'',
+              personalPhilosophy: obj['PersonalPhilosophy']||'',
+              profilePicture: obj['ProfilePicture']||'',
+              social: {
+                facebook: obj['Facebook']||'',
+                instagram: obj['Instagram']||'',
+                twitter: obj['Twitter']||'',
+                linkedin: obj['LinkedIn']||'',
+                website: obj['Website']||''
+              },
+              contact: {
+                email: obj['Email']||'',
+                phone: obj['Phone']||'',
+                location: obj['Location']||''
+              },
+              active: obj['Active'] !== false && obj['Active'] !== 'false'
+            });
+          }
+        }
       }
+    } catch (e) { developers = []; }
+    developers = developers.filter(function(d){return d.active && d.name;});
+
+    // Get Founder Info (new schema) from Home_FounderInfo sheet (NO CACHE for always fresh data)
+    let founders = [];
+    try {
+      const fSheet = ss.getSheetByName('Home_FounderInfo');
+      if (fSheet) {
+        const values = fSheet.getDataRange().getValues();
+        if (values.length >= 2) {
+          const headers = values[0];
+          for (let i=1;i<values.length;i++) {
+            const row = values[i];
+            if (!row[0]) continue;
+            const obj = {};
+            for (let c=0;c<headers.length;c++) obj[headers[c]] = row[c];
+            // Gather achievements
+            const achievements = [];
+            for (let a=1;a<=10;a++) if (obj['Achievement_'+a]) achievements.push(obj['Achievement_'+a]);
+            founders.push({
+              id: obj['ID']||'',
+              name: obj['Name']||'',
+              nickname: obj['Nickname']||'',
+              role: obj['Role']||'',
+              about: obj['About']||'',
+              backgroundJourney: obj['BackgroundJourney']||'',
+              achievements: achievements,
+              organizationalImpact: obj['OrganizationalImpact']||'',
+              leadershipPhilosophy: obj['LeadershipPhilosophy']||'',
+              profilePicture: obj['ProfilePicture']||'',
+              social: {
+                facebook: obj['Facebook']||'',
+                instagram: obj['Instagram']||'',
+                twitter: obj['Twitter']||'',
+                linkedin: obj['LinkedIn']||'',
+                website: obj['Website']||''
+              },
+              contact: {
+                email: obj['Email']||'',
+                phone: obj['Phone']||'',
+                officeLocation: obj['OfficeLocation']||''
+              },
+              active: obj['Active'] !== false && obj['Active'] !== 'false'
+            });
+          }
+        }
+      }
+    } catch (e) { founders = []; }
+    founders = founders.filter(function(f){return f.active && f.name;});
+
+    // Extract and normalize primary fields
+    const title = (map['title'] || '').toString();
+    const subtitle = (map['subtitle'] || '').toString();
+    const membershipURL = (map['membership_URL'] || '').toString();
+    const motto = (map['motto'] || '').toString();
+    const vision = (map['vision'] || '').toString();
+    const mission = (map['mission'] || '').toString();
+    const objectivesText = (map['Section 3. YSP shall be guided by the following advocacy pillars:'] || '').toString();
+    const orgChartUrl = (map['orgChartUrl'] || '').toString();
+    const email = (map['email'] || '').toString();
+    const phone = (map['phone'] || '').toString();
+    const aboutYSP = (map['aboutYSP'] || map['about'] || '').toString();
+    const founderName = (map['founderName'] || '').toString();
+    const locationUrl = (map['location_url'] || '').toString();
+    const partnerUrl = (map['partner_url'] || '').toString();
+    
+    // Helper to read value from map using multiple possible key variants
+    function getMapValue(keys) {
+      for (let i = 0; i < keys.length; i++) {
+        const k = keys[i];
+        if (map[k] !== undefined && map[k] !== null && String(map[k]).toString().trim() !== '') {
+          return String(map[k]).toString();
+        }
+      }
+      return '';
     }
-    
-    while (rowIndex < homepageData.length) {
-      const titleRow = homepageData[rowIndex];
-      const imageRow = homepageData[rowIndex + 1];
-      const descRow = homepageData[rowIndex + 2];
-      
-      // Check if this is a project block
-      const titleKey = titleRow ? (titleRow[0] || '').toString() : '';
-      if (!titleKey.startsWith('projectTitle_')) {
-        break; // No more projects
-      }
-      
-      const title = titleRow[1] || '';
-      const imageUrl = imageRow ? (imageRow[1] || '') : '';
-      const description = descRow ? (descRow[1] || '') : '';
-      
-      if (title || imageUrl || description) {
-        // Extract project number from key for frontend reference
-        const match = titleKey.match(/projectTitle_(\d+)/);
-        const projectNumber = match ? parseInt(match[1], 10) : 0;
-        
-        projects.push({
-          number: projectNumber,
-          title: title,
-          image: imageUrl,
-          description: description
+
+    // Social media links (accept many legacy variants)
+    const facebookUrl = getMapValue(['facebook_url', 'facebookUrl', 'facebook', 'facebook-url']);
+    const instagramUrl = getMapValue(['instagram_url', 'instagramUrl', 'instagram', 'instagram-url']);
+    const twitterUrl = getMapValue(['twitter_url', 'twitterUrl', 'twitter', 'twitter-url']);
+    const linkedinUrl = getMapValue(['linkedin_url', 'linkedinUrl', 'linkedin', 'linkedin-url']);
+    const youtubeUrl = getMapValue(['youtube_url', 'youtubeUrl', 'youtube', 'youtube-url']);
+    const tiktokUrl = getMapValue(['tiktok_url', 'tiktokUrl', 'tiktok', 'tiktok-url']);
+
+    Logger.log('Retrieved homepage content: ' + Object.keys(map).length + ' settings, ' + 
+           projects.length + ' projects, ' + developers.length + ' developers, ' + 
+           founders.length + ' founders');
+    Logger.log('Homepage map object: ' + JSON.stringify(map));
+
+    // Parse individual project keys (ProjectTitle_*, ProjectDesc_*, ProjectImageURL_*, ProjectLinkURL_*, ProjectLinkText_*)
+    var legacyProjects = [];
+    var projectIndex = 1;
+    while (projectIndex < 50) { // reasonable upper bound
+      var tKey = 'ProjectTitle_' + projectIndex;
+      var dKey = 'ProjectDesc_' + projectIndex;
+      var iKey = 'ProjectImageURL_' + projectIndex;
+      var lKey = 'ProjectLinkURL_' + projectIndex;
+      var ltKey = 'ProjectLinkText_' + projectIndex;
+      if (map[tKey] || map[dKey] || map[iKey]) {
+        legacyProjects.push({
+          number: projectIndex,
+          id: 'project_' + projectIndex,
+          title: (map[tKey] || '').toString(),
+          description: (map[dKey] || '').toString(),
+          image: convertToPublicDriveUrl((map[iKey] || '').toString()),
+          link: (map[lKey] || '').toString(),
+          linkText: (map[ltKey] || 'Learn More').toString(),
+          active: true
         });
       }
-      
-      rowIndex += 3; // Move to next project (skip 3 rows)
+      projectIndex++;
     }
-    
-    Logger.log('Retrieved homepage content with ' + projects.length + ' projects');
-    
-    return {
-      success: true,
-      content: {
-        mission: mission,
-        vision: vision,
-        about: aboutYSP,
-        objectives: objectivesArray,
-        orgChartUrl: orgChartUrl,
-        founderName: founderName,
-        email: email,
-        facebookUrl: facebookUrl,
-        projects: projects,
-        motto: motto
-      }
+    // Combine sheet-based projects with legacy inline projects (legacy last)
+    var combinedProjects = projects.concat(legacyProjects.filter(function(lp){return lp.title;}));
+
+    // Build normalized content object with all expected keys and safe defaults
+    const normalizedHero = {
+      hero_main_heading: title || motto || 'Welcome to Youth Service Philippines',
+      hero_sub_heading: subtitle || 'Tagum Chapter',
+      hero_tagline: map['hero_tagline'] || map['heroTagline'] || motto || aboutYSP || '',
+      membership_URL: membershipURL || ''
     };
+
+    const normalizedContact = {
+      title: map['contact_title'] || map['contactTitle'] || 'Get in Touch',
+      email: email || '',
+      emailHref: email ? ('mailto:' + String(email).trim()) : '',
+      phone: phone || '',
+      phoneHref: phone ? ('tel:' + String(phone).replace(/\s+/g, '')) : '',
+      location: map['location_text'] || map['location_text'] || '',
+      locationLink: locationUrl || getMapValue(['location_url', 'locationUrl', 'location', 'location-link']),
+      // Individual social links
+      facebook: facebookUrl || '',
+      instagram: instagramUrl || '',
+      twitter: twitterUrl || '',
+      linkedin: linkedinUrl || '',
+      youtube: youtubeUrl || '',
+      tiktok: tiktokUrl || '',
+      // Composite / legacy fields
+      socialLink: map['social_link'] || facebookUrl || instagramUrl || linkedinUrl || '',
+      socialLabel: map['social_label'] || 'Facebook',
+      socialText: map['social_text'] || '',
+      // Partner/organization
+      partnerButtonLink: partnerUrl || getMapValue(['partner_url', 'partnerUrl', 'partner', 'partner-link']) || map['partner_url'] || '',
+      partnerButtonText: map['partnerButtonText'] || map['partner_button_text'] || 'Partner with Us',
+      partnerTitle: map['partnerTitle'] || map['partner_title'] || '',
+      partnerDescription: map['partnerDescription'] || map['partner_description'] || '',
+      // Provide an array of social links for UI to iterate
+      socialLinks: [
+        { platform: 'facebook', url: facebookUrl || '' },
+        { platform: 'instagram', url: instagramUrl || '' },
+        { platform: 'twitter', url: twitterUrl || '' },
+        { platform: 'linkedin', url: linkedinUrl || '' },
+        { platform: 'youtube', url: youtubeUrl || '' },
+        { platform: 'tiktok', url: tiktokUrl || '' },
+        // Include location and partner as clickable items as well (frontend can decide how to render)
+        { platform: 'location', url: locationUrl || getMapValue(['location_url', 'locationUrl', 'location', 'location-link']) || '' },
+        { platform: 'partner', url: partnerUrl || getMapValue(['partner_url', 'partnerUrl', 'partner', 'partner-link']) || '' }
+      ].filter(function(s){ return s.url && s.url.toString().trim() !== ''; })
+    };
+
+    const advocacyPillarsObj = {
+      title: map['advocacy_title'] || 'Advocacy Pillars',
+      intro: objectivesText || map['advocacy_intro'] || '',
+      pillars: []
+    };
+
+    // Try to parse numbered pillars from intro if present (legacy format)
+    try {
+      const introText = advocacyPillarsObj.intro || '';
+      const pillarMatches = introText.match(/\d+\.\)\s*[^\n]+/g) || [];
+      if (pillarMatches.length) {
+        advocacyPillarsObj.pillars = pillarMatches.map(function(p) { return { label: '', description: p.replace(/^\d+\.\)\s*/, '') }; });
+      } else if (map['advocacy_pillars_json']) {
+        try { advocacyPillarsObj.pillars = JSON.parse(map['advocacy_pillars_json']); } catch (e) { advocacyPillarsObj.pillars = []; }
+      }
+    } catch (e) { advocacyPillarsObj.pillars = []; }
+
+    // Ensure projects are always an array
+    const normalizedProjects = Array.isArray(combinedProjects) ? combinedProjects : [];
+
+    // Ensure developers/founders arrays exist
+    const normalizedDevelopers = Array.isArray(developers) ? developers : [];
+    const normalizedFounders = Array.isArray(founders) ? founders : [];
+
+    const normalizedContent = {
+      // Keep legacy simple fields for backward compatibility
+      mission: mission || '',
+      vision: vision || '',
+      about: aboutYSP || '',
+      objectives: objectivesText ? [objectivesText] : [],
+      orgChartUrl: convertToPublicDriveUrl(orgChartUrl || ''),
+      email: email || '',
+      phone: phone || '',
+      motto: motto || '',
+      membership_URL: membershipURL || '',
+      founderName: founderName || '',
+      location_url: locationUrl || '',
+      partner_url: partnerUrl || '',
+
+      // Hero (normalized)
+      ...normalizedHero,
+
+      // About/Mission/Vision normalized fields (as objects for frontend)
+      about: {
+        title: map['about_title'] || 'About Us',
+        content: map['about_content'] || aboutYSP || ''
+      },
+      mission: {
+        title: map['mission_title'] || 'Our Mission',
+        content: map['mission_content'] || mission || ''
+      },
+      vision: {
+        title: map['vision_title'] || 'Our Vision',
+        content: map['vision_content'] || vision || ''
+      },
+
+      // Advocacy
+      advocacyPillars: advocacyPillarsObj,
+
+      // Contact block
+      contact: normalizedContact,
+
+      // Social media (flat + nested)
+      social_facebook: facebookUrl || '',
+      social_instagram: instagramUrl || '',
+      social_twitter: twitterUrl || '',
+      social_linkedin: linkedinUrl || '',
+      social_youtube: youtubeUrl || '',
+      social_tiktok: tiktokUrl || '',
+      social: {
+        facebook: facebookUrl || '',
+        instagram: instagramUrl || '',
+        twitter: twitterUrl || '',
+        linkedin: linkedinUrl || '',
+        youtube: youtubeUrl || '',
+        tiktok: tiktokUrl || ''
+      },
+
+      // Projects, developers, founders
+      projects: normalizedProjects,
+      developers: normalizedDevelopers,
+      founders: normalizedFounders,
+
+      // Titles for UI
+      hero_title: title || normalizedHero.hero_main_heading,
+      hero_subtitle: subtitle || normalizedHero.hero_sub_heading,
+
+      // Debug map for diagnostics
+      _debug_map: map
+    };
+
+    return { success: true, content: normalizedContent };
   } catch (error) {
     Logger.log('Error fetching homepage content: ' + error.toString());
     return { success: false, message: 'Error fetching homepage content: ' + error.toString() };
@@ -3337,8 +3539,25 @@ function handleUpdateOrgChartUrl(data) {
       return { success: false, message: 'Homepage Content sheet not found' };
     }
 
-    // Row 4 (index 3) Column B holds orgChartUrl according to handleGetHomepageContent
-    sheet.getRange(4, 2).setValue(data.imageUrl);
+    // Find the row with key 'orgChartUrl' in column A
+    var allData = sheet.getDataRange().getValues();
+    var found = false;
+    for (var i = 0; i < allData.length; i++) {
+      var key = allData[i][0] ? allData[i][0].toString() : '';
+      if (key === 'orgChartUrl') {
+        sheet.getRange(i + 1, 2).setValue(data.imageUrl);
+        found = true;
+        break;
+      }
+    }
+    
+    // If key doesn't exist, append new row
+    if (!found) {
+      var lastRow = sheet.getLastRow();
+      sheet.getRange(lastRow + 1, 1).setValue('orgChartUrl');
+      sheet.getRange(lastRow + 1, 2).setValue(data.imageUrl);
+    }
+    
     return { success: true, message: 'Org chart updated' };
   } catch (e) {
     Logger.log('Error in handleUpdateOrgChartUrl: ' + e.toString());
@@ -3366,8 +3585,25 @@ function handleDeleteOrgChart(data) {
       return { success: false, message: 'Homepage Content sheet not found' };
     }
 
+    // Find the row with key 'orgChartUrl' in column A
+    var allData = sheet.getDataRange().getValues();
+    var currentUrl = '';
+    var rowIndex = -1;
+    
+    for (var i = 0; i < allData.length; i++) {
+      var key = allData[i][0] ? allData[i][0].toString() : '';
+      if (key === 'orgChartUrl') {
+        currentUrl = allData[i][1] ? allData[i][1].toString() : '';
+        rowIndex = i + 1; // 1-indexed
+        break;
+      }
+    }
+    
+    if (rowIndex === -1) {
+      return { success: false, message: 'Org chart URL not found in sheet' };
+    }
+
     // Optionally trash existing file if link present
-    var currentUrl = sheet.getRange(4, 2).getValue();
     try {
       if (currentUrl && typeof currentUrl === 'string') {
         var idMatch = currentUrl.match(/[?&]id=([^&]+)/) || currentUrl.match(/\/file\/d\/([^/]+)/);
@@ -3381,7 +3617,7 @@ function handleDeleteOrgChart(data) {
     }
 
     // Clear the URL from the sheet
-    sheet.getRange(4, 2).setValue('');
+    sheet.getRange(rowIndex, 2).setValue('');
     return { success: true, message: 'Org chart link cleared' };
   } catch (e) {
     Logger.log('Error in handleDeleteOrgChart: ' + e.toString());
@@ -3476,14 +3712,17 @@ function handleDeleteHomepageProject(data) {
     }
     
     var allData = sheet.getDataRange().getValues();
-    var titleKey = 'projectTitle_' + data.projectNumber;
-    var imageKey = 'projectImageUrl_' + data.projectNumber;
-    var descKey = 'projectDesc_' + data.projectNumber;
+    // Match new uppercase 5-row structure: ProjectTitle_N, ProjectDesc_N, ProjectImageURL_N, ProjectLinkURL_N, ProjectLinkText_N
+    var titleKey = 'ProjectTitle_' + data.projectNumber;
+    var descKey = 'ProjectDesc_' + data.projectNumber;
+    var imageKey = 'ProjectImageURL_' + data.projectNumber;
+    var linkUrlKey = 'ProjectLinkURL_' + data.projectNumber;
+    var linkTextKey = 'ProjectLinkText_' + data.projectNumber;
     
     var rowsToDelete = [];
     for (var i = 0; i < allData.length; i++) {
       var key = allData[i][0] ? allData[i][0].toString() : '';
-      if (key === titleKey || key === imageKey || key === descKey) {
+      if (key === titleKey || key === descKey || key === imageKey || key === linkUrlKey || key === linkTextKey) {
         rowsToDelete.push(i + 1); // 1-indexed
       }
     }
@@ -3498,7 +3737,7 @@ function handleDeleteHomepageProject(data) {
       sheet.deleteRow(rowsToDelete[j]);
     }
     
-    Logger.log('Deleted homepage project: ' + data.projectNumber);
+    Logger.log('Deleted homepage project: ' + data.projectNumber + ' (deleted ' + rowsToDelete.length + ' rows)');
     
     // Invalidate homepage cache
     invalidateCache('homepage_content');
@@ -3511,6 +3750,218 @@ function handleDeleteHomepageProject(data) {
   } catch (e) {
     Logger.log('Error in handleDeleteHomepageProject: ' + e.toString());
     return { success: false, message: 'Error deleting project: ' + e.toString() };
+  }
+}
+
+/**
+ * UPDATE HOMEPAGE CONTENT HANDLER
+ * Updates editable homepage content fields in Homepage Content sheet
+ * Expects: { action: 'updateHomepageContent', mission, vision, about, motto, email, phone, facebookUrl, idCode }
+ * Admin/Auditor only
+ */
+function handleUpdateHomepageContent(data) {
+  try {
+    if (!data || !data.idCode) {
+      return { success: false, message: 'ID Code is required' };
+    }
+    var role = _getUserRoleByIdCode(data.idCode);
+    if (role !== 'Admin' && role !== 'Auditor') {
+      return { success: false, message: 'Forbidden: Only Admin and Auditor can update homepage content' };
+    }
+
+    var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    var sheet = ss.getSheetByName(SHEETS.HOMEPAGE_CONTENT);
+    if (!sheet) {
+      return { success: false, message: 'Homepage Content sheet not found' };
+    }
+
+    // Get all data to find and update rows
+    var allData = sheet.getDataRange().getValues();
+    var updates = [
+      { key: 'mission', value: data.mission },
+      { key: 'vision', value: data.vision },
+      { key: 'aboutYSP', value: data.aboutYSP },
+      { key: 'motto', value: data.motto },
+      { key: 'email', value: data.email },
+      { key: 'phone', value: data.phone },
+      { key: 'facebook_url', value: data.facebook_url }
+    ];
+
+    var updatedKeys = [];
+    for (var u = 0; u < updates.length; u++) {
+      if (updates[u].value !== undefined && updates[u].value !== null) {
+        var found = false;
+        for (var i = 0; i < allData.length; i++) {
+          var key = allData[i][0] ? allData[i][0].toString() : '';
+          if (key === updates[u].key) {
+            sheet.getRange(i + 1, 2).setValue(updates[u].value);
+            updatedKeys.push(updates[u].key);
+            found = true;
+            break;
+          }
+        }
+        // If key doesn't exist, append new row
+        if (!found) {
+          var lastRow = sheet.getLastRow();
+          sheet.getRange(lastRow + 1, 1).setValue(updates[u].key);
+          sheet.getRange(lastRow + 1, 2).setValue(updates[u].value);
+          updatedKeys.push(updates[u].key + ' (new)');
+        }
+      }
+    }
+
+    Logger.log('Updated homepage content fields: ' + updatedKeys.join(', '));
+
+    // Invalidate homepage cache
+    invalidateCache('homepage_content');
+
+    return {
+      success: true,
+      message: 'Homepage content updated successfully',
+      updatedKeys: updatedKeys
+    };
+  } catch (e) {
+    Logger.log('Error in handleUpdateHomepageContent: ' + e.toString());
+    return { success: false, message: 'Error updating homepage content: ' + e.toString() };
+  }
+}
+
+/**
+ * CREATE PROJECT HANDLER
+ * Creates a new project in the Homepage Content sheet
+ * 
+ * Adds 5 rows with keys:
+ * - ProjectTitle_N
+ * - ProjectDesc_N
+ * - ProjectImageURL_N
+ * - ProjectLinkURL_N
+ * - ProjectLinkText_N
+ */
+function handleCreateProject(data) {
+  try {
+    // Validate user permissions
+    if (!data || !data.idCode) {
+      return { success: false, message: 'ID Code is required' };
+    }
+    
+    var role = _getUserRoleByIdCode(data.idCode);
+    if (role !== 'Admin' && role !== 'Auditor') {
+      return { success: false, message: 'Forbidden: Only Admin and Auditor can create projects' };
+    }
+    
+    // Validate required fields
+    if (!data.title || !data.description || !data.imageBase64) {
+      return { success: false, message: 'Title, description, and image are required' };
+    }
+    
+    // Step 1: Upload image to Google Drive
+    var imageUrl = '';
+    try {
+      var folder = DriveApp.getFolderById(PROJECTS_IMPLEMENTED_FOLDER_ID);
+      
+      // Extract base64 data (remove data:image/xxx;base64, prefix if present)
+      var base64Data = data.imageBase64;
+      if (base64Data.indexOf(',') > -1) {
+        base64Data = base64Data.split(',')[1];
+      }
+      
+      // Determine MIME type
+      var mimeType = 'image/jpeg';
+      if (data.imageBase64.indexOf('data:image/png') > -1) {
+        mimeType = 'image/png';
+      } else if (data.imageBase64.indexOf('data:image/jpg') > -1) {
+        mimeType = 'image/jpeg';
+      }
+      
+      // Create sanitized filename
+      var sanitizedTitle = (data.title || 'project')
+        .replace(/[^a-zA-Z0-9_-]/g, '_')
+        .substring(0, 50);
+      var timestamp = new Date().getTime();
+      var extension = mimeType === 'image/png' ? 'png' : 'jpg';
+      var fileName = 'project_' + sanitizedTitle + '_' + timestamp + '.' + extension;
+      
+      // Create blob and upload
+      var blob = Utilities.newBlob(
+        Utilities.base64Decode(base64Data),
+        mimeType,
+        fileName
+      );
+      
+      var file = folder.createFile(blob);
+      
+      // Set public sharing
+      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+      
+      // Generate public URL
+      var fileId = file.getId();
+      imageUrl = 'https://drive.google.com/uc?export=view&id=' + fileId;
+      
+      Logger.log('Uploaded project image: ' + fileName + ' -> ' + imageUrl);
+    } catch (imgError) {
+      Logger.log('Error uploading image: ' + imgError.toString());
+      return { success: false, message: 'Error uploading image: ' + imgError.toString() };
+    }
+    
+    // Step 2: Add project to Homepage Content sheet
+    var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    var sheet = ss.getSheetByName(SHEETS.HOMEPAGE_CONTENT);
+    
+    if (!sheet) {
+      return { success: false, message: 'Homepage Content sheet not found' };
+    }
+    
+    // Find highest existing project number
+    var allData = sheet.getDataRange().getValues();
+    var maxN = 0;
+    for (var i = 0; i < allData.length; i++) {
+      var key = allData[i][0] ? allData[i][0].toString() : '';
+      var match = key.match(/^ProjectTitle_(\d+)$/);
+      if (match) {
+        var num = parseInt(match[1], 10);
+        if (num > maxN) maxN = num;
+      }
+    }
+    var nextN = maxN + 1;
+    
+    // Find the last row to append the 5 new rows
+    var lastRow = sheet.getLastRow();
+    
+    // Add 5 rows: ProjectTitle_N, ProjectDesc_N, ProjectImageURL_N, ProjectLinkURL_N, ProjectLinkText_N
+    sheet.getRange(lastRow + 1, 1).setValue('ProjectTitle_' + nextN);
+    sheet.getRange(lastRow + 1, 2).setValue(data.title);
+    
+    sheet.getRange(lastRow + 2, 1).setValue('ProjectDesc_' + nextN);
+    sheet.getRange(lastRow + 2, 2).setValue(data.description);
+    
+    sheet.getRange(lastRow + 3, 1).setValue('ProjectImageURL_' + nextN);
+    sheet.getRange(lastRow + 3, 2).setValue(imageUrl);
+    
+    sheet.getRange(lastRow + 4, 1).setValue('ProjectLinkURL_' + nextN);
+    sheet.getRange(lastRow + 4, 2).setValue(data.link || '');
+    
+    sheet.getRange(lastRow + 5, 1).setValue('ProjectLinkText_' + nextN);
+    sheet.getRange(lastRow + 5, 2).setValue(data.linkText || 'Learn More');
+    
+    Logger.log('Created new project: N=' + nextN + ', Title=' + data.title);
+    
+    // Invalidate homepage cache
+    invalidateCache('homepage_content');
+    
+    return {
+      success: true,
+      message: 'Project created successfully',
+      projectNumber: nextN,
+      title: data.title,
+      imageUrl: imageUrl
+    };
+    
+  } catch (error) {
+    Logger.log('Error in handleCreateProject: ' + error.toString());
+    return { 
+      success: false, 
+      message: 'Error creating project: ' + error.toString()
+    };
   }
 }
 
@@ -3899,4 +4350,736 @@ function handleUpdateUserRole(data) {
   }
 }
 
+/**
+ * Get all announcements for migration (no user filtering)
+ */
+function handleGetAllAnnouncementsForMigration(data) {
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const announcementsSheet = ss.getSheetByName(SHEETS.ANNOUNCEMENTS);
+    
+    const allData = announcementsSheet.getDataRange().getValues();
+    const announcements = [];
+    
+    // Process announcements (skip header row)
+    for (let row = 1; row < allData.length; row++) {
+      const announcementRow = allData[row];
+      
+      // Skip if no announcement ID
+      if (!announcementRow[1]) continue;
+      
+      announcements.push({
+        timestamp: announcementRow[0] || '',
+        announcement_id: announcementRow[1].toString(),
+        author_id_code: announcementRow[2] || '',
+        author_name: announcementRow[3] || '',
+        title: announcementRow[4] || '',
+        subject: announcementRow[5] || '',
+        body: announcementRow[6] || '',
+        recipient_type: announcementRow[7] || '',
+        recipient_value: announcementRow[8] || '',
+        email_status: announcementRow[9] || ''
+      });
+    }
+    
+    return {
+      success: true,
+      announcements: announcements,
+      count: announcements.length
+    };
+  } catch (e) {
+    Logger.log('Error in handleGetAllAnnouncementsForMigration: ' + e.toString());
+    return { success: false, message: 'Error fetching announcements: ' + e.toString() };
+  }
+}
 
+/**
+ * Get all attendance records for migration
+ */
+function handleGetAllAttendanceForMigration(data) {
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const attendanceSheet = ss.getSheetByName(SHEETS.MASTER_ATTENDANCE);
+    
+    const allData = attendanceSheet.getDataRange().getValues();
+    const headerRow = allData[0];
+    
+    // Find event columns (starting from column 5/index 4)
+    const events = [];
+    for (let col = 4; col < headerRow.length; col += 6) {
+      const eventId = headerRow[col];
+      if (eventId && eventId.toString().trim() !== '') {
+        events.push({
+          event_id: eventId.toString(),
+          col_start: col
+        });
+      }
+    }
+    
+    const attendanceRecords = [];
+    
+    // Process each user row (skip header)
+    for (let row = 1; row < allData.length; row++) {
+      const userRow = allData[row];
+      
+      const id_code = userRow[0] ? userRow[0].toString() : '';
+      const name = userRow[1] ? userRow[1].toString() : '';
+      const position = userRow[2] ? userRow[2].toString() : '';
+      const id_number = userRow[3] ? userRow[3].toString() : '';
+      
+      // Skip if no ID code
+      if (!id_code) continue;
+      
+      // Process each event for this user
+      for (const event of events) {
+        const timeIn = userRow[event.col_start + 1] || '';
+        const timeOut = userRow[event.col_start + 2] || '';
+        
+        // Parse status from time_in field
+        let status = 'Not Recorded';
+        if (timeIn) {
+          const timeInStr = timeIn.toString();
+          if (timeInStr.includes('Present')) status = 'Present';
+          else if (timeInStr.includes('Late')) status = 'Late';
+          else if (timeInStr.includes('Absent')) status = 'Absent';
+          else if (timeInStr.includes('Excused')) status = 'Excused';
+        }
+        
+        attendanceRecords.push({
+          id_code: id_code,
+          name: name,
+          position: position,
+          id_number: id_number,
+          event_id: event.event_id,
+          time_in: timeIn.toString(),
+          time_out: timeOut.toString(),
+          status: status
+        });
+      }
+    }
+    
+    return {
+      success: true,
+      attendance: attendanceRecords,
+      count: attendanceRecords.length,
+      events_found: events.length
+    };
+  } catch (e) {
+    Logger.log('Error in handleGetAllAttendanceForMigration: ' + e.toString());
+    return { success: false, message: 'Error fetching attendance: ' + e.toString() };
+  }
+}
+
+  /**
+   * Get all user profiles with credentials for migration
+   * MIGRATION ONLY - Returns username and passwords
+   */
+  function handleGetAllUsersForMigration() {
+    try {
+      const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+      const profilesSheet = ss.getSheetByName(SHEETS.USER_PROFILES);
+      const allData = profilesSheet.getDataRange().getValues();
+    
+      const users = [];
+    
+      // Skip header row
+      for (let i = 1; i < allData.length; i++) {
+        const row = allData[i];
+      
+        const idCode = row[18] ? row[18].toString().trim() : '';
+      
+        // Skip if no ID code
+        if (!idCode) continue;
+      
+        users.push({
+          id_code: idCode,
+          username: row[13] ? row[13].toString().trim() : '',
+          password: row[14] ? row[14].toString().trim() : '',
+          full_name: row[3] ? row[3].toString().trim() : '',
+          role: row[20] ? row[20].toString().trim() : 'Member'
+        });
+      }
+    
+      return {
+        success: true,
+        users: users,
+        count: users.length
+      };
+    } catch (e) {
+      Logger.log('Error in handleGetAllUsersForMigration: ' + e.toString());
+      return { success: false, message: 'Error fetching users: ' + e.toString() };
+    }
+  }
+
+// ===== GENERIC IMAGE UPLOAD HANDLER =====
+/**
+ * Generic image upload to Google Drive with automatic CORS-friendly URL transformation
+ * @param {Object} data - Contains base64Image, fileName, uploadType ('project', 'orgchart', 'founder', 'developer')
+ * @returns {Object} - Success status with public Drive URL
+ */
+function handleUploadImage(data) {
+  try {
+    const { base64Image, fileName, uploadType, mimeType } = data;
+    
+    if (!base64Image) {
+      return { success: false, message: 'Image data is required' };
+    }
+    
+    if (!uploadType) {
+      return { success: false, message: 'Upload type is required (project, orgchart, founder, developer)' };
+    }
+    
+    // Determine folder based on upload type
+    let folderId;
+    switch(uploadType.toLowerCase()) {
+      case 'project':
+      case 'projects':
+        folderId = PROJECTS_IMPLEMENTED_FOLDER_ID;
+        break;
+      case 'orgchart':
+      case 'org_chart':
+        folderId = ORGCHART_UPLOAD_FOLDER_ID;
+        break;
+      case 'founder':
+        folderId = FOUNDER_IMAGE_FOLDER_ID;
+        break;
+      case 'developer':
+        folderId = DEVELOPER_IMAGE_FOLDER_ID;
+        break;
+      default:
+        return { success: false, message: 'Invalid upload type. Use: project, orgchart, founder, or developer' };
+    }
+    
+    // Get the target folder
+    const folder = DriveApp.getFolderById(folderId);
+    
+    // Decode base64 image
+    const base64Data = base64Image.split(',')[1] || base64Image;
+    const blob = Utilities.newBlob(
+      Utilities.base64Decode(base64Data),
+      mimeType || 'image/jpeg',
+      fileName || 'upload_' + new Date().getTime() + '.jpg'
+    );
+    
+    // Upload file to Drive
+    const file = folder.createFile(blob);
+    
+    // Make file publicly viewable
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    
+    // Get the file ID
+    const fileId = file.getId();
+    
+    // Convert to CORS-friendly public URL format
+    const publicUrl = 'https://drive.google.com/uc?export=view&id=' + fileId;
+    
+    Logger.log('Image uploaded successfully: ' + fileName + ' → ' + publicUrl);
+    
+    return {
+      success: true,
+      message: 'Image uploaded successfully',
+      fileId: fileId,
+      publicUrl: publicUrl,
+      fileName: file.getName(),
+      uploadType: uploadType
+    };
+    
+  } catch (error) {
+    Logger.log('Error uploading image: ' + error.toString());
+    return { success: false, message: 'Error uploading image: ' + error.toString() };
+  }
+}
+
+// ===== FOUNDER INFO HANDLERS =====
+/**
+ * Upload founder profile image to Google Drive
+ * Expects: { action: 'uploadFounderImage', base64Image, fileName, mimeType, idCode }
+ */
+function handleUploadFounderImage(data) {
+  try {
+    if (!data || !data.idCode) {
+      return { success: false, message: 'ID Code is required' };
+    }
+    var role = _getUserRoleByIdCode(data.idCode);
+    if (role !== 'Admin' && role !== 'Auditor') {
+      return { success: false, message: 'Forbidden: Only Admin and Auditor can upload founder images' };
+    }
+    if (!data.base64Image) {
+      return { success: false, message: 'Image data is required' };
+    }
+
+    var folder = DriveApp.getFolderById(FOUNDER_IMAGE_FOLDER_ID);
+    var base64Data = data.base64Image.split(',')[1] || data.base64Image;
+
+    var timestamp = new Date().getTime();
+    var ext = (data.mimeType || 'image/jpeg').split('/')[1] || 'jpg';
+    var finalName = 'founder_' + timestamp + '.' + ext;
+
+    var blob = Utilities.newBlob(
+      Utilities.base64Decode(base64Data),
+      data.mimeType || 'image/jpeg',
+      finalName
+    );
+
+    // Remove any existing file with the same name
+    var existingFiles = folder.getFilesByName(finalName);
+    while (existingFiles.hasNext()) {
+      existingFiles.next().setTrashed(true);
+    }
+
+    var file = folder.createFile(blob);
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+
+    var fileUrl = 'https://drive.google.com/uc?export=view&id=' + file.getId();
+
+    return {
+      success: true,
+      message: 'Founder image uploaded successfully',
+      imageUrl: fileUrl,
+      fileName: finalName
+    };
+  } catch (e) {
+    Logger.log('Error in handleUploadFounderImage: ' + e.toString());
+    return { success: false, message: 'Error uploading founder image: ' + e.toString() };
+  }
+}
+
+/**
+ * Upload developer profile image to Google Drive
+ * Expects: { action: 'uploadDeveloperImage', base64Image, fileName, mimeType, idCode }
+ */
+function handleUploadDeveloperImage(data) {
+  try {
+    if (!data || !data.idCode) {
+      return { success: false, message: 'ID Code is required' };
+    }
+    var role = _getUserRoleByIdCode(data.idCode);
+    if (role !== 'Admin' && role !== 'Auditor') {
+      return { success: false, message: 'Forbidden: Only Admin and Auditor can upload developer images' };
+    }
+    if (!data.base64Image) {
+      return { success: false, message: 'Image data is required' };
+    }
+
+    var folder = DriveApp.getFolderById(DEVELOPER_IMAGE_FOLDER_ID);
+    var base64Data = data.base64Image.split(',')[1] || data.base64Image;
+
+    var timestamp = new Date().getTime();
+    var ext = (data.mimeType || 'image/jpeg').split('/')[1] || 'jpg';
+    var finalName = 'developer_' + timestamp + '.' + ext;
+
+    var blob = Utilities.newBlob(
+      Utilities.base64Decode(base64Data),
+      data.mimeType || 'image/jpeg',
+      finalName
+    );
+
+    // Remove any existing file with the same name
+    var existingFiles = folder.getFilesByName(finalName);
+    while (existingFiles.hasNext()) {
+      existingFiles.next().setTrashed(true);
+    }
+
+    var file = folder.createFile(blob);
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+
+    var fileUrl = 'https://drive.google.com/uc?export=view&id=' + file.getId();
+
+    return {
+      success: true,
+      message: 'Developer image uploaded successfully',
+      imageUrl: fileUrl,
+      fileName: finalName
+    };
+  } catch (e) {
+    Logger.log('Error in handleUploadDeveloperImage: ' + e.toString());
+    return { success: false, message: 'Error uploading developer image: ' + e.toString() };
+  }
+}
+
+/**
+ * Update founder information in Home_FounderInfo sheet
+ * Expects: { action: 'updateFounderInfo', founderId, name, role, bio, profilePicture, facebook, instagram, linkedin, email, active, idCode }
+ */
+function handleUpdateFounderInfo(data) {
+  try {
+    if (!data || !data.idCode) {
+      return { success: false, message: 'ID Code is required' };
+    }
+    var userRole = _getUserRoleByIdCode(data.idCode);
+    if (userRole !== 'Admin' && userRole !== 'Auditor') {
+      return { success: false, message: 'Forbidden: Only Admin and Auditor can update founder info' };
+    }
+
+    var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    var sheet = ss.getSheetByName('Home_FounderInfo');
+    if (!sheet) {
+      return { success: false, message: 'Home_FounderInfo sheet not found' };
+    }
+
+    // Ensure headers match new schema
+    var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    var requiredHeaders = ['ID','Name','Nickname','Role','About','BackgroundJourney','Achievement_1','Achievement_2','Achievement_3','Achievement_4','Achievement_5','Achievement_6','Achievement_7','Achievement_8','Achievement_9','Achievement_10','OrganizationalImpact','LeadershipPhilosophy','ProfilePicture','Facebook','Instagram','Twitter','LinkedIn','Website','Email','Phone','OfficeLocation','Active'];
+    if (headers.length < requiredHeaders.length || headers[1] !== 'Name') {
+      // Reinitialize schema if mismatch
+      initializeFounderInfoSheet();
+      headers = requiredHeaders;
+    }
+
+    var founderId = data.founderId || '1';
+    var allData = sheet.getDataRange().getValues();
+    var rowIndex = -1;
+    for (var i = 1; i < allData.length; i++) {
+      if (allData[i][0].toString() === founderId.toString()) {
+        rowIndex = i + 1;
+        break;
+      }
+    }
+    if (rowIndex === -1) {
+      rowIndex = sheet.getLastRow() + 1;
+    }
+
+    // Parse achievements string "achievements" separated by ||
+    var achievements = [];
+    if (data.achievements) {
+      achievements = data.achievements.split('||').filter(function(a){return a && a.trim();});
+    }
+
+    sheet.getRange(rowIndex, headers.indexOf('ID')+1).setValue(founderId);
+    if (data.name !== undefined) sheet.getRange(rowIndex, headers.indexOf('Name')+1).setValue(data.name);
+    if (data.nickname !== undefined) sheet.getRange(rowIndex, headers.indexOf('Nickname')+1).setValue(data.nickname);
+    if (data.role !== undefined) sheet.getRange(rowIndex, headers.indexOf('Role')+1).setValue(data.role);
+    if (data.about !== undefined) sheet.getRange(rowIndex, headers.indexOf('About')+1).setValue(data.about);
+    if (data.backgroundJourney !== undefined) sheet.getRange(rowIndex, headers.indexOf('BackgroundJourney')+1).setValue(data.backgroundJourney);
+    if (data.organizationalImpact !== undefined) sheet.getRange(rowIndex, headers.indexOf('OrganizationalImpact')+1).setValue(data.organizationalImpact);
+    if (data.leadershipPhilosophy !== undefined) sheet.getRange(rowIndex, headers.indexOf('LeadershipPhilosophy')+1).setValue(data.leadershipPhilosophy);
+    if (data.profilePicture !== undefined) sheet.getRange(rowIndex, headers.indexOf('ProfilePicture')+1).setValue(data.profilePicture);
+    if (data.facebook !== undefined) sheet.getRange(rowIndex, headers.indexOf('Facebook')+1).setValue(data.facebook);
+    if (data.instagram !== undefined) sheet.getRange(rowIndex, headers.indexOf('Instagram')+1).setValue(data.instagram);
+    if (data.twitter !== undefined) sheet.getRange(rowIndex, headers.indexOf('Twitter')+1).setValue(data.twitter);
+    if (data.linkedin !== undefined) sheet.getRange(rowIndex, headers.indexOf('LinkedIn')+1).setValue(data.linkedin);
+    if (data.website !== undefined) sheet.getRange(rowIndex, headers.indexOf('Website')+1).setValue(data.website);
+    if (data.email !== undefined) sheet.getRange(rowIndex, headers.indexOf('Email')+1).setValue(data.email);
+    if (data.phone !== undefined) sheet.getRange(rowIndex, headers.indexOf('Phone')+1).setValue(data.phone);
+    if (data.officeLocation !== undefined) sheet.getRange(rowIndex, headers.indexOf('OfficeLocation')+1).setValue(data.officeLocation);
+    if (data.active !== undefined) sheet.getRange(rowIndex, headers.indexOf('Active')+1).setValue(data.active !== false);
+
+    // Write achievements up to 10
+    for (var a=0; a<10; a++) {
+      var colName = 'Achievement_' + (a+1);
+      var colIdx = headers.indexOf(colName)+1;
+      if (colIdx > 0) {
+        sheet.getRange(rowIndex, colIdx).setValue(achievements[a] || '');
+      }
+    }
+
+    Logger.log('Updated founder info (new schema): ' + founderId);
+    invalidateCache('home_founderinfo');
+    invalidateCache('homepage_content');
+    return { success: true, message: 'Founder information updated successfully', founderId: founderId };
+  } catch (e) {
+    Logger.log('Error in handleUpdateFounderInfo (new schema): ' + e.toString());
+    return { success: false, message: 'Error updating founder info: ' + e.toString() };
+  }
+}
+
+/**
+ * Update developer information in Home_DevInfo sheet
+ * Expects: { action: 'updateDeveloperInfo', developerId, name, role, bio, profilePicture, github, linkedin, twitter, email, active, idCode }
+ */
+function handleUpdateDeveloperInfo(data) {
+  try {
+    if (!data || !data.idCode) {
+      return { success: false, message: 'ID Code is required' };
+    }
+    var userRole = _getUserRoleByIdCode(data.idCode);
+    if (userRole !== 'Admin' && userRole !== 'Auditor') {
+      return { success: false, message: 'Forbidden: Only Admin and Auditor can update developer info' };
+    }
+
+    var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    var sheet = ss.getSheetByName('Home_DevInfo');
+    if (!sheet) {
+      return { success: false, message: 'Home_DevInfo sheet not found' };
+    }
+
+    // Ensure headers match new schema
+    var headers = sheet.getRange(1,1,1,sheet.getLastColumn()).getValues()[0];
+    var requiredHeaders = ['ID','Name','Role','Position','Organization','About','Background_1','Background_2','Background_3','Background_4','Background_5','Affiliation_1','Position_1','Affiliation_2','Position_2','Affiliation_3','Position_3','Affiliation_4','Position_4','Affiliation_5','Position_5','ProjectHighlights','PersonalPhilosophy','ProfilePicture','Facebook','Instagram','Twitter','LinkedIn','Website','Email','Phone','Location','Active'];
+    if (headers.length < requiredHeaders.length || headers[3] !== 'Position' || headers[4] !== 'Organization') {
+      initializeDeveloperInfoSheet();
+      headers = requiredHeaders;
+    }
+
+    var developerId = data.developerId || '1';
+    var allData = sheet.getDataRange().getValues();
+    var rowIndex = -1;
+    for (var i=1;i<allData.length;i++) {
+      if (allData[i][0].toString() === developerId.toString()) {
+        rowIndex = i+1;
+        break;
+      }
+    }
+    if (rowIndex === -1) {
+      rowIndex = sheet.getLastRow() + 1;
+    }
+
+    // Parse background segments & affiliations
+    var backgrounds = [];
+    if (data.backgrounds) backgrounds = data.backgrounds.split('||').filter(function(b){return b && b.trim();});
+    var affiliations = [];
+    if (data.affiliations) affiliations = data.affiliations.split('||').filter(function(a){return a && a.trim();});
+
+    sheet.getRange(rowIndex, headers.indexOf('ID')+1).setValue(developerId);
+    if (data.name !== undefined) sheet.getRange(rowIndex, headers.indexOf('Name')+1).setValue(data.name);
+    if (data.role !== undefined) sheet.getRange(rowIndex, headers.indexOf('Role')+1).setValue(data.role);
+    if (data.position !== undefined) sheet.getRange(rowIndex, headers.indexOf('Position')+1).setValue(data.position);
+    if (data.organization !== undefined) sheet.getRange(rowIndex, headers.indexOf('Organization')+1).setValue(data.organization);
+    if (data.about !== undefined) sheet.getRange(rowIndex, headers.indexOf('About')+1).setValue(data.about);
+    if (data.projectHighlights !== undefined) sheet.getRange(rowIndex, headers.indexOf('ProjectHighlights')+1).setValue(data.projectHighlights);
+    if (data.personalPhilosophy !== undefined) sheet.getRange(rowIndex, headers.indexOf('PersonalPhilosophy')+1).setValue(data.personalPhilosophy);
+    if (data.profilePicture !== undefined) sheet.getRange(rowIndex, headers.indexOf('ProfilePicture')+1).setValue(data.profilePicture);
+    if (data.facebook !== undefined) sheet.getRange(rowIndex, headers.indexOf('Facebook')+1).setValue(data.facebook);
+    if (data.instagram !== undefined) sheet.getRange(rowIndex, headers.indexOf('Instagram')+1).setValue(data.instagram);
+    if (data.twitter !== undefined) sheet.getRange(rowIndex, headers.indexOf('Twitter')+1).setValue(data.twitter);
+    if (data.linkedin !== undefined) sheet.getRange(rowIndex, headers.indexOf('LinkedIn')+1).setValue(data.linkedin);
+    if (data.website !== undefined) sheet.getRange(rowIndex, headers.indexOf('Website')+1).setValue(data.website);
+    if (data.email !== undefined) sheet.getRange(rowIndex, headers.indexOf('Email')+1).setValue(data.email);
+    if (data.phone !== undefined) sheet.getRange(rowIndex, headers.indexOf('Phone')+1).setValue(data.phone);
+    if (data.location !== undefined) sheet.getRange(rowIndex, headers.indexOf('Location')+1).setValue(data.location);
+    if (data.active !== undefined) sheet.getRange(rowIndex, headers.indexOf('Active')+1).setValue(data.active !== false);
+
+    // Write backgrounds
+    for (var b=0; b<5; b++) {
+      var bCol = headers.indexOf('Background_' + (b+1)) + 1;
+      if (bCol>0) sheet.getRange(rowIndex, bCol).setValue(backgrounds[b] || '');
+    }
+    // Write affiliations
+    for (var f=0; f<5; f++) {
+      var affPair = affiliations[f] || '';
+      var parts = affPair.split('::');
+      var aff = parts[0] || '';
+      var pos = parts[1] || '';
+      var affCol = headers.indexOf('Affiliation_' + (f+1)) + 1;
+      var posCol = headers.indexOf('Position_' + (f+1)) + 1;
+      if (affCol>0) sheet.getRange(rowIndex, affCol).setValue(aff);
+      if (posCol>0) sheet.getRange(rowIndex, posCol).setValue(pos);
+    }
+
+    Logger.log('Updated developer info (new schema): ' + developerId);
+    invalidateCache('home_devinfo');
+    invalidateCache('homepage_content');
+    return { success: true, message: 'Developer information updated successfully', developerId: developerId };
+  } catch (e) {
+    Logger.log('Error in handleUpdateDeveloperInfo (new schema): ' + e.toString());
+    return { success: false, message: 'Error updating developer info: ' + e.toString() };
+  }
+}
+
+/**
+ * Initialize Founder Info sheet with proper headers and real data
+ */
+function initializeFounderInfoSheet() {
+  try {
+    var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    var sheet = ss.getSheetByName('Home_FounderInfo');
+    if (!sheet) sheet = ss.insertSheet('Home_FounderInfo');
+
+    var headers = ['ID','Name','Nickname','Role','About','BackgroundJourney','Achievement_1','Achievement_2','Achievement_3','Achievement_4','Achievement_5','Achievement_6','Achievement_7','Achievement_8','Achievement_9','Achievement_10','OrganizationalImpact','LeadershipPhilosophy','ProfilePicture','Facebook','Instagram','Twitter','LinkedIn','Website','Email','Phone','OfficeLocation','Active'];
+    sheet.clear();
+    sheet.getRange(1,1,1,headers.length).setValues([headers]);
+    sheet.getRange(1,1,1,headers.length).setFontWeight('bold').setBackground('#4a90e2').setFontColor('#ffffff');
+
+    // Founder base data
+    var about = 'Juanquine Carlo R. Castro, known affectionately as "Wacky Racho," is the visionary founder of Youth Service Philippines - Tagum Chapter. With an unwavering commitment to community service and youth empowerment, he established the organization to mobilize Filipino youth in creating meaningful social change across Tagum City and Davao del Norte.';
+    var backgroundJourney = 'His leadership philosophy centers on grassroots engagement, collaborative partnerships, and sustainable community development. Under his guidance, YSP Tagum Chapter has grown into a dynamic organization that touches thousands of lives through diverse programs spanning education, health, environment, and disaster response.';
+    var organizationalImpact = 'Impacts across Education, Environment, Health, Disaster Response, Leadership Development.';
+    var leadershipPhilosophy = 'True leadership empowers others to discover and unleash their potential for the greater good.';
+    var achievements = [
+      'Founded YSP Tagum Chapter',
+      'Led 50+ community outreach programs',
+      'Mobilized 200+ active youth volunteers',
+      'Established multi-sector partnerships'
+    ];
+
+    var row = [
+      '1','Juanquine Carlo R. Castro','Wacky Racho','Founder & Visionary Leader',
+      about,backgroundJourney,
+      achievements[0]||'',achievements[1]||'',achievements[2]||'',achievements[3]||'', '', '', '', '', '', '',
+      organizationalImpact,leadershipPhilosophy,
+      '', // ProfilePicture
+      'https://www.facebook.com/YSPTagumChapter','', '', '', '', 'YSPTagumChapter@gmail.com','+63 917 123 4567','Tagum City, Davao del Norte, Philippines','true'
+    ];
+    sheet.getRange(2,1,1,row.length).setValues([row]);
+    return { success: true, message: 'Founder Info sheet initialized (new schema) successfully' };
+  } catch(e) {
+    Logger.log('Error initializeFounderInfoSheet(new): ' + e.toString());
+    return { success:false, message: 'Error initializing Founder Info sheet: ' + e.toString() };
+  }
+}
+
+/**
+ * Initialize Developer Info sheet with proper headers and real data
+ */
+function initializeDeveloperInfoSheet() {
+  try {
+    var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    var sheet = ss.getSheetByName('Home_DevInfo');
+    if (!sheet) sheet = ss.insertSheet('Home_DevInfo');
+    var headers = ['ID','Name','Role','Position','Organization','About','Background_1','Background_2','Background_3','Background_4','Background_5','Affiliation_1','Position_1','Affiliation_2','Position_2','Affiliation_3','Position_3','Affiliation_4','Position_4','Affiliation_5','Position_5','ProjectHighlights','PersonalPhilosophy','ProfilePicture','Facebook','Instagram','Twitter','LinkedIn','Website','Email','Phone','Location','Active'];
+    sheet.clear();
+    sheet.getRange(1,1,1,headers.length).setValues([headers]);
+    sheet.getRange(1,1,1,headers.length).setFontWeight('bold').setBackground('#4a90e2').setFontColor('#ffffff');
+
+    var about = 'Ezequiel John B. Crisostomo is a passionate full-stack developer and system architect dedicated to creating innovative digital solutions.';
+    var backgrounds = [
+      'Focus on scalable, user-friendly applications',
+      'Experience in React & TypeScript ecosystems',
+      'Commitment to leveraging tech for social good'
+    ];
+    var projectHighlights = 'Member Management, QR Attendance, Polling Platform, Dynamic Navigation, Glassmorphism UI, Real-Time Updates, Responsive Design';
+    var personalPhilosophy = 'Technology should serve humanity by making lives easier and communities more connected.';
+    var affiliations = [
+      ['Youth Service Philippines - Tagum Chapter','Membership & Internal Affairs Officer']
+    ];
+
+    var row = [
+      '1','Ezequiel John B. Crisostomo','Full-Stack Developer & System Architect','Membership & Internal Affairs Officer','Youth Service Philippines - Tagum Chapter',about,
+      backgrounds[0]||'',backgrounds[1]||'',backgrounds[2]||'',backgrounds[3]||'',backgrounds[4]||'',
+      affiliations[0] ? affiliations[0][0] : '', affiliations[0] ? affiliations[0][1] : '', '', '', '', '', '', '', '', '',
+      projectHighlights, personalPhilosophy,
+      '', // ProfilePicture
+      '','', '', '', '', 'YSPTagumChapter@gmail.com','+63 917 123 4567','Tagum City, Davao del Norte, Philippines','true'
+    ];
+    sheet.getRange(2,1,1,row.length).setValues([row]);
+    return { success:true, message: 'Developer Info sheet initialized (new schema) successfully' };
+  } catch(e) {
+    Logger.log('Error initializeDeveloperInfoSheet(new): ' + e.toString());
+    return { success:false, message: 'Error initializing Developer Info sheet: ' + e.toString() };
+  }
+}
+
+/**
+ * Delete founder profile
+ * Expects: { action: 'deleteFounder', founderId, idCode }
+ */
+function handleDeleteFounder(data) {
+  try {
+    if (!data || !data.idCode) {
+      return { success: false, message: 'ID Code is required' };
+    }
+    var role = _getUserRoleByIdCode(data.idCode);
+    if (role !== 'Admin' && role !== 'Auditor') {
+      return { success: false, message: 'Forbidden: Only Admin and Auditor can delete founder profiles' };
+    }
+    
+    var founderId = data.founderId || '1';
+    var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    var sheet = ss.getSheetByName('Home_FounderInfo');
+    
+    if (!sheet) {
+      return { success: false, message: 'Home_FounderInfo sheet not found' };
+    }
+    
+    var dataRange = sheet.getDataRange();
+    var values = dataRange.getValues();
+    
+    for (var i = 1; i < values.length; i++) {
+      if (values[i][0].toString() === founderId.toString()) {
+        sheet.deleteRow(i + 1);
+        invalidateCache('home_founderinfo');
+        invalidateCache('homepage_content');
+        return { success: true, message: 'Founder profile deleted successfully' };
+      }
+    }
+    
+    return { success: false, message: 'Founder profile not found' };
+  } catch (e) {
+    Logger.log('Error in handleDeleteFounder: ' + e.toString());
+    return { success: false, message: 'Error deleting founder profile: ' + e.toString() };
+  }
+}
+
+/**
+ * Delete developer profile
+ * Expects: { action: 'deleteDeveloper', developerId, idCode }
+ */
+function handleDeleteDeveloper(data) {
+  try {
+    if (!data || !data.idCode) {
+      return { success: false, message: 'ID Code is required' };
+    }
+    var role = _getUserRoleByIdCode(data.idCode);
+    if (role !== 'Admin' && role !== 'Auditor') {
+      return { success: false, message: 'Forbidden: Only Admin and Auditor can delete developer profiles' };
+    }
+    
+    var developerId = data.developerId || '1';
+    var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    var sheet = ss.getSheetByName('Home_DevInfo');
+    
+    if (!sheet) {
+      return { success: false, message: 'Home_DevInfo sheet not found' };
+    }
+    
+    var dataRange = sheet.getDataRange();
+    var values = dataRange.getValues();
+    
+    for (var i = 1; i < values.length; i++) {
+      if (values[i][0].toString() === developerId.toString()) {
+        sheet.deleteRow(i + 1);
+        invalidateCache('home_devinfo');
+        invalidateCache('homepage_content');
+        return { success: true, message: 'Developer profile deleted successfully' };
+      }
+    }
+    
+    return { success: false, message: 'Developer profile not found' };
+  } catch (e) {
+    Logger.log('Error in handleDeleteDeveloper: ' + e.toString());
+    return { success: false, message: 'Error deleting developer profile: ' + e.toString() };
+  }
+}
+
+// ===== HELPER: Convert any Google Drive link to public CORS-friendly format =====
+/**
+ * Transforms various Google Drive URL formats to public view format
+ * @param {string} driveUrl - Any Google Drive URL
+ * @returns {string} - Public CORS-friendly URL or original if not a Drive link
+ */
+function convertToPublicDriveUrl(driveUrl) {
+  if (!driveUrl || typeof driveUrl !== 'string') return '';
+  
+  // Extract file ID from various Drive URL formats
+  let fileId = null;
+  
+  // Format: https://drive.google.com/file/d/FILE_ID/view
+  let match = driveUrl.match(/\/file\/d\/([^\/]+)/);
+  if (match) {
+    fileId = match[1];
+  }
+  
+  // Format: https://drive.google.com/open?id=FILE_ID
+  if (!fileId) {
+    match = driveUrl.match(/[?&]id=([^&]+)/);
+    if (match) {
+      fileId = match[1];
+    }
+  }
+  
+  // Format: https://drive.google.com/uc?export=view&id=FILE_ID (already correct)
+  if (!fileId) {
+    match = driveUrl.match(/uc\?export=view&id=([^&]+)/);
+    if (match) {
+      return driveUrl; // Already in correct format
+    }
+  }
+  
+  // If file ID extracted, return public format
+  if (fileId) {
+    return 'https://drive.google.com/uc?export=view&id=' + fileId;
+  }
+  
+  // If not a Drive link or couldn't parse, return original
+  return driveUrl;
+}

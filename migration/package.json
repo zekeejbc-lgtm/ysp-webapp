@@ -1,0 +1,19 @@
+{
+  "name": "ysp-migration",
+  "version": "1.0.0",
+  "description": "Google Sheets to Supabase migration tool for YSP Tagum Chapter",
+  "type": "module",
+  "scripts": {
+    "migrate": "node migrate.js",
+    "migrate:dry-run": "node migrate.js --dry-run",
+    "migrate:users": "node migrate.js --table=user_profiles",
+    "migrate:events": "node migrate.js --table=events",
+    "migrate:attendance": "node migrate.js --table=attendance",
+    "migrate:announcements": "node migrate.js --table=announcements"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {}
+}
