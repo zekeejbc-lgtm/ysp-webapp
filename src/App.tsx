@@ -406,7 +406,6 @@ export default function App() {
   const fallbackLogoUrl =
     "https://ui-avatars.com/api/?name=YSP&size=80&background=f6421f&color=fff";
 
-  // Mock data for projects
   const [projects, setProjects] = useState<Project[]>([]);
   const [orgChartUrl, setOrgChartUrl] = useState<string>('');
   const [founders, setFounders] = useState<any[]>([]);

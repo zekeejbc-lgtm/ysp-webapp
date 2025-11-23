@@ -122,7 +122,6 @@ export default function ManageMembersPage({ onClose, isDark }: ManageMembersPage
   const [showViewMemberModal, setShowViewMemberModal] = useState(false);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
 
-  // Mock data
   const [members, setMembers] = useState<Member[]>([]);
   const [pendingApplications, setPendingApplications] = useState<PendingApplication[]>([]);
 

@@ -53,32 +53,7 @@ export default function TabangTaBaiPage({ onClose, isAdmin, isDark, userRole = '
   // Real data states
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [donations, setDonations] = useState<CampaignDonation[]>([]);
-  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([
-    {
-      id: 'gcash',
-      name: 'GCash',
-      accountName: 'Youth Service Philippines - Tagum',
-      accountNumber: '09123456789',
-      qrCode: '',
-      instructions: '1. Open your GCash app\n2. Scan the QR code or enter the mobile number\n3. Enter your donation amount\n4. Complete the payment\n5. Take a screenshot of the receipt\n6. Upload it below to complete your donation'
-    },
-    {
-      id: 'maya',
-      name: 'Maya',
-      accountName: 'Youth Service Philippines - Tagum',
-      accountNumber: '09987654321',
-      qrCode: '',
-      instructions: '1. Open your Maya app\n2. Scan the QR code or enter the mobile number\n3. Enter your donation amount\n4. Complete the payment\n5. Take a screenshot of the receipt\n6. Upload it below to complete your donation'
-    },
-    {
-      id: 'gotyme',
-      name: 'GoTyme Bank',
-      accountName: 'Youth Service Philippines - Tagum',
-      accountNumber: '09111222333',
-      qrCode: '',
-      instructions: '1. Open your GoTyme app\n2. Scan the QR code or enter the mobile number\n3. Enter your donation amount\n4. Complete the payment\n5. Take a screenshot of the receipt\n6. Upload it below to complete your donation'
-    }
-  ]);
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
 
   // Fetch data from GAS
   useEffect(() => {

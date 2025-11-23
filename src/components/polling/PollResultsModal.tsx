@@ -35,21 +35,7 @@ export default function PollResultsModal({ poll, isDark, onClose }: PollResultsM
   const [dateFilter, setDateFilter] = useState<string>("all");
 
   // Mock responses for demonstration
-  const mockResponses: PollResponse[] = Array.from({ length: poll.responses }, (_, i) => ({
-    id: `R${i + 1}`,
-    pollId: poll.id,
-    userId: `U${i + 1}`,
-    userName: `User ${i + 1}`,
-    userRole: ["Member", "Officer", "Admin"][i % 3],
-    userCommittee: ["Finance", "Events", "Marketing"][i % 3],
-    isAnonymous: poll.anonymousResponses,
-    submittedAt: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
-    answers: poll.questions.map(q => ({
-      questionId: q.id,
-      answer: generateMockAnswer(q),
-    })),
-    completionTime: Math.floor(Math.random() * 300) + 60,
-  }));
+  const mockResponses: PollResponse[] = [];
 
   const handleExport = (format: "csv" | "pdf" | "charts") => {
     toast.success(`Exporting results as ${format.toUpperCase()}...`);
@@ -540,34 +526,6 @@ function IndividualResponses({ responses, questions, anonymousResponses, isDark 
       )}
     </div>
   );
-}
-
-// Helper function to generate mock answers
-function generateMockAnswer(question: Question): any {
-  switch (question.type) {
-    case "short-answer":
-      return "Sample short answer response";
-    case "paragraph":
-      return "This is a longer paragraph response with more detailed feedback and thoughts.";
-    case "multiple-choice":
-    case "dropdown":
-      return question.options?.[Math.floor(Math.random() * (question.options?.length || 1))];
-    case "checkbox":
-      const numChecked = Math.floor(Math.random() * (question.options?.length || 1)) + 1;
-      return question.options?.slice(0, numChecked) || [];
-    case "linear-scale":
-      return Math.floor(Math.random() * ((question.scaleMax || 5) - (question.scaleMin || 1) + 1)) + (question.scaleMin || 1);
-    case "star-rating":
-      return Math.floor(Math.random() * 5) + 1;
-    case "yes-no":
-      return Math.random() > 0.5 ? "Yes" : "No";
-    case "date":
-      return new Date().toISOString().split("T")[0];
-    case "time":
-      return "14:30";
-    default:
-      return null;
-  }
 }
 
 // Missing ChevronLeft and ChevronRight imports

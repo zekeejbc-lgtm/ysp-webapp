@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { X, Lock, User, Eye, EyeOff, LogIn, AlertCircle } from 'lucide-react';
 import { ImageWithFallback } from './figma/ImageWithFallback';
+import { toast } from 'sonner';
 
 interface LoginPanelProps {
   isOpen: boolean;
   onClose: () => void;
-  onLogin: (username: string, password: string) => void;
+  onLogin: (username: string, password: string) => Promise<void>;
   isDark: boolean;
 }
 
@@ -62,12 +63,50 @@ export default function LoginPanel({ isOpen, onClose, onLogin, isDark }: LoginPa
     if (!validateForm()) return;
     
     setIsLoading(true);
+    let isAborted = false;
+    const toastId = 'login-processing';
+
+    // Show persistent processing toast with abort button
+    toast.custom((t) => (
+      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-4 flex items-center gap-3 min-w-[300px]">
+        <div className="w-5 h-5 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+        <div className="flex-1">
+          <h3 className="font-medium text-gray-900 dark:text-gray-100">Signing in...</h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Verifying credentials</p>
+        </div>
+        <button 
+          onClick={() => {
+            isAborted = true;
+            toast.dismiss(toastId);
+            setIsLoading(false);
+            toast.info('Login cancelled');
+          }}
+          className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors text-gray-500"
+          title="Abort login"
+        >
+          <X size={16} />
+        </button>
+      </div>
+    ), { 
+      id: toastId,
+      duration: Infinity 
+    });
     
-    // Simulate API call
-    setTimeout(() => {
-      onLogin(username, password);
-      setIsLoading(false);
-    }, 1000);
+    try {
+      await onLogin(username, password);
+      
+      if (!isAborted) {
+        toast.dismiss(toastId);
+      }
+    } catch (error) {
+      if (!isAborted) {
+        toast.dismiss(toastId);
+      }
+    } finally {
+      if (!isAborted) {
+        setIsLoading(false);
+      }
+    }
   };
 
   const handleForgotPassword = () => {

@@ -74,53 +74,7 @@ export default function FeedbackPage({ onClose, isAdmin, isDark, userRole = 'gue
   const [hoveredRating, setHoveredRating] = useState(0);
   const [uploadedImages, setUploadedImages] = useState<Array<{ file: File; preview: string }>>([]);
   
-  // Mock feedbacks with complete schema (persistent data)
-  const [feedbacks, setFeedbacks] = useState<Feedback[]>([
-    {
-      id: 'FB-001',
-      timestamp: '2025-01-28T10:30:00',
-      author: 'Juan Dela Cruz',
-      authorId: 'YSP-2024-001',
-      feedback: 'Great website! Very informative and easy to navigate. Love the new design!',
-      replyTimestamp: '2025-01-28T14:20:00',
-      replier: 'Admin Team',
-      replierId: 'ADMIN-001',
-      reply: 'Thank you for your positive feedback! We\'re glad you enjoy the new design.',
-      anonymous: false,
-      category: 'Compliment',
-      imageUrl: undefined,
-      status: 'Resolved',
-      visibility: 'Public',
-      email: 'juan@example.com',
-      rating: 5,
-      notes: 'User seems satisfied'
-    },
-    {
-      id: 'FB-002',
-      timestamp: '2025-01-27T15:45:00',
-      author: 'Anonymous',
-      authorId: 'Guest',
-      feedback: 'Would love to see more volunteer opportunities posted regularly.',
-      anonymous: true,
-      category: 'Suggestion',
-      status: 'Reviewed',
-      visibility: 'Public',
-      rating: 4
-    },
-    {
-      id: 'FB-003',
-      timestamp: '2025-01-26T09:15:00',
-      author: 'Maria Santos',
-      authorId: 'YSP-2024-015',
-      feedback: 'The donation process could be simplified. Having issues with payment.',
-      anonymous: false,
-      category: 'Complaint',
-      status: 'Pending',
-      visibility: 'Private',
-      email: 'maria@example.com',
-      rating: 3
-    }
-  ]);
+  const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
 
   // Guest's temporary feedbacks (stored in sessionStorage, cleared on refresh)
   const [guestFeedbacks, setGuestFeedbacks] = useState<Feedback[]>([]);
