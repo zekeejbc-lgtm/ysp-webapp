@@ -1,0 +1,44 @@
+import React, { useMemo, useState } from 'react'
+
+const ERROR_IMG_SRC =
+  'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODgiIGhlaWdodD0iODgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjMDAwIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBvcGFjaXR5PSIuMyIgZmlsbD0ibm9uZSIgc3Ryb2tlLXdpZHRoPSIzLjciPjxyZWN0IHg9IjE2IiB5PSIxNiIgd2lkdGg9IjU2IiBoZWlnaHQ9IjU2IiByeD0iNiIvPjxwYXRoIGQ9Im0xNiA1OCAxNi0xOCAzMiAzMiIvPjxjaXJjbGUgY3g9IjUzIiBjeT0iMzUiIHI9IjciLz48L3N2Zz4KCg=='
+
+export function ImageWithFallback(props: React.ImgHTMLAttributes<HTMLImageElement>) {
+  const [didError, setDidError] = useState(false)
+  const { src, alt, style, className, ...rest } = props
+
+  const normalizeDriveUrl = (url?: string | null) => {
+    if (!url) return url as any
+    const s = String(url)
+    if (!/drive\.google\.com/.test(s)) return s
+    // Already in uc format
+    const ucMatch = s.match(/uc\?export=view&id=([^&]+)/)
+    if (ucMatch) return s
+    // /file/d/{id}/view format
+    const fileMatch = s.match(/\/file\/d\/([^\/]+)/)
+    if (fileMatch) return `https://drive.google.com/uc?export=view&id=${fileMatch[1]}`
+    // open?id={id}
+    const idParam = s.match(/[?&]id=([^&]+)/)
+    if (idParam) return `https://drive.google.com/uc?export=view&id=${idParam[1]}`
+    return s
+  }
+
+  const safeSrc = useMemo(() => normalizeDriveUrl(src as string), [src])
+
+  const handleError = () => {
+    setDidError(true)
+  }
+
+  return didError ? (
+    <div
+      className={`inline-block bg-gray-100 text-center align-middle ${className ?? ''}`}
+      style={style}
+    >
+      <div className="flex items-center justify-center w-full h-full">
+        <img src={ERROR_IMG_SRC} alt="Error loading image" {...rest} data-original-url={src} />
+      </div>
+    </div>
+  ) : (
+    <img src={safeSrc} alt={alt} className={className} style={style} {...rest} onError={handleError} />
+  )
+}

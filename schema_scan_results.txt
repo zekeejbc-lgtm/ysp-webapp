@@ -1,0 +1,398 @@
+✅ Database Connection Successful!
+----------------------------------------
+Found the following sheets and columns:
+
+Total Sheets Found: 19
+Sheets: User Profiles, Donations, Donation_Campaigns, Donation_Settings, Logging Debug, WeakPasswords, Main, Officer Directory, Homepage Content, Access Logs, Feedback, Master Attendance Log, Polls, Poll Responses, Poll Templates, Announcements, Form Responses 5, Home_DevInfo, Home_FounderInfo
+
+📋 SHEET: User Profiles
+   Columns (37):
+   [0] Timestamp
+   [1] Email Address
+   [2] DATA PRIVACY AGREEMENT
+   [3] Full name
+   [4] Date of Birth
+   [5] Age
+   [6] Sex/Gender
+   [7] Pronouns
+   [8] Civil Status
+   [9] Contact Number
+   [10] Religion
+   [11] Nationality
+   [12] Personal Email Address
+   [13] Username
+   [14] Password
+   [15] Data Privacy Acknowledgment
+   [16] Declaration of Truthfulness and Responsibility
+   [17] Do you understand that by prohibiting the collection of your personal information, your application will not be processed?  
+   [18] ID Code
+   [19] Position
+   [20] Role
+   [21] ProfilePictureURL
+   [22] Column 1
+   [23] Column 2
+   [24] Column 25
+   [25] Column 26
+   [26] Column 27
+   [27] Column 28
+   [28] Column 29
+   [29] Column 30
+   [30] Column 31
+   [31] Column 32
+   [32] Column 33
+   [33] Column 34
+   [34] Column 35
+   [35] Column 36
+   [36] Column 37
+
+📋 SHEET: Donations
+   Columns (12):
+   [0] Donation ID
+   [1] Timestamp
+   [2] Donor Name
+   [3] Contact
+   [4] Amount
+   [5] Payment Method
+   [6] Campaign
+   [7] Reference Number
+   [8] Receipt URL
+   [9] Status
+   [10] Notes
+   [11] Verified By
+
+📋 SHEET: Donation_Campaigns
+   Columns (8):
+   [0] Campaign ID
+   [1] Name
+   [2] Description
+   [3] Target Amount
+   [4] Current Amount
+   [5] Start Date
+   [6] End Date
+   [7] Status
+
+📋 SHEET: Donation_Settings
+   Columns (5):
+   [0] Setting Key
+   [1] Method
+   [2] QR Image URL
+   [3] Account Name
+   [4] Active
+
+📋 SHEET: Logging Debug
+   Columns (6):
+   [0] RecordedAt (PH)
+   [1] Status
+   [2] idCode
+   [3] userRowIndex
+   [4] userRow (json)
+   [5] toAppend (json)
+
+📋 SHEET: WeakPasswords
+   Columns (6):
+   [0] Wed Oct 15 2025 00:25:36 GMT-0800 (GMT-08:00)
+   [1] ezequieljohncrisostomo20@gmail.com
+   [2] ZekeYSP
+   [3] Zeke25200
+   [4] 75
+   [5] Strong
+
+📋 SHEET: Main
+   Columns (30):
+   [0] Timestamp
+   [1] Email Address
+   [2] DATA PRIVACY AGREEMENT
+   [3] Full name
+   [4] Date of Birth
+   [5] Age
+   [6] Sex
+   [7] Pronouns
+   [8] Civil Status
+   [9] Contact Number
+   [10] Religion
+   [11] Nationality
+   [12] School and Year Level
+   [13] Personal Email Address
+   [14] Complete Permanent Address
+   [15] Complete Current Address
+   [16] Available Device/s
+   [17] Do you have any existing medical conditions, allergies, or health concerns that the committee should be aware of?  
+   [18] Emergency Contact Person
+   [19] Relationship to Emergency Contact
+   [20] Emergency Contact Number
+   [21] Youth Service Organization Designation
+   [22] Upload a recent digital 1x1 Formal ID Picture
+   [23] Facebook and Messenger Account
+   [24] Data Privacy Acknowledgment
+   [25] Declaration of Truthfulness and Responsibility  
+   [26] ID Code
+   [27] ID Number
+   [28] 
+   [29] Do you understand that by prohibiting the collection of your personal information, your application will not be processed?  
+
+📋 SHEET: Officer Directory
+   Columns (5):
+   [0] ID Code
+   [1] Name
+   [2] Position
+   [3] ID Number
+   [4] Sort ID
+
+📋 SHEET: Homepage Content
+   Columns (3):
+   [0] Key
+   [1] Value
+   [2] UpdatedAt
+
+📋 SHEET: Access Logs
+   Columns (11):
+   [0] Timestamp
+   [1] Account Created
+   [2] Email
+   [3] ID Code
+   [4] Name
+   [5] Role
+   [6] Action
+   [7] ActionType
+   [8] IP Address
+   [9] Device
+   [10] Status
+
+📋 SHEET: Feedback
+   Columns (18):
+   [0] Timestamp
+   [1] Author
+   [2] Author ID Code
+   [3] Feedback
+   [4] Reply Timestamp
+   [5] Replier
+   [6] Replier ID
+   [7] Reply
+   [8] Feedback ID
+   [9] Anonymous
+   [10] Category
+   [11] Image URL
+   [12] Status
+   [13] Visibility
+   [14] Notes
+   [15] Reference ID
+   [16] Email
+   [17] Rating
+
+📋 SHEET: Master Attendance Log
+   Columns (22):
+   [0] ID Code
+   [1] Name
+   [2] Position
+   [3] ID Number
+   [4] 1
+   [5] Test 123
+   [6] Tue Oct 28 2025 00:00:00 GMT-0800 (GMT-08:00)
+   [7] Time IN
+   [8] Time OUT
+   [9] Inactive
+   [10] 2
+   [11] YSP
+   [12] Tue Oct 28 2025 00:00:00 GMT-0800 (GMT-08:00)
+   [13] Time IN
+   [14] Time OUT
+   [15] Inactive
+   [16] 3
+   [17] NYVS 2025
+   [18] Sat Nov 15 2025 00:00:00 GMT-0800 (GMT-08:00)
+   [19] Time IN
+   [20] Time OUT
+   [21] Active
+
+📋 SHEET: Polls
+   Columns (19):
+   [0] Poll ID
+   [1] Timestamp Created
+   [2] Creator ID Code
+   [3] Creator Name
+   [4] Title
+   [5] Description
+   [6] Questions JSON
+   [7] Target Audience Type
+   [8] Target Value
+   [9] Start Date
+   [10] End Date
+   [11] Status
+   [12] Anonymous
+   [13] Show Results After Vote
+   [14] Show Results After Close
+   [15] Template Used
+   [16] Total Votes
+   [17] Voters List JSON
+   [18] Email Sent
+
+📋 SHEET: Poll Responses
+   Columns (8):
+   [0] Response ID
+   [1] Poll ID
+   [2] Respondent ID Code
+   [3] Respondent Name
+   [4] Respondent Position
+   [5] Respondent Committee
+   [6] Timestamp Submitted
+   [7] Responses JSON
+
+📋 SHEET: Poll Templates
+   Columns (5):
+   [0] Template ID
+   [1] Template Name
+   [2] Template Description
+   [3] Default Questions JSON
+   [4] Recommended Settings JSON
+
+📋 SHEET: Announcements
+   Columns (46):
+   [0] Timestamp
+   [1] Announcement ID
+   [2] Author ID Code
+   [3] Author Name
+   [4] Title
+   [5] Subject
+   [6] Body
+   [7] Recipient Type
+   [8] Recipeint Value 
+   [9] Email Status
+   [10] 
+   [11] 
+   [12] 
+   [13] 
+   [14] 
+   [15] 
+   [16] ID Code
+   [17] Name
+   [18] Position
+   [19] Role
+   [20] ANN-2025-001
+   [21] Testing the Announcement
+   [22] ANN-2025-002
+   [23] TEsting
+   [24] ANN-2025-003
+   [25] Test
+   [26] ANN-2025-004
+   [27] Testest
+   [28] ANN-2025-005
+   [29] Zek
+   [30] ANN-2025-006
+   [31] testing
+   [32] ANN-2025-007
+   [33] Title
+   [34] ANN-2025-008
+   [35] Title test
+   [36] ANN-2025-009
+   [37] Eze
+   [38] ANN-2025-010
+   [39] toaster
+   [40] ANN-2025-011
+   [41] check
+   [42] ANN-2025-012
+   [43] test
+   [44] ANN-2025-013
+   [45] test
+
+📋 SHEET: Form Responses 5
+   Columns (11):
+   [0] Timestamp
+   [1] Email Address
+   [2] DATA PRIVACY AGREEMENT
+   [3] Full name
+   [4] Youth Service Organization Designation
+   [5] Enter your assigned YSPT ID Code
+   [6] Event
+   [7] Status
+   [8] Time Attended
+   [9] Time Exited
+   [10] Upload a picture taken during the Event/Activity
+
+📋 SHEET: Home_DevInfo
+   Columns (33):
+   [0] ID
+   [1] Name
+   [2] Role
+   [3] Position
+   [4] Organization
+   [5] About
+   [6] Background_1
+   [7] Background_2
+   [8] Background_3
+   [9] Background_4
+   [10] Background_5
+   [11] Affiliation_1
+   [12] Position_1
+   [13] Affiliation_2
+   [14] Position_2
+   [15] Affiliation_3
+   [16] Position_3
+   [17] Affiliation_4
+   [18] Position_4
+   [19] Affiliation_5
+   [20] Position_5
+   [21] ProjectHighlights
+   [22] PersonalPhilosophy
+   [23] ProfilePicture
+   [24] Facebook
+   [25] Instagram
+   [26] Twitter
+   [27] LinkedIn
+   [28] Website
+   [29] Email
+   [30] Phone
+   [31] Location
+   [32] Active
+
+📋 SHEET: Home_FounderInfo
+   Columns (48):
+   [0] ID
+   [1] Name
+   [2] Nickname
+   [3] Role
+   [4] About
+   [5] BackgroundJourney
+   [6] Achievement_1
+   [7] Achievement_2
+   [8] Achievement_3
+   [9] Achievement_4
+   [10] Achievement_5
+   [11] Achievement_6
+   [12] Achievement_7
+   [13] Achievement_8
+   [14] Achievement_9
+   [15] Achievement_10
+   [16] Achievement_11
+   [17] Achievement_12
+   [18] Achievement_13
+   [19] Achievement_14
+   [20] Achievement_15
+   [21] Achievement_16
+   [22] Achievement_17
+   [23] Achievement_18
+   [24] Achievement_19
+   [25] Achievement_20
+   [26] Achievement_21
+   [27] Achievement_22
+   [28] Achievement_23
+   [29] Achievement_24
+   [30] Achievement_25
+   [31] Achievement_26
+   [32] Achievement_27
+   [33] Achievement_28
+   [34] Achievement_29
+   [35] Achievement_30
+   [36] OrganizationalImpact
+   [37] LeadershipPhilosophy
+   [38] ProfilePicture
+   [39] Facebook
+   [40] Instagram
+   [41] Twitter
+   [42] LinkedIn
+   [43] Website
+   [44] Email
+   [45] Phone
+   [46] OfficeLocation
+   [47] Active
+
+----------------------------------------
