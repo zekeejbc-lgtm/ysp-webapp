@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ArrowLeft, Upload, X, Check, Copy, AlertCircle, Heart, Users, TrendingUp, Share2, CheckCircle, XCircle, Mail } from 'lucide-react';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { toast } from 'sonner';
@@ -95,7 +95,7 @@ export default function TabangTaBaiPage({ onClose, isAdmin, isDark, userRole = '
             description: c.description || '',
             goalAmount: parseFloat(c.targetAmount) || 0,
             currentAmount: parseFloat(c.currentAmount) || 0,
-            imageUrl: 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=800&q=80', // Placeholder or fetch from somewhere
+            imageUrl: c.imageUrl || 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=800&q=80',
             qrCodes: {}, // Will be populated from settings if needed, or just use global payment methods
             endDate: c.endDate ? new Date(c.endDate).toISOString().split('T')[0] : ''
           }));

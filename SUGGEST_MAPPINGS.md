@@ -345,17 +345,21 @@ Supports: PollingEvaluationsPage (public/private polls, responses, results).
 
 ---
 
-## Coverage Checklist (Frontend ↔ GAS)
-- Auth/Login: `User_Profiles` N/O for credentials; `Access_Logs` A–K
-- Officer Directory: `User_Profiles` D/E/F/G/H/J/K/L/S/T/U/V/X/W
-- Manage Members: `User_Profiles` + `Member_Applications`
-- Attendance (QR/Manual): `Master_Attendance_Log` + `Events_Control`
-- Attendance Dashboard/Transparency: derive from `Master_Attendance_Log`
-- Announcements: `Announcements` A–P + dynamic status columns U→
-- Feedback: `Feedback` A–R
-- Donations: `Donations`, `Donation_Campaigns`, `Donation_Settings`
-- Homepage: `Homepage_Content`, `Homepage_Projects`
-- Polling/Evaluations: `Polls`, `Poll_Questions`, `Poll_Responses`
+## Gap Analysis (Based on Scan vs Frontend Needs)
+
+### Donation_Campaigns
+- **Missing:** `Image URL`
+- **Impact:** Campaign images will fallback to placeholders.
+- **Action:** Add `Image URL` column (e.g., Column I).
+
+### Donations
+- **Missing:** Explicit `Rejection Reason` column.
+- **Impact:** Rejection reasons might be lost or need to be stored in `Notes`.
+- **Action:** Use `Notes` column or add `Rejection Reason` column.
+
+### Officer Directory
+- **Observation:** The `Officer Directory` sheet is minimal. The frontend search uses `User Profiles` sheet for full details (images, contact info).
+- **Action:** Ensure `User Profiles` is kept up-to-date with officer roles.
 
 ## Implementation Notes
 - Keep sheet names stable; handlers map directly by name.

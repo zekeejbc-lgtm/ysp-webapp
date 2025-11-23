@@ -21,6 +21,7 @@
 
 import { X } from "lucide-react";
 import { DESIGN_TOKENS, getGlassStyle, getCardPadding } from "./tokens";
+import { ImageWithFallback } from "../figma/ImageWithFallback";
 
 interface DetailField {
   label: string;
@@ -102,7 +103,7 @@ export default function DetailsCard({
               borderColor: DESIGN_TOKENS.colors.brand.orange,
             }}
           >
-            <img
+            <ImageWithFallback
               src={profileImage}
               alt={title}
               className="w-full h-full object-cover"
