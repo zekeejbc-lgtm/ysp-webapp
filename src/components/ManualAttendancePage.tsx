@@ -195,10 +195,13 @@ export default function ManualAttendancePage({ onClose, isDark }: ManualAttendan
             <button
               onClick={() => setTimeType("in")}
               className={`flex-1 px-4 py-3 rounded-xl transition-all ${timeType === "in"
-                ? "bg-[#f6421f] text-white"
+                ? "text-white"
                 : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
                 }`}
-              style={{ fontWeight: DESIGN_TOKENS.typography.fontWeight.semibold }}
+              style={{ 
+                fontWeight: DESIGN_TOKENS.typography.fontWeight.semibold,
+                backgroundColor: timeType === "in" ? DESIGN_TOKENS.colors.brand.red : undefined
+              }}
             >
               Time In
             </button>
@@ -206,10 +209,13 @@ export default function ManualAttendancePage({ onClose, isDark }: ManualAttendan
               onClick={() => setTimeType("out")}
               disabled={status === "Absent" || status === "Excused"}
               className={`flex-1 px-4 py-3 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed ${timeType === "out"
-                ? "bg-[#f6421f] text-white"
+                ? "text-white"
                 : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
                 }`}
-              style={{ fontWeight: DESIGN_TOKENS.typography.fontWeight.semibold }}
+              style={{ 
+                fontWeight: DESIGN_TOKENS.typography.fontWeight.semibold,
+                backgroundColor: timeType === "out" ? DESIGN_TOKENS.colors.brand.red : undefined
+              }}
             >
               Time Out
             </button>
@@ -256,7 +262,10 @@ export default function ManualAttendancePage({ onClose, isDark }: ManualAttendan
         {/* Record Button */}
         <Button
           onClick={handleRecordAttendance}
-          className="w-full px-6 py-4 rounded-xl text-white transition-all duration-300 hover:shadow-lg flex items-center justify-center gap-3 bg-gradient-to-br from-[#f6421f] to-[#ee8724] font-semibold"
+          className="w-full px-6 py-4 rounded-xl text-white transition-all duration-300 hover:shadow-lg flex items-center justify-center gap-3 font-semibold"
+          style={{
+            background: `linear-gradient(135deg, ${DESIGN_TOKENS.colors.brand.red} 0%, ${DESIGN_TOKENS.colors.brand.orange} 100%)`
+          }}
         >
           <Save className="w-5 h-5" />
           Record Attendance

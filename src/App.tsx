@@ -1209,6 +1209,11 @@ export default function App() {
         <MyQRIDPage
           onClose={() => setShowMyQRID(false)}
           isDark={isDark}
+          userInfo={{
+            fullName: userName,
+            idCode: userIdCode || "N/A",
+            position: userRole
+          }}
         />
       </>
     );

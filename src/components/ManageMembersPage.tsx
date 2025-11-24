@@ -155,10 +155,10 @@ export default function ManageMembersPage({ onClose, isDark }: ManageMembersPage
             position: p.position,
             role: p.role,
             committee: getCommitteeFromId(p.idCode),
-            status: "Active", // Default to Active as backend doesn't send status yet
+            status: p.status || "Active", // Use backend status or default to Active
             email: p.email,
             phone: p.contact,
-            dateJoined: p.dateJoined || "2023-01-01",
+            dateJoined: p.dateJoined || new Date().toISOString().split('T')[0], // Use backend date or today
             // Extended info
             address: p.address,
             dateOfBirth: p.birthday,

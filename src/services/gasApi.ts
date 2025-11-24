@@ -189,9 +189,9 @@ export async function getEventsFromGAS() {
   }
 }
 
-export async function recordAttendanceInGAS(idCode: string, eventId: string) {
+export async function recordAttendanceInGAS(idCode: string, eventId: string, timeType?: string) {
   try {
-    const result = await callGAS('recordAttendance', { idCode, eventId });
+    const result = await callGAS('recordAttendance', { idCode, eventId, timeType });
     return result;
   } catch (error) {
     console.error('Error recording attendance:', error);

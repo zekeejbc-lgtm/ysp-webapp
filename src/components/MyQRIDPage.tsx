@@ -14,7 +14,7 @@
  */
 
 import { Download, Smartphone } from "lucide-react";
-import { QRCodeSVG } from "qrcode.react";
+import { QRCodeCanvas } from "qrcode.react";
 import { toast } from "sonner";
 import { PageLayout, Button, DESIGN_TOKENS } from "./design-system";
 
@@ -40,13 +40,22 @@ export default function MyQRIDPage({
   };
 
   const handleSaveQR = () => {
-    // In a real app, this would generate a PNG file
-    toast.success("QR Code Downloaded", {
-      description: `${defaultUser.idCode}_${defaultUser.fullName.replace(
-        /\s/g,
-        "_"
-      )}.png`,
-    });
+    const canvas = document.getElementById("qr-code-canvas") as HTMLCanvasElement;
+    if (canvas) {
+      const pngUrl = canvas.toDataURL("image/png");
+      const downloadLink = document.createElement("a");
+      downloadLink.href = pngUrl;
+      downloadLink.download = `${defaultUser.idCode}_${defaultUser.fullName.replace(/\s/g, "_")}.png`;
+      document.body.appendChild(downloadLink);
+      downloadLink.click();
+      document.body.removeChild(downloadLink);
+      
+      toast.success("QR Code Downloaded", {
+        description: `${defaultUser.idCode}_${defaultUser.fullName.replace(/\s/g, "_")}.png`,
+      });
+    } else {
+      toast.error("Failed to generate QR code image");
+    }
   };
 
   // Determine QR size based on screen (use media query in real implementation)
@@ -101,7 +110,8 @@ export default function MyQRIDPage({
             marginBottom: `${DESIGN_TOKENS.spacing.scale.xl}px`,
           }}
         >
-          <QRCodeSVG
+          <QRCodeCanvas
+            id="qr-code-canvas"
             value={defaultUser.idCode}
             size={qrSize}
             level="H"

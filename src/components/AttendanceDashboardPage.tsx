@@ -41,6 +41,20 @@ export default function AttendanceDashboardPage({ onClose, isDark }: AttendanceD
   ]);
   const [barChartData, setBarChartData] = useState<any[]>([]);
 
+  const committees = [
+    { value: "All Members", label: "All Members" },
+    { value: "Executive Board", label: "Executive Board" },
+    { value: "Community Development", label: "Community Development" },
+    { value: "Environmental Conservation", label: "Environmental Conservation" },
+    { value: "Youth Development", label: "Youth Development" },
+    { value: "Membership and Internal Affairs", label: "Membership and Internal Affairs" },
+    { value: "Communications and Marketing", label: "Communications and Marketing" },
+    { value: "Finance and Treasury", label: "Finance and Treasury" },
+    { value: "Secretariat and Documentation", label: "Secretariat and Documentation" },
+    { value: "External Relations", label: "External Relations" },
+    { value: "Program Development", label: "Program Development" }
+  ];
+
   // Fetch active events
   useEffect(() => {
     const fetchEvents = async () => {

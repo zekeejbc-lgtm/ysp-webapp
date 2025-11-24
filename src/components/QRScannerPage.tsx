@@ -15,9 +15,10 @@
 
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import { Html5Qrcode } from "html5-qrcode";
 import { PageLayout, DESIGN_TOKENS, getGlassStyle } from "./design-system";
 import CustomDropdown from "./CustomDropdown";
-import { Camera, StopCircle } from "lucide-react";
+import { Camera, StopCircle, QrCode, CheckCircle } from "lucide-react";
 
 interface QRScannerPageProps {
   onClose: () => void;
@@ -51,57 +52,78 @@ export default function QRScannerPage({ onClose, isDark }: QRScannerPageProps) {
     fetchEvents();
   }, []);
 
+  useEffect(() => {
+    let html5QrCode: Html5Qrcode | null = null;
+
+    if (isScanning) {
+      const startScanning = async () => {
+        try {
+          // Wait for element to be available
+          await new Promise(resolve => setTimeout(resolve, 100));
+          
+          html5QrCode = new Html5Qrcode("reader");
+          await html5QrCode.start(
+            { facingMode: "environment" },
+            {
+              fps: 10,
+              qrbox: { width: 250, height: 250 },
+            },
+            async (decodedText) => {
+              // Success
+              if (html5QrCode) {
+                try {
+                  await html5QrCode.stop();
+                  html5QrCode.clear();
+                } catch (e) {
+                  console.error("Error stopping scanner", e);
+                }
+                setIsScanning(false);
+              }
+              
+              toast.success("QR Code Scanned", { description: `ID: ${decodedText}` });
+              
+              try {
+                const { recordAttendanceInGAS } = await import("../services/gasApi");
+                // Pass timeType (in/out)
+                const result = await recordAttendanceInGAS(decodedText, selectedEvent, timeType);
+                
+                if (result.success) {
+                  toast.success("Attendance Recorded", { description: result.message });
+                } else {
+                  toast.error("Attendance Failed", { description: result.message });
+                }
+              } catch (error) {
+                toast.error("Error recording attendance");
+              }
+            },
+            (errorMessage) => {
+              // Error (ignore for scanning loop)
+            }
+          );
+          setCameraPermission("granted");
+        } catch (err) {
+          console.error(err);
+          setCameraPermission("denied");
+          setIsScanning(false);
+          toast.error("Failed to start camera");
+        }
+      };
+      startScanning();
+    }
+
+    return () => {
+      if (html5QrCode) {
+        html5QrCode.stop().catch(e => console.error("Error stopping scanner cleanup", e));
+      }
+    };
+  }, [isScanning, selectedEvent]);
+
   const handleStartScanning = async () => {
     if (!selectedEvent) {
       toast.error("Please select an event first");
       return;
     }
-
-    // Simulate camera permission request
-    try {
-      setIsScanning(true);
-      setCameraPermission("granted");
-
-      // Simulate scanning delay and result
-      // In a real implementation, this would be replaced by the QR scanner library's onScan callback
-      setTimeout(async () => {
-        try {
-          // Simulate a scanned ID - In production this comes from the camera
-          const scannedIdCode = "MEM-001";
-
-          const { recordAttendanceInGAS } = await import("../services/gasApi");
-          // Pass timeType (in/out) if backend supports it, otherwise it might auto-detect
-          // The current backend recordAttendance might need timeType? 
-          // Let's assume recordAttendance handles it or we need to update backend.
-          // Checking backend: handleRecordAttendance(data) -> idCode, eventId. 
-          // It seems to auto-detect in/out based on previous logs or just logs it.
-          // Wait, the UI has "Time In" / "Time Out" toggle. We should send this.
-          // But recordAttendanceInGAS signature in gasApi.ts only takes idCode and eventId.
-          // I should update gasApi.ts to take type, or just send it in data.
-          // For now, I'll send it as part of the payload if I can, but the function signature is fixed in my previous edit.
-          // Actually, I can update recordAttendanceInGAS to take an optional type.
-          // But let's stick to what I defined: recordAttendanceInGAS(idCode, eventId).
-          // If the backend needs type, I'll need to update both.
-          // Let's check backend handleRecordAttendance.
-
-          const result = await recordAttendanceInGAS(scannedIdCode, selectedEvent);
-
-          if (result.success) {
-            toast.success("Attendance Recorded", { description: result.message });
-          } else {
-            toast.error("Attendance Failed", { description: result.message });
-          }
-        } catch (error) {
-          toast.error("Error recording attendance");
-        } finally {
-          setIsScanning(false);
-        }
-      }, 2000);
-    } catch (error) {
-      setCameraPermission("denied");
-      toast.error("Camera access denied");
-      setIsScanning(false);
-    }
+    setIsScanning(true);
   };
 
   const glassStyle = getGlassStyle(isDark);
@@ -242,7 +264,7 @@ export default function QRScannerPage({ onClose, isDark }: QRScannerPageProps) {
 
       {/* Camera Preview */}
       <div
-        className="border rounded-lg overflow-hidden"
+        className="border rounded-lg overflow-hidden relative"
         style={{
           borderRadius: `${DESIGN_TOKENS.radius.card}px`,
           borderColor: isDark
@@ -252,30 +274,10 @@ export default function QRScannerPage({ onClose, isDark }: QRScannerPageProps) {
           aspectRatio: DESIGN_TOKENS.media.cameraPreview.aspectRatio,
         }}
       >
-        {isScanning ? (
-          <div className="w-full h-full bg-black flex items-center justify-center">
-            <div className="text-center text-white">
-              <QrCode className="w-16 h-16 mx-auto mb-4 animate-pulse" />
-              <p
-                style={{
-                  fontSize: `${DESIGN_TOKENS.typography.fontSize.h3}px`,
-                  fontWeight: DESIGN_TOKENS.typography.fontWeight.semibold,
-                }}
-              >
-                Scanning for QR Code...
-              </p>
-              <p
-                className="text-gray-400 mt-2"
-                style={{
-                  fontSize: `${DESIGN_TOKENS.typography.fontSize.caption}px`,
-                }}
-              >
-                Position the QR code within the frame
-              </p>
-            </div>
-          </div>
-        ) : cameraPermission === "denied" ? (
-          <div className="w-full h-full flex items-center justify-center bg-red-500/10">
+        {isScanning && <div id="reader" className="w-full h-full" />}
+        
+        {!isScanning && cameraPermission === "denied" && (
+          <div className="w-full h-full flex items-center justify-center bg-red-500/10 absolute inset-0">
             <div className="text-center">
               <Camera className="w-16 h-16 mx-auto mb-4 text-red-500" />
               <p
@@ -297,8 +299,10 @@ export default function QRScannerPage({ onClose, isDark }: QRScannerPageProps) {
               </p>
             </div>
           </div>
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
+        )}
+        
+        {!isScanning && cameraPermission !== "denied" && (
+          <div className="w-full h-full flex items-center justify-center absolute inset-0">
             <div className="text-center">
               <QrCode className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
               <p
