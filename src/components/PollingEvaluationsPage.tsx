@@ -14,11 +14,11 @@
  * =============================================================================
  */
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Search, Plus, BarChart3, Star, FileText, CheckSquare, Calendar,
   Eye, Edit, Trash2, Copy, Link2, Users, Clock, Globe, Lock,
-  TrendingUp, Download, Share2, Play, Pause, RotateCcw
+  TrendingUp, Download, Share2, Play, Pause, RotateCcw, User
 } from "lucide-react";
 import { toast } from "sonner";
 import { PageLayout, Button, DESIGN_TOKENS } from "./design-system";
@@ -27,19 +27,28 @@ import CreatePollModal from "./polling/CreatePollModal";
 import TakePollModalEnhanced from "./polling/TakePollModalEnhanced";
 import PollResultsModal from "./polling/PollResultsModal";
 import CustomDropdown from "./CustomDropdown";
+import { getPollsFromGAS, createPollInGAS, submitPollResponseInGAS, deletePollInGAS, updatePollStatusInGAS } from "../services/gasApi";
 
 interface PollingEvaluationsPageProps {
   onClose: () => void;
   isDark: boolean;
   userRole: string;
   isLoggedIn?: boolean;
+  userIdCode?: string;
+  userName?: string;
+  userCommittee?: string;
+  userPosition?: string;
 }
 
 export default function PollingEvaluationsPage({ 
   onClose, 
   isDark, 
   userRole,
-  isLoggedIn = true 
+  isLoggedIn = true,
+  userIdCode = "",
+  userName = "",
+  userCommittee = "",
+  userPosition = ""
 }: PollingEvaluationsPageProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<PollType | "all">("all");
@@ -54,8 +63,30 @@ export default function PollingEvaluationsPage({
   // Check if user can create polls
   const canCreatePolls = ["admin", "head", "officer", "auditor"].includes(userRole.toLowerCase());
 
-  // Mock polls data
+  // Polls data
   const [polls, setPolls] = useState<Poll[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    loadPolls();
+  }, []);
+
+  const loadPolls = async () => {
+    setIsLoading(true);
+    try {
+      const result = await getPollsFromGAS(userRole, userIdCode, userCommittee);
+      if (result.success) {
+        setPolls(result.polls);
+      } else {
+        toast.error("Failed to load polls");
+      }
+    } catch (error) {
+      console.error("Error loading polls:", error);
+      toast.error("Error loading polls");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Filter polls
   const filteredPolls = polls.filter((poll) => {
@@ -107,14 +138,24 @@ export default function PollingEvaluationsPage({
     toast.info("Edit functionality coming soon!");
   };
 
-  const handleClosePoll = (pollId: string) => {
-    setPolls(polls.map(p => p.id === pollId ? { ...p, status: "closed" as PollStatus } : p));
-    toast.success("Poll closed successfully");
+  const handleClosePoll = async (pollId: string) => {
+    const result = await updatePollStatusInGAS(pollId, "closed");
+    if (result.success) {
+      setPolls(polls.map(p => p.id === pollId ? { ...p, status: "closed" as PollStatus } : p));
+      toast.success("Poll closed successfully");
+    } else {
+      toast.error("Failed to close poll");
+    }
   };
 
-  const handleReopenPoll = (pollId: string) => {
-    setPolls(polls.map(p => p.id === pollId ? { ...p, status: "open" as PollStatus } : p));
-    toast.success("Poll reopened successfully");
+  const handleReopenPoll = async (pollId: string) => {
+    const result = await updatePollStatusInGAS(pollId, "open");
+    if (result.success) {
+      setPolls(polls.map(p => p.id === pollId ? { ...p, status: "open" as PollStatus } : p));
+      toast.success("Poll reopened successfully");
+    } else {
+      toast.error("Failed to reopen poll");
+    }
   };
 
   const handleDuplicatePoll = (poll: Poll) => {
@@ -128,13 +169,30 @@ export default function PollingEvaluationsPage({
       responses: 0,
       views: 0,
     };
-    setPolls([...polls, newPoll]);
-    toast.success("Poll duplicated successfully");
+    // Note: Duplication in GAS not implemented yet, just local for now or we could implement createPollInGAS here too
+    // For now, let's just open the create modal with pre-filled data? 
+    // Or just create it directly. Let's create it directly.
+    createPollInGAS(newPoll, userIdCode, userName).then(result => {
+        if (result.success) {
+            setPolls([...polls, newPoll]);
+            toast.success("Poll duplicated successfully");
+            loadPolls();
+        } else {
+            toast.error("Failed to duplicate poll");
+        }
+    });
   };
 
-  const handleDeletePoll = (pollId: string) => {
-    setPolls(polls.filter(p => p.id !== pollId));
-    toast.success("Poll deleted successfully");
+  const handleDeletePoll = async (pollId: string) => {
+    if (!confirm("Are you sure you want to delete this poll?")) return;
+    
+    const result = await deletePollInGAS(pollId);
+    if (result.success) {
+      setPolls(polls.filter(p => p.id !== pollId));
+      toast.success("Poll deleted successfully");
+    } else {
+      toast.error("Failed to delete poll");
+    }
   };
 
   const handleSharePoll = (poll: Poll) => {
@@ -381,17 +439,23 @@ export default function PollingEvaluationsPage({
           isDark={isDark}
           userRole={userRole}
           onClose={() => setShowCreateModal(false)}
-          onSave={(newPoll) => {
-            setPolls([...polls, newPoll]);
-            setShowCreateModal(false);
-            toast.success("Poll created successfully!");
+          onSave={async (newPoll) => {
+            const result = await createPollInGAS(newPoll, userIdCode, userName);
+            if (result.success) {
+              setPolls([...polls, newPoll]);
+              setShowCreateModal(false);
+              toast.success("Poll created successfully!");
+              loadPolls();
+            } else {
+              toast.error("Failed to create poll: " + result.message);
+            }
           }}
         />
       )}
 
       {/* Take Poll Modal */}
       {showTakePollModal && selectedPoll && (
-        <TakePollModal
+        <TakePollModalEnhanced
           poll={selectedPoll}
           isDark={isDark}
           isLoggedIn={isLoggedIn}
@@ -399,14 +463,27 @@ export default function PollingEvaluationsPage({
             setShowTakePollModal(false);
             setSelectedPoll(null);
           }}
-          onSubmit={() => {
-            // Update response count
-            setPolls(polls.map(p => 
-              p.id === selectedPoll.id ? { ...p, responses: p.responses + 1 } : p
-            ));
-            setShowTakePollModal(false);
-            setSelectedPoll(null);
-            toast.success("Response submitted successfully!");
+          onSubmit={async (responses) => {
+            const result = await submitPollResponseInGAS(
+              selectedPoll.id, 
+              responses, 
+              userIdCode, 
+              userName, 
+              userPosition, 
+              userCommittee
+            );
+            
+            if (result.success) {
+              // Update response count locally
+              setPolls(polls.map(p => 
+                p.id === selectedPoll.id ? { ...p, responses: p.responses + 1 } : p
+              ));
+              setShowTakePollModal(false);
+              setSelectedPoll(null);
+              toast.success("Response submitted successfully!");
+            } else {
+              toast.error("Failed to submit response: " + result.message);
+            }
           }}
         />
       )}

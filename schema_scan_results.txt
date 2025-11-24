@@ -2,11 +2,11 @@
 ----------------------------------------
 Found the following sheets and columns:
 
-Total Sheets Found: 19
-Sheets: User Profiles, Donations, Donation_Campaigns, Donation_Settings, Logging Debug, WeakPasswords, Main, Officer Directory, Homepage Content, Access Logs, Feedback, Master Attendance Log, Polls, Poll Responses, Poll Templates, Announcements, Form Responses 5, Home_DevInfo, Home_FounderInfo
+Total Sheets Found: 27
+Sheets: User Profiles, Access_Logs, Master_Attendance_Log, Events_Control, Homepage_Content, Homepage_Projects, Member_Applications, Poll_Questions, Poll_Responses, User_Profiles, Donations, Donation_Campaigns, Donation_Settings, Logging Debug, WeakPasswords, Main, Officer Directory, Homepage Content, Access Logs, Feedback, Master Attendance Log, Polls, Poll Responses, Poll Templates, Announcements, Home_DevInfo, Home_FounderInfo
 
 📋 SHEET: User Profiles
-   Columns (37):
+   Columns (38):
    [0] Timestamp
    [1] Email Address
    [2] DATA PRIVACY AGREEMENT
@@ -29,24 +29,180 @@ Sheets: User Profiles, Donations, Donation_Campaigns, Donation_Settings, Logging
    [19] Position
    [20] Role
    [21] ProfilePictureURL
-   [22] Column 1
-   [23] Column 2
-   [24] Column 25
-   [25] Column 26
-   [26] Column 27
-   [27] Column 28
-   [28] Column 29
-   [29] Column 30
-   [30] Column 31
-   [31] Column 32
-   [32] Column 33
-   [33] Column 34
-   [34] Column 35
-   [35] Column 36
-   [36] Column 37
+   [22] Address
+   [23] Barangay
+   [24] City
+   [25] Province
+   [26] Zip Code
+   [27] Facebook
+   [28] Instagram
+   [29] Twitter
+   [30] Emergency Contact Name
+   [31] Emergency Contact Relation
+   [32] Emergency Contact Number
+   [33] Chapter
+   [34] Committee
+   [35] Date Joined
+   [36] Membership Type
+   [37] Status
+
+📋 SHEET: Access_Logs
+   Columns (11):
+   [0] Timestamp
+   [1] Account Created
+   [2] Email
+   [3] ID Code
+   [4] Name
+   [5] Role
+   [6] Action
+   [7] ActionType
+   [8] IP Address
+   [9] Device
+   [10] Status
+
+📋 SHEET: Master_Attendance_Log
+   Columns (4):
+   [0] ID Code
+   [1] Name
+   [2] Position
+   [3] ID number
+
+📋 SHEET: Events_Control
+   Columns (8):
+   [0] Event ID
+   [1] Name
+   [2] Date
+   [3] Start Time
+   [4] End Time
+   [5] Status
+   [6] Created By
+   [7] Notes
+
+📋 SHEET: Homepage_Content
+   Columns (3):
+   [0] Key
+   [1] Value
+   [2] UpdatedAt
+
+📋 SHEET: Homepage_Projects
+   Columns (7):
+   [0] Project ID
+   [1] Title
+   [2] Description
+   [3] ImageURL
+   [4] Link
+   [5] LinkText
+   [6] Active
+
+📋 SHEET: Member_Applications
+   Columns (41):
+   [0] Application ID
+   [1] Date Applied
+   [2] Status
+   [3] Full Name
+   [4] Email
+   [5] Phone
+   [6] Address
+   [7] Date of Birth
+   [8] Age
+   [9] Gender
+   [10] Civil Status
+   [11] Nationality
+   [12] Chapter
+   [13] Committee Preference
+   [14] Desired Role
+   [15] Skills
+   [16] Education
+   [17] Certifications
+   [18] Experience
+   [19] Achievements
+   [20] Volunteer History
+   [21] Reason For Joining
+   [22] Personal Statement
+   [23] Emergency Contact Name
+   [24] Emergency Contact Relation
+   [25] Emergency Contact Number
+   [26] Facebook
+   [27] Instagram
+   [28] Twitter
+   [29] Profile Picture URL
+   [30] Attachments (JSON)
+   [31] Reviewed By
+   [32] Reviewed At
+   [33] Decision Notes
+   [34] Converted To Member
+   [35] Created Member ID Code
+   [36] Created Username
+   [37] Created Role
+   [38] Created Position
+   [39] Created Committee
+   [40] Created Notes
+
+📋 SHEET: Poll_Questions
+   Columns (14):
+   [0] Poll ID
+   [1] Question ID
+   [2] Order
+   [3] Type
+   [4] Text
+   [5] Help Text
+   [6] Required
+   [7] Options JSON
+   [8] Validation JSON
+   [9] Allow Other
+   [10] Max Files
+   [11] Max Size (MB)
+   [12] Matrix Rows JSON
+   [13] Matrix Cols JSON
+
+📋 SHEET: Poll_Responses
+   Columns (14):
+   [0] Response ID
+   [1] Poll ID
+   [2] Respondent ID Code
+   [3] Respondent Name
+   [4] Timestamp
+   [5] Device
+   [6] IP Address
+   [7] Status
+   [8] Score
+   [9] Result Visibility
+   [10] Answers JSON
+   [11] Reviewer
+   [12] Reviewed At
+   [13] Notes
+
+📋 SHEET: User_Profiles
+   Columns (26):
+   [0] Timestamp
+   [1] Email Address
+   [2] Data Privacy Agreement
+   [3] Full name
+   [4] Date of Birth
+   [5] Age
+   [6] Sex/Gender
+   [7] Pronouns
+   [8] Civil Status
+   [9] Contact Number
+   [10] Religion
+   [11] Nationality
+   [12] Personal Email Address
+   [13] Username
+   [14] Password
+   [15] Data Privacy Acknowledgment
+   [16] Declaration of Truthfulness and Responsibility
+   [17] Data Collection Agreement
+   [18] ID Code
+   [19] Position
+   [20] Role
+   [21] ProfilePictureURL
+   [22] Status
+   [23] Committee
+   [24] Notes
+   [25] Last Updated
 
 📋 SHEET: Donations
-   Columns (12):
+   Columns (13):
    [0] Donation ID
    [1] Timestamp
    [2] Donor Name
@@ -59,9 +215,10 @@ Sheets: User Profiles, Donations, Donation_Campaigns, Donation_Settings, Logging
    [9] Status
    [10] Notes
    [11] Verified By
+   [12] Rejection Reason
 
 📋 SHEET: Donation_Campaigns
-   Columns (8):
+   Columns (9):
    [0] Campaign ID
    [1] Name
    [2] Description
@@ -70,14 +227,17 @@ Sheets: User Profiles, Donations, Donation_Campaigns, Donation_Settings, Logging
    [5] Start Date
    [6] End Date
    [7] Status
+   [8] Image URL
 
 📋 SHEET: Donation_Settings
-   Columns (5):
-   [0] Setting Key
-   [1] Method
-   [2] QR Image URL
-   [3] Account Name
-   [4] Active
+   Columns (7):
+   [0] ID
+   [1] Setting Key
+   [2] Method
+   [3] Account Name/Number
+   [4] QR Image URL
+   [5] Account Name
+   [6] Active
 
 📋 SHEET: Logging Debug
    Columns (6):
@@ -168,15 +328,15 @@ Sheets: User Profiles, Donations, Donation_Campaigns, Donation_Settings, Logging
    [5] Replier
    [6] Replier ID
    [7] Reply
-   [8] Feedback ID
-   [9] Anonymous
-   [10] Category
-   [11] Image URL
-   [12] Status
-   [13] Visibility
-   [14] Notes
-   [15] Reference ID
-   [16] Email
+   [8] Anonymous
+   [9] Category
+   [10] Image URL
+   [11] Status
+   [12] Visibility
+   [13] Notes
+   [14] Reference ID
+   [15] Email
+   [16] Reference
    [17] Rating
 
 📋 SHEET: Master Attendance Log
@@ -205,26 +365,44 @@ Sheets: User Profiles, Donations, Donation_Campaigns, Donation_Settings, Logging
    [21] Active
 
 📋 SHEET: Polls
-   Columns (19):
+   Columns (37):
    [0] Poll ID
    [1] Timestamp Created
    [2] Creator ID Code
-   [3] Creator Name
-   [4] Title
-   [5] Description
-   [6] Questions JSON
-   [7] Target Audience Type
-   [8] Target Value
-   [9] Start Date
-   [10] End Date
-   [11] Status
-   [12] Anonymous
-   [13] Show Results After Vote
-   [14] Show Results After Close
-   [15] Template Used
-   [16] Total Votes
-   [17] Voters List JSON
-   [18] Email Sent
+   [3] Type
+   [4] Creator Name
+   [5] Visibility
+   [6] Created By
+   [7] Created By Role
+   [8] Created At
+   [9] Updated At
+   [10] Deadline
+   [11] Open Forever
+   [12] Target Audience
+   [13] Allow Edit After Submit
+   [14] Allow Multiple Submissions
+   [15] Anonymous Responses
+   [16] Show Results To Participants
+   [17] Account Only Submissions
+   [18] IP Lock
+   [19] Device Lock
+   [20] Requires Approval
+   [21] Theme JSON
+   [22] Title
+   [23] Description
+   [24] Questions JSON
+   [25] Target Audience Type
+   [26] Target Value
+   [27] Start Date
+   [28] End Date
+   [29] Status
+   [30] Anonymous
+   [31] Show Results After Vote
+   [32] Show Results After Close
+   [33] Template Used
+   [34] Total Votes
+   [35] Voters List JSON
+   [36] Email Sent
 
 📋 SHEET: Poll Responses
    Columns (8):
@@ -246,7 +424,7 @@ Sheets: User Profiles, Donations, Donation_Campaigns, Donation_Settings, Logging
    [4] Recommended Settings JSON
 
 📋 SHEET: Announcements
-   Columns (46):
+   Columns (53):
    [0] Timestamp
    [1] Announcement ID
    [2] Author ID Code
@@ -255,58 +433,51 @@ Sheets: User Profiles, Donations, Donation_Campaigns, Donation_Settings, Logging
    [5] Subject
    [6] Body
    [7] Recipient Type
-   [8] Recipeint Value 
-   [9] Email Status
-   [10] 
-   [11] 
-   [12] 
-   [13] 
-   [14] 
-   [15] 
-   [16] ID Code
-   [17] Name
-   [18] Position
-   [19] Role
-   [20] ANN-2025-001
-   [21] Testing the Announcement
-   [22] ANN-2025-002
-   [23] TEsting
-   [24] ANN-2025-003
-   [25] Test
-   [26] ANN-2025-004
-   [27] Testest
-   [28] ANN-2025-005
-   [29] Zek
-   [30] ANN-2025-006
-   [31] testing
-   [32] ANN-2025-007
-   [33] Title
-   [34] ANN-2025-008
-   [35] Title test
-   [36] ANN-2025-009
-   [37] Eze
-   [38] ANN-2025-010
-   [39] toaster
-   [40] ANN-2025-011
-   [41] check
-   [42] ANN-2025-012
-   [43] test
-   [44] ANN-2025-013
-   [45] test
-
-📋 SHEET: Form Responses 5
-   Columns (11):
-   [0] Timestamp
-   [1] Email Address
-   [2] DATA PRIVACY AGREEMENT
-   [3] Full name
-   [4] Youth Service Organization Designation
-   [5] Enter your assigned YSPT ID Code
-   [6] Event
-   [7] Status
-   [8] Time Attended
-   [9] Time Exited
-   [10] Upload a picture taken during the Event/Activity
+   [8] Recipient Value
+   [9] Recipeint Value 
+   [10] Priority
+   [11] Category
+   [12] IsPinned
+   [13] ImageURL_1
+   [14] ImageURL_2
+   [15] ImageURL_3
+   [16] Email Status
+   [17] 
+   [18] 
+   [19] 
+   [20] 
+   [21] 
+   [22] 
+   [23] ID Code
+   [24] Name
+   [25] Position
+   [26] Role
+   [27] ANN-2025-001
+   [28] Testing the Announcement
+   [29] ANN-2025-002
+   [30] TEsting
+   [31] ANN-2025-003
+   [32] Test
+   [33] ANN-2025-004
+   [34] Testest
+   [35] ANN-2025-005
+   [36] Zek
+   [37] ANN-2025-006
+   [38] testing
+   [39] ANN-2025-007
+   [40] Title
+   [41] ANN-2025-008
+   [42] Title test
+   [43] ANN-2025-009
+   [44] Eze
+   [45] ANN-2025-010
+   [46] toaster
+   [47] ANN-2025-011
+   [48] check
+   [49] ANN-2025-012
+   [50] test
+   [51] ANN-2025-013
+   [52] test
 
 📋 SHEET: Home_DevInfo
    Columns (33):

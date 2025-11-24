@@ -28,7 +28,7 @@ interface TakePollModalProps {
   isDark: boolean;
   isLoggedIn: boolean;
   onClose: () => void;
-  onSubmit: () => void;
+  onSubmit: (answers: Record<string, any>) => void;
 }
 
 export default function TakePollModalEnhanced({ poll, isDark, isLoggedIn, onClose, onSubmit }: TakePollModalProps) {
@@ -133,7 +133,7 @@ export default function TakePollModalEnhanced({ poll, isDark, isLoggedIn, onClos
     
     // Call onSubmit after a delay
     setTimeout(() => {
-      onSubmit();
+      onSubmit(answers);
     }, 3000);
   };
 

@@ -215,6 +215,8 @@ export default function App() {
   const [userUsername, setUserUsername] = useState<string>("");
   const [userIdCode, setUserIdCode] = useState<string>("");
   const [userProfilePicture, setUserProfilePicture] = useState<string>("");
+  const [userCommittee, setUserCommittee] = useState<string>("");
+  const [userPosition, setUserPosition] = useState<string>("");
   const [logoError, setLogoError] = useState(false);
   const [showDonationPage, setShowDonationPage] =
     useState(false);
@@ -325,6 +327,8 @@ export default function App() {
           setUserUsername(session.userUsername || '');
           setUserIdCode(session.userIdCode);
           setUserProfilePicture(session.userProfilePicture);
+          setUserCommittee(session.userCommittee || '');
+          setUserPosition(session.userPosition || '');
         }
       }
     } catch (error) {
@@ -873,6 +877,8 @@ export default function App() {
         setUserName(derivedName);
         setUserUsername(user.username || '');
         setUserIdCode(user.id || '');
+        setUserCommittee(user.committee || '');
+        setUserPosition(user.position || '');
         try {
           localStorage.setItem('ysp.session', JSON.stringify({
             isAdmin: true,
@@ -880,7 +886,9 @@ export default function App() {
             userName: derivedName,
             userUsername: user.username || '',
             userIdCode: user.id || '',
-            userProfilePicture: user.profilePicture || ''
+            userProfilePicture: user.profilePicture || '',
+            userCommittee: user.committee || '',
+            userPosition: user.position || ''
           }));
         } catch { }
       }
@@ -1380,6 +1388,10 @@ export default function App() {
           isDark={isDark}
           userRole={userRole}
           isLoggedIn={isAdmin}
+          userIdCode={userIdCode}
+          userName={userName}
+          userCommittee={userCommittee}
+          userPosition={userPosition}
         />
       </>
     );

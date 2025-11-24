@@ -22,6 +22,8 @@ export interface LoginResponse {
     guardianName?: string;
     guardianContact?: string;
     profilePicture?: string;
+    committee?: string;
+    position?: string;
   };
 }
 
@@ -75,6 +77,8 @@ export async function loginWithGAS(username: string, password: string): Promise<
           guardianName: result.user.guardianName || '',
           guardianContact: result.user.guardianContact || '',
           profilePicture: result.user.profilePicture || '',
+          committee: result.user.committee || '',
+          position: result.user.position || '',
         },
       };
     }
@@ -308,5 +312,71 @@ export async function exportMembersFromGAS() {
   } catch (error) {
     console.error('Error exporting members:', error);
     return { success: false, members: [] };
+  }
+}
+
+// ===== POLLING API =====
+
+export async function getPollsFromGAS(userRole: string, idCode: string, committee: string) {
+  try {
+    const result = await callGAS('getPolls', { userRole, idCode, committee });
+    return result;
+  } catch (error) {
+    console.error('Error fetching polls:', error);
+    return { success: false, polls: [] };
+  }
+}
+
+export async function createPollInGAS(poll: any, idCode: string, userName: string) {
+  try {
+    const result = await callGAS('createPoll', { poll, idCode, userName });
+    return result;
+  } catch (error) {
+    console.error('Error creating poll:', error);
+    return { success: false, message: error instanceof Error ? error.message : 'Unknown error' };
+  }
+}
+
+export async function submitPollResponseInGAS(
+  pollId: string, 
+  responses: any, 
+  idCode: string, 
+  userName: string, 
+  userPosition: string, 
+  userCommittee: string
+) {
+  try {
+    const result = await callGAS('submitPollResponse', { 
+      pollId, 
+      responses, 
+      idCode, 
+      userName, 
+      userPosition, 
+      userCommittee 
+    });
+    return result;
+  } catch (error) {
+    console.error('Error submitting poll response:', error);
+    return { success: false, message: error instanceof Error ? error.message : 'Unknown error' };
+  }
+}
+
+export async function deletePollInGAS(pollId: string) {
+  try {
+    const result = await callGAS('deletePoll', { pollId });
+    return result;
+  } catch (error) {
+    console.error('Error deleting poll:', error);
+    return { success: false, message: error instanceof Error ? error.message : 'Unknown error' };
+  }
+}
+
+export async function updatePollStatusInGAS(pollId: string, status: string) {
+  try {
+    const result = await callGAS('updatePollStatus', { pollId, status });
+    return result;
+  } catch (error) {
+    console.error('Error updating poll status:', error);
+    return { success: false, message: error instanceof Error ? error.message : 'Unknown error' };
   }
 }

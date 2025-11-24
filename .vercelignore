@@ -1,0 +1,16 @@
+# Ignore node modules and local build outputs
+node_modules/
+build/
+.vercel/
+
+# Local env
+.env
+
+# Editor files
+.vscode/
+.idea/
+.DS_Store
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
